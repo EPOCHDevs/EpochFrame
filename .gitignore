@@ -7,3 +7,5 @@
 
 # Generated files
 cmake-build-*
+
+*.txt

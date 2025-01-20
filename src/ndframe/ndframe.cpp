@@ -4,11 +4,10 @@
 
 #include "epochframe/ndframe.h"
 #include "epoch_lab_shared/macros.h"
+#include "factory/index_factory.h"
+
 
 namespace epochframe {
 
-    NDFrame::NDFrame(IndexPtr index) : m_index(std::move(index)) {
-        AssertWithTraceFromFormat(m_index != nullptr, "Index cannot be null");
-    }
+    NDFrame::NDFrame(IndexPtr index) : m_index(index ? std::move(index) : factory::index::range(0, 0)) {}
 } // namespace epochframe
-
