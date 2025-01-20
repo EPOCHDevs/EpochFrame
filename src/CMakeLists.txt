@@ -1,5 +1,3 @@
-add_library(epochframe STATIC "")
-
 add_subdirectory(aggregators)
 add_subdirectory(dataframe)
 add_subdirectory(factory)

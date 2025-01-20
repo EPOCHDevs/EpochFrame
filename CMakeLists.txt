@@ -15,4 +15,13 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 
+add_library(epochframe STATIC "")
+
+target_include_directories(epochframe
+        PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
 add_subdirectory(src)
