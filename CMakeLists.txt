@@ -5,6 +5,7 @@ include(${EPOCH_LAB}/shared_header.cmake)
 
 project(EpochFrame LANGUAGES C CXX)
 
+include(${EPOCH_CMAKE}/include_test.cmake)
 include(${EPOCH_CMAKE}/get_cpp_dataframe.cmake)
 find_package(Boost REQUIRED COMPONENTS filesystem system date_time )
 find_package(tabulate CONFIG REQUIRED)
@@ -23,5 +24,7 @@ target_include_directories(epochframe
         PRIVATE
         ${PROJECT_SOURCE_DIR}/src
 )
+
+INCLUDE_TEST()
 
 add_subdirectory(src)

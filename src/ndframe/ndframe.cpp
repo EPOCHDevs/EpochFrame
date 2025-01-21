@@ -9,5 +9,5 @@
 
 namespace epochframe {
 
-    NDFrame::NDFrame(IndexPtr index) : m_index(index ? std::move(index) : factory::index::range(0, 0)) {}
+    NDFrame::NDFrame(IndexPtr index) : m_index(index ? std::move(index) : factory::index::from_range(0)) {}
 } // namespace epochframe

@@ -7,6 +7,16 @@
 #include <memory>
 #include <utility>  // for std::pair
 
+
+namespace arrow{
+    class ChunkedArray;
+    class Array;
+    class Scalar;
+
+    using ArrayPtr = std::shared_ptr<Array>;
+    using ScalarPtr = std::shared_ptr<Scalar>;
+}
+
 // Forward-declare Index and NDFrame for pointer aliases:
 namespace epochframe {
 
