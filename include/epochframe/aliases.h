@@ -29,4 +29,6 @@ namespace epochframe {
     using NDFramePtr = std::shared_ptr<NDFrame>;
 
     using Shape2D = std::array<size_t, 2>;
+    using SliceType = std::pair<uint64_t , uint64_t>;
+    using IndexType = uint64_t;
 } // namespace epochframe

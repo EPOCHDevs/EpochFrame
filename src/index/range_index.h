@@ -12,5 +12,6 @@ namespace epochframe {
     class RangeIndex : public ArrowIndex<arrow::UInt64Array> {
     public:
         explicit RangeIndex(std::shared_ptr<arrow::UInt64Array> array);
+
     };
 } // namespace epochframe

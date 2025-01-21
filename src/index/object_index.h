@@ -8,10 +8,10 @@
 
 namespace epochframe {
 
-    class StringIndex : public ArrowIndex<arrow::StringArray> {
+    class ObjectIndex : public ArrowIndex<arrow::StringArray> {
 
     public:
-        explicit StringIndex(std::shared_ptr<arrow::StringArray> array);
+        explicit ObjectIndex(std::shared_ptr<arrow::StringArray> array);
 
     };
 } // namespace epochframe

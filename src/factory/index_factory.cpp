@@ -2,7 +2,7 @@
 #include "index_factory.h"
 #include "index/range_index.h"
 #include "index/datetime_index.h"
-#include "index/string_index.h"
+#include "index/object_index.h"
 #include "common_utils/asserts.h"
 #include <arrow/builder.h>
 #include <arrow/array.h>
@@ -13,65 +13,69 @@
 namespace epochframe::factory::index {
 
 // 1. Range
-    std::shared_ptr<Index> range(int64_t start, int64_t stop, int64_t step) {
-        // Build an Int64 array from [start..stop) with the given step
-        arrow::UInt64Builder builder;
-        int64_t dist = std::abs(stop - start);
-        int64_t count = (dist > 0 && step > 0) ? (dist + step - 1) / step : 0;
-        // Simple approach ignoring negative step etc. For brevity.
-
-        AssertStatusIsOk(builder.Reserve(count));
-        auto val = start;
-        for (int64_t i = 0; i < count; ++i) {
-            builder.UnsafeAppend(val);
-            val += step;
+     std::shared_ptr<arrow::UInt64Array>
+    build_range_array(int64_t start, int64_t stop, int64_t step)
+    {
+        if (step == 0) {
+            throw std::invalid_argument("RangeIndex step cannot be zero");
         }
 
-        // Now construct a RangeIndex from that array
-        return std::make_shared<RangeIndex>(AssertCastResultIsOk<arrow::UInt64Array>(builder.Finish()));
+        arrow::UInt64Builder builder;
+        AssertStatusIsOk(builder.Reserve(static_cast<int64_t>(std::abs( (stop - start) / step) ) ) );
+
+        if (step > 0) {
+            for (int64_t val = start; val < stop; val += step) {
+                builder.UnsafeAppend(static_cast<uint64_t>(val));
+            }
+        } else {
+            // step < 0
+            for (int64_t val = start; val > stop; val += step) {
+                builder.UnsafeAppend(static_cast<uint64_t>(val));
+            }
+        }
+
+        auto resultArr = AssertResultIsOk(builder.Finish());
+        return std::static_pointer_cast<arrow::UInt64Array>(resultArr);
+    }
+
+    std::shared_ptr<Index> from_range(int64_t start, int64_t stop, int64_t step) {
+        auto arr = build_range_array(start, stop, step);
+        return std::make_shared<RangeIndex>(arr);
     }
 
     std::shared_ptr<Index> from_range(int64_t stop, int64_t step) {
-        return range(0, stop, step);
+        return from_range(0, stop, step);
     }
 
-// 2. Date range
-    std::shared_ptr<Index> date_range(int64_t start_ns, int64_t end_ns, int64_t step_ns) {
-        // We'll create a Timestamp array in Arrow (assuming NANO resolution)
-        arrow::TimestampBuilder builder(arrow::timestamp(arrow::TimeUnit::NANO, "UTC"), arrow::default_memory_pool());
-
-        if (step_ns <= 0) {
-            step_ns = 1; // minimal fallback
-        }
-
-        int64_t dist = (end_ns - start_ns);
-        int64_t count = (dist > 0) ? (dist / step_ns) : 0;
-
-        AssertStatusIsOk(builder.Reserve(count));
-        auto val = start_ns;
-        for (int64_t i = 0; i < count; ++i) {
-            builder.UnsafeAppend(val);
-            val += step_ns;
-        }
-        std::shared_ptr<arrow::Array> arr;
-        AssertStatusIsOk(builder.Finish(&arr));
-
-        return std::make_shared<DateTimeIndex>(AssertCastResultIsOk<arrow::TimestampArray>(builder.Finish()));
+    std::shared_ptr<Index> from_range(int64_t stop) {
+        return from_range(0, stop, 1);
     }
 
 // 3. String index
-    std::shared_ptr<Index> string_index(const std::vector<std::string> &data) {
+    std::shared_ptr<Index> make_object_index(const std::vector<std::string> &data) {
         arrow::StringBuilder builder;
         AssertStatusIsOk(builder.Reserve(data.size()));
 
         for (auto &str: data) {
-            builder.UnsafeAppend(str);
+            AssertStatusIsOk(builder.Append(str));
         }
 
-        std::shared_ptr<arrow::Array> arr;
-        AssertStatusIsOk(builder.Finish(&arr));
+        return std::make_shared<ObjectIndex>(AssertCastResultIsOk<arrow::StringArray>(builder.Finish()));
+    }
 
-        return std::make_shared<StringIndex>(AssertCastResultIsOk<arrow::StringArray>(builder.Finish()));
+    std::shared_ptr<Index> make_object_index(const std::vector<arrow::ScalarPtr> &data) {
+        arrow::StringBuilder builder;
+        AssertStatusIsOk(builder.Reserve(data.size()));
+
+        for (auto &str: data) {
+            if (str && str->is_valid) {
+                AssertStatusIsOk(builder.Append(str->ToString()));
+            } else {
+                builder.UnsafeAppendNull();
+            }
+        }
+
+        return std::make_shared<ObjectIndex>(AssertCastResultIsOk<arrow::StringArray>(builder.Finish()));
     }
 
 } // namespace epochframe::factory::index

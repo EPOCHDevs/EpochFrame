@@ -8,6 +8,7 @@
 #include <stdexcept> // for runtime_error
 #include <epoch_lab_shared/macros.h> // For AssertWithTraceFromFormat or any custom asserts
 #include "common_utils/asserts.h"
+#include "aggregators/arrow_agg.h"
 
 
 namespace epochframe {
@@ -23,22 +24,7 @@ namespace epochframe {
     public:
         //--------------------------------------------------------------------------
         // Constructor
-
-        explicit ArrowIndex(std::shared_ptr<ArrowArrayType> array, std::string name = "")
-                : m_array(std::move(array)), m_name(std::move(name)) {
-            // Basic null check
-            AssertWithTraceFromFormat(
-                    m_array != nullptr,
-                    "ArrowIndex constructed with a null array pointer!"
-            );
-
-            AssertWithTraceFromFormat(
-                    ArrowArrayType::TypeClass::type_id == m_array->type_id(),
-                    fmt::format("Expected array of type {}, got {}",
-                                std::string{ArrowArrayType::TypeClass::type_name()},
-                                m_array->type()->ToString())
-            );
-        }
+        explicit ArrowIndex(std::shared_ptr<ArrowArrayType> array, std::string name = "");
 
         explicit ArrowIndex(std::shared_ptr<arrow::Array> array, std::string name= "")
                 : ArrowIndex(PtrCast<ArrowArrayType>(std::move(array)), std::move(name)) {}
@@ -78,19 +64,11 @@ namespace epochframe {
         }
 
         bool all(bool skipNA) const final {
-            if (m_array->length() == 0) {
-                // By Pandas convention, all([]) == true
-                return true;
-            }
-            return arrow_utils::call_unary_agg_compute_as<bool>(arrow_utils::call_cast_array<arrow::BooleanArray>(m_array), "all", skipNA);
+            return agg::all(m_array, skipNA);
         }
 
         bool any(bool skipNA) const final {
-            if (m_array->length() == 0) {
-                // any([]) == false
-                return false;
-            }
-            return arrow_utils::call_unary_agg_compute_as<bool>(arrow_utils::call_cast_array<arrow::BooleanArray>(m_array), "any", skipNA);
+            return agg::any(m_array, skipNA);
         }
 
         bool is_unique() const final {
@@ -106,7 +84,7 @@ namespace epochframe {
             // For floating types, this can be arrow_utils::call_unary_compute("is_nan") + any()
             // But let's do a quick approach for demonstration:
             auto is_nan_arr = arrow_utils::call_unary_compute_array(m_array, "is_nan");
-            return arrow_utils::call_unary_agg_compute_as<bool>(is_nan_arr, "any");
+            return arrow_utils::call_unary_agg_compute_as<arrow::BooleanScalar>(is_nan_arr, "any").value;
         }
 
         bool has_nulls() const final {
@@ -131,14 +109,14 @@ namespace epochframe {
             return arrow_utils::call_unary_agg_compute(m_array, "max", skipNA);
         }
 
-        int64_t argmin(bool skipNA = true) const final {
+        IndexType argmin(bool skipNA = true) const final {
             if (m_array->length() == 0) { return -1; }
-            return AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::Index(m_array, arrow::compute::IndexOptions{min(skipNA)}));
+            return AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::Index(m_array, arrow::compute::IndexOptions{min(skipNA)})).value;
         }
 
-        int64_t argmax(bool skipNA = true) const final {
+        IndexType argmax(bool skipNA = true) const final {
             if (m_array->length() == 0) { return -1; }
-            return AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::Index(m_array, arrow::compute::IndexOptions{max(skipNA)}));
+            return AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::Index(m_array, arrow::compute::IndexOptions{max(skipNA)})).value;
         }
 
         //--------------------------------------------------------------------------
@@ -174,19 +152,19 @@ namespace epochframe {
                          arrow::compute::FilterOptions::NullSelectionBehavior::DROP);
         }
 
-        std::shared_ptr<Index> delete_(int64_t loc) const final;
+        std::shared_ptr<Index> delete_(IndexType loc) const final;
 
-        std::shared_ptr<Index> insert(int64_t loc, arrow::ScalarPtr const &value) const final;
+        std::shared_ptr<Index> insert(IndexType loc, arrow::ScalarPtr const &value) const final;
 
         //--------------------------------------------------------------------------
         // Searching / Slicing
 
-        int64_t get_loc(arrow::ScalarPtr const &label) const final;
+        IndexType get_loc(arrow::ScalarPtr const &label) const final;
 
-        std::pair<int64_t, int64_t>
-        slice_locs(arrow::ScalarPtr const &start, arrow::ScalarPtr const &end) const final;
+        SliceType
+        slice_locs(arrow::ScalarPtr const &start, arrow::ScalarPtr const &end=nullptr) const final;
 
-        [[nodiscard]] uint64_t searchsorted(arrow::ScalarPtr const &value,
+        [[nodiscard]] IndexType searchsorted(arrow::ScalarPtr const &value,
                               SearchSortedSide side) const final;
 
         //--------------------------------------------------------------------------

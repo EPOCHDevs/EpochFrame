@@ -39,11 +39,11 @@ TEST_CASE("arrow_utils::call_unary_compute_as<T>", "[arrow][compute]") {
 
     // Using "sum" aggregator, expect a scalar int64 = 15
     arrow::compute::ScalarAggregateOptions agg_opts(true, 1);
-    auto sum_val = call_unary_compute_as<int64_t>(arr, "sum", &agg_opts);
+    auto sum_val = call_unary_compute_scalar_as<arrow::Int64Scalar>(arr, "sum", &agg_opts).value;
     REQUIRE(sum_val == 15);
 
     REQUIRE_THROWS_WITH(
-            call_unary_compute_as<double>(arr, "sum", &agg_opts),
+            call_unary_compute_scalar_as<arrow::DoubleScalar>(arr, "sum", &agg_opts),
             Catch::Matchers::ContainsSubstring(" std::bad_cast")
     );
 }
@@ -81,7 +81,7 @@ TEST_CASE("arrow_utils::call_unary_agg_compute_as - invalid type cast", "[arrow]
     // "all" is typically used on boolean, but let's see if Arrow interprets nonzero as true
     // We'll see if it returns bool
     REQUIRE_THROWS_WITH(
-            call_unary_agg_compute_as<int64_t>(arr, "all"),
+            call_unary_compute_scalar_as<arrow::Int64Scalar>(arr, "all"),
             Catch::Matchers::ContainsSubstring("NotImplemented")
     );
 }

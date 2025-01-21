@@ -79,10 +79,10 @@ namespace epochframe {
         /// Return index of minimum element
         /// If skipNA = false, NA might lead to different semantics (decide how you handle it).
         /// Return -1 if no valid min or empty?
-        virtual int64_t argmin(bool skipNA = true) const = 0;
+        virtual IndexType argmin(bool skipNA = true) const = 0;
 
         /// Return index of maximum element
-        virtual int64_t argmax(bool skipNA = true) const = 0;
+        virtual IndexType argmax(bool skipNA = true) const = 0;
 
         // ------------------------------------------------------------------------
         // Equality / Identity / Factorization
@@ -125,28 +125,28 @@ namespace epochframe {
 
         /// Return a new Index with element at certain location removed
         /// Pandas uses .delete() with an integer or slice for positional removal
-        virtual std::shared_ptr<Index> delete_(int64_t loc) const = 0;
+        virtual std::shared_ptr<Index> delete_(IndexType loc) const = 0;
 
         /// Insert a new value at position 'loc'
         /// Return a new Index
         virtual std::shared_ptr<Index>
-        insert(int64_t loc, arrow::ScalarPtr const &value) const = 0;
+        insert(IndexType loc, arrow::ScalarPtr const &value) const = 0;
 
         // ------------------------------------------------------------------------
         // Searching / Slicing
 
         /// Return the integer location of 'label' in the index (like Pandas .get_loc())
         /// Could throw if not found
-        virtual int64_t get_loc(arrow::ScalarPtr const &label) const = 0;
+        virtual IndexType get_loc(arrow::ScalarPtr const &label) const = 0;
 
         /// Return integer locations for start/end labels (like Pandas .slice_locs)
         /// e.g. used internally for slicing
-        virtual std::pair<int64_t, int64_t>
-        slice_locs(arrow::ScalarPtr const &start, arrow::ScalarPtr const &end) const = 0;
+        virtual SliceType
+        slice_locs(arrow::ScalarPtr const &start, arrow::ScalarPtr const &end=arrow::MakeNullScalar(arrow::null())) const = 0;
 
         /// Like Pandas .searchsorted - find insertion position to maintain order
         /// 'side' can be 'left' or 'right'
-        virtual uint64_t
+        virtual IndexType
         searchsorted(arrow::ScalarPtr const &label, SearchSortedSide side = SearchSortedSide::Left) const = 0;
 
         // ------------------------------------------------------------------------
@@ -190,6 +190,7 @@ namespace epochframe {
         value_counts() const = 0;
 
         virtual std::shared_ptr<arrow::BooleanArray> isin(arrow::ArrayPtr const&) const = 0;
+
     };
 
 } // namespace epochframe

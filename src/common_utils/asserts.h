@@ -70,13 +70,13 @@ namespace epochframe {
         throw std::runtime_error(result.status().ToString());
     }
 
-    template<typename T>
-    inline auto AssertCastScalarResultIsOk(const arrow::Result<arrow::Datum> &result) {
+    template<typename ArrowScalarType>
+    inline ArrowScalarType AssertCastScalarResultIsOk(const arrow::Result<arrow::Datum> &result) {
         if (result.ok()) {
             try {
-                return result->scalar_as<T>().value;
+                return result->scalar_as<ArrowScalarType>();
             }catch (const std::exception&e) {
-                throw std::runtime_error(fmt::format("Failed to cast scalar to type {}: {}", std::string{T::TypeClass::type_name()}, e.what()));
+                throw std::runtime_error(fmt::format("Failed to cast scalar to type {}: {}", std::string{ArrowScalarType::TypeClass::type_name()}, e.what()));
             }
         }
         throw std::runtime_error(result.status().ToString());

@@ -37,8 +37,12 @@ namespace epochframe::arrow_utils {
             const std::string &function_name,
             const arrow::compute::FunctionOptions *options = nullptr
     ) {
-        auto dat = call_unary_compute(input, function_name, options);
-        return dat.make_array();
+        try {
+            return call_unary_compute(input, function_name, options).make_array();
+        } catch (const std::exception &e) {
+            throw std::runtime_error(
+                    fmt::format("Failed to call unary compute function {}: {}", function_name, e.what()));
+        }
     }
 
     inline arrow::ArrayPtr call_compute_array(
@@ -46,36 +50,48 @@ namespace epochframe::arrow_utils {
             const std::string &function_name,
             const arrow::compute::FunctionOptions *options = nullptr
     ) {
-        return call_compute(inputs, function_name, options).make_array();
+        try {
+            return call_compute(inputs, function_name, options).make_array();
+        } catch (const std::exception &e) {
+            throw std::runtime_error(
+                    fmt::format("Failed to call compute function {}: {}", function_name, e.what()));
+        }
     }
 
-    template<typename T>
-    T call_compute_as(const std::vector<arrow::Datum> &inputs, const std::string &function_name,
+    template<typename ArrowScalarType>
+    ArrowScalarType call_compute_scalar_as(const std::vector<arrow::Datum> &inputs, const std::string &function_name,
                       const arrow::compute::FunctionOptions *options = nullptr) {
+        static_assert(std::is_class_v<ArrowScalarType>);
+
         arrow::Datum result = call_compute(inputs, function_name, options);
-        using ScalarType = typename arrow::CTypeTraits<T>::ScalarType;
         try {
-            return result.scalar_as<ScalarType>().value;
+            return result.scalar_as<ArrowScalarType>();
         } catch (const std::exception &e) {
             throw std::runtime_error(
                     fmt::format("Failed to cast compute result to {}: {}",
-                                arrow::CTypeTraits<T>::type_singleton()->ToString(),
+                                std::string{ArrowScalarType::TypeClass::type_name()},
                                 e.what()));
         }
     }
 
-    template<typename T>
-    T call_unary_compute_as(const arrow::Datum &input,
-                            const std::string &function_name,
-                            const arrow::compute::FunctionOptions *options = nullptr) {
-        return call_compute_as<T>({input}, function_name, options);
+    template<typename ArrowScalarType>
+    ArrowScalarType call_compute_scalar_as(const arrow::Datum &input, const std::string &function_name,
+                                    const arrow::compute::FunctionOptions *options = nullptr) {
+        return call_compute_scalar_as<ArrowScalarType>(std::vector<arrow::Datum>{input}, function_name, options);
     }
 
-    template<typename T>
-    T call_unary_agg_compute_as(const arrow::Datum &input, const std::string &function_name,
+    template<typename ArrowScalarType>
+    ArrowScalarType call_unary_compute_scalar_as(const arrow::Datum &input,
+                            const std::string &function_name,
+                            const arrow::compute::FunctionOptions *options = nullptr) {
+        return call_compute_scalar_as<ArrowScalarType>({input}, function_name, options);
+    }
+
+    template<typename ArrowScalarType>
+    ArrowScalarType call_unary_agg_compute_as(const arrow::Datum &input, const std::string &function_name,
                                 bool skip_nulls = true, uint32_t min_count = 1) {
         arrow::compute::ScalarAggregateOptions options{skip_nulls, min_count};
-        return call_unary_compute_as<T>(input, function_name, &options);
+        return call_unary_compute_scalar_as<ArrowScalarType>(input, function_name, &options);
     }
 
     inline arrow::ScalarPtr

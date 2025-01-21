@@ -5,7 +5,9 @@ add_subdirectory(factory)
 add_subdirectory(index)
 add_subdirectory(methods)
 add_subdirectory(ndframe)
+add_subdirectory(scalar)
 add_subdirectory(series)
+add_subdirectory(vector_functions)
 
 target_link_libraries(epochframe
         PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only

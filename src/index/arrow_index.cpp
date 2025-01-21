@@ -4,8 +4,26 @@
 
 #include "arrow_index.h"
 #include "common_utils/asserts.h"  // for your AssertStatusIsOk, etc.
+#include "vector_functions/arrow_vector_functions.h"
+
 
 namespace epochframe {
+    template<typename ArrowArrayType>
+    ArrowIndex<ArrowArrayType>::ArrowIndex(std::shared_ptr<ArrowArrayType> array, std::string name)
+            : m_array(std::move(array)), m_name(std::move(name)) {
+        // Basic null check
+        AssertWithTraceFromFormat(
+                m_array != nullptr,
+                "ArrowIndex constructed with a null array pointer!"
+        );
+
+        AssertWithTraceFromFormat(
+                ArrowArrayType::TypeClass::type_id == m_array->type_id(),
+                fmt::format("Expected array of type {}, got {}",
+                            std::string{ArrowArrayType::TypeClass::type_name()},
+                            m_array->type()->ToString())
+        );
+    }
 
 /** nbytes() - sum buffer sizes */
     template<typename T>
@@ -137,7 +155,7 @@ namespace epochframe {
 /** delete_(loc) */
     template<typename T>
     std::shared_ptr<Index>
-    ArrowIndex<T>::delete_(int64_t loc) const {
+    ArrowIndex<T>::delete_(IndexType loc) const {
         // Remove the element at 'loc'
         // 0 <= loc < length
         auto length = static_cast<int64_t>(m_array->length());
@@ -161,7 +179,7 @@ namespace epochframe {
 /** insert(loc, value) */
     template<typename T>
     std::shared_ptr<Index>
-    ArrowIndex<T>::insert(int64_t loc, arrow::ScalarPtr const &val) const {
+    ArrowIndex<T>::insert(IndexType loc, arrow::ScalarPtr const &val) const {
         auto length = static_cast<int64_t>(m_array->length());
         if (loc < 0) {
             loc += length;
@@ -188,45 +206,30 @@ namespace epochframe {
 
 /** get_loc(label) */
     template<typename T>
-    int64_t ArrowIndex<T>::get_loc(arrow::ScalarPtr const &label) const {
-        // We'll build a 1-element array from the scalar, then do a "match" or "index_in"
-        // Then see the result
-        using namespace arrow::compute;
-
-        auto arr_res = arrow::MakeArrayFromScalar(*label, 1);
-        if (!arr_res.ok()) {
-            throw std::runtime_error(arr_res.status().ToString());
+    IndexType ArrowIndex<T>::get_loc(arrow::ScalarPtr const &label) const {
+        if (!label) {
+            throw std::runtime_error("get_loc: label is null");
         }
-        auto label_arr = *arr_res;
-
-        // "match" returns the index of each value in the dictionary, or -1 if not found
-        auto match_res = CallFunction("match", {label_arr, m_array});
-        if (!match_res.ok()) {
-            throw std::runtime_error(match_res.status().ToString());
-        }
-        auto match_arr = match_res->make_array();
-        // match_arr is an Int32Array typically
-        auto int32_match = std::dynamic_pointer_cast<arrow::Int32Array>(match_arr);
-        if (!int32_match || int32_match->length() == 0) {
-            return -1;
-        }
-        return static_cast<int64_t>(int32_match->Value(0));
+        auto currentIndex = AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::Index(m_array, arrow::compute::IndexOptions{label})).value;
+        AssertFalseFromFormat(currentIndex == -1, fmt::format("get_loc: label {} not found", label->ToString()));
+        return currentIndex;
     }
 
 /** slice_locs(start, end) */
     template<typename T>
-    std::pair<int64_t, int64_t>
+    SliceType
     ArrowIndex<T>::slice_locs(arrow::ScalarPtr const &start, arrow::ScalarPtr const &end) const {
-        // We'll just do get_loc for each
-        auto start_pos = get_loc(start);
-        auto end_pos = get_loc(end);
-        // If either is -1 => not found => we clamp them or handle however Pandas does
-        if (start_pos < 0) { start_pos = 0; }
-        if (end_pos < 0) { end_pos = static_cast<int64_t>(size()); }
-        // ensure start_pos <= end_pos
-        if (start_pos > end_pos) {
-            std::swap(start_pos, end_pos);
+        if (!start) {
+            throw std::runtime_error("slice_locs: start is nullptr");
         }
+        if (!end) {
+            throw std::runtime_error("slice_locs: end is nullptr");
+        }
+
+        // We'll just do get_loc for each
+        auto start_pos = start->is_valid ? get_loc(start) : 0;
+        auto end_pos = start->is_valid ? get_loc(end)+1 : m_array->length();
+
         return {start_pos, end_pos};
     }
 
@@ -234,10 +237,7 @@ namespace epochframe {
 /** unique() => calls "unique" kernel */
     template<typename T>
     std::shared_ptr<Index> ArrowIndex<T>::unique() const {
-        // "unique" returns array of distinct elements in the order of first occurrence
-        using namespace arrow::compute;
-        return std::make_shared<ArrowIndex<T>>(AssertCastArrayResultIsOk<T>(CallFunction("unique", {m_array})),
-                                               m_name + "_unique");
+        return std::make_shared<ArrowIndex<T>>(vector::unique<T>(m_array), m_name);
     }
 
 /** sort_values(ascending) => uses sort_indices + take */
