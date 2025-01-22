@@ -1,6 +1,7 @@
 add_subdirectory(aggregators)
 add_subdirectory(common_utils)
 add_subdirectory(dataframe)
+add_subdirectory(datetime)
 add_subdirectory(factory)
 add_subdirectory(index)
 add_subdirectory(methods)
