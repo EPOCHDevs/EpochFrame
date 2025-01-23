@@ -65,8 +65,6 @@ namespace epochframe::datetime {
 
     int Timestamp::nanosecond() const { return (utc_ns_ % 1000); }
 
-    int Timestamp::day_of_week() const { return time_.date().day_of_week().as_number(); }
-
     int Timestamp::day_of_year() const { return time_.date().day_of_year(); }
 
 // Arithmetic

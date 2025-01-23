@@ -3,6 +3,7 @@
 //
 
 #include "offset.h"
+#include "datetime/tseries/offsets/handler/base_offset_handler.h"
 #include <stdexcept>
 #include <sstream>
 
@@ -17,31 +18,25 @@ namespace epochframe::datetime {
 // Offset methods
 // -------------------
 
-    Offset::Offset(std::shared_ptr<OffsetHandler> handler,
-                   std::int64_t n, bool normalize)
-            : m_handler(std::move(handler)), m_n(n), m_normalize(normalize) {
-        AssertWithTraceFromFormat(n > 0, "n must be positive");
-        auto fStr = m_n == 1 ? rule_code() : fmt::format("{}{}", m_n, rule_code());
-
-        if (!m_handler->offset().is_special()) {
-            fStr = fmt::format("{}{}", m_n, to_simple_string(m_handler->offset()));
-        }
-    }
-
-
     bool Offset::is_on_offset(Timestamp const &dt) const {
-        if (m_normalize) {
-            return dt == ptime(dt.date());
+        if (m_handler->should_normalized() && !is_normalized(dt)) {
+            return false;
         }
         return m_handler->is_on_offset(dt);
     }
 
-    Timestamp Offset::rollback(Timestamp const &ts) const {
-
+    Timestamp Offset::rollback(Timestamp const &dt) const {
+        if (! is_on_offset(dt)) {
+            return dt - base();
+        }
+        return dt;
     }
 
-    Timestamp Offset::rollforward(Timestamp const &ts) const {
-
+    Timestamp Offset::rollforward(Timestamp const & dt) const {
+        if (! is_on_offset(dt)) {
+            return dt + base();
+        }
+        return dt;
     }
 
     std::string Offset::to_string() const {

@@ -18,14 +18,14 @@ namespace epochframe::datetime {
         /**
          * Constructor with n (frequency multiple) and normalize flag.
          */
-        Offset(std::shared_ptr<OffsetHandler> handler, std::int64_t n = 1, bool normalize = false);
+        explicit Offset(std::shared_ptr<OffsetHandler> handler):m_handler(std::move(handler)) {}
 
         // ------------------------------------------------------------------
         // Accessors
 
         std::int64_t getN() const { return m_n; }
 
-        bool isNormalize() const { return m_normalize; }
+        Offset base() const { return Offset{m_handler->base()}; }
 
         // ------------------------------------------------------------------
         // Equality
@@ -47,39 +47,30 @@ namespace epochframe::datetime {
          * or expand in derived classes if more fields are introduced.
          */
         struct Hash {
-            std::size_t operator()(const Offset &offset) const;
+            std::size_t operator()(const Offset &offset) const {
+                return offset.m_handler->hash();
+            }
         };
 
-        Offset operator+(const Offset &other) const {
-            return {m_handler->apply(other.m_handler)};
-        }
-
-        void operator+(const Offset &other) {
-            m_handler->_apply(other.m_handler);
+        Timestamp operator+(const Timestamp &other) const {
+            return m_handler->apply(other);
         }
 
         Offset operator-(const Offset &other) const {
-            return {m_handler, m_n - other.m_n, other.m_normalize};
+            return Offset{m_handler->sub(other.m_handler)};
         }
 
         void operator-(const Offset &other) {
-            m_n -= other.m_n;
+            m_handler = m_handler->sub(other.m_handler);
         }
 
-        Offset operator-() const {
-            return -1 * (*this);
+        Offset operator*(int64_t other) const {
+            return Offset{m_handler->mul(other)};
         }
 
         Offset operator-() const {
             return (*this) * -1;
         }
-
-        Offset operator*() const {
-            return (*this) * -1;
-        }
-
-//        def __rsub__(self, other):
-//        return (-self).__add__(other)
 
         /**
          * Names and Code
@@ -94,11 +85,10 @@ namespace epochframe::datetime {
 
         std::string to_string() const;
 
-        bool is_on_offset(Timestamp const &other) const;
-
         Timestamp rollback(Timestamp const &other) const;
-
         Timestamp rollforward(Timestamp const &other) const;
+
+        bool is_on_offset(Timestamp const &other) const;
 
         int64_t nanos(Timestamp const &other) const {
             return m_handler->offset().total_nanoseconds() * m_n;
@@ -132,11 +122,19 @@ namespace epochframe::datetime {
         // ------------------------------------------------------------------
         // Data
         std::shared_ptr<OffsetHandler> m_handler;
-        std::int64_t m_n;      ///< The integer multiple of this offset.
-        bool m_normalize;      ///< Whether to normalize to a boundary (e.g., midnight).
-        const std::string m_freqStr;
+        std::string m_freqStr;
 
         bool get_start_end_field(Timestamp const& ts, std::string const& field) const;
+
     };
 
+    inline Timestamp operator+(Timestamp const& dt, const Offset& offset) {
+        return offset + dt;
+    };
+    inline Timestamp operator-(Timestamp const& dt, const Offset& offset) {
+        return (-offset) + dt;
+    };
+    inline Offset operator*(int64_t dt, const Offset& offset) {
+        return offset * dt;
+    };
 }  // namespace epochframe

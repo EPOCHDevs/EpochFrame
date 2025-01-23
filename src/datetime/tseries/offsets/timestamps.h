@@ -66,9 +66,16 @@ namespace epochframe::datetime {
 
         int nanosecond() const;
 
-        int day_of_week() const; // Monday=0, Sunday=6
+        int day_of_week() const // Monday=0, Sunday=6
+        {
+            return weekday();
+        }
 
         int day_of_year() const;
+
+        int weekday() const {
+            return ::epochframe::datetime::day_of_week(year(), month(), day());
+        }
 
         // Start/end properties
         bool is_leap_year() const {

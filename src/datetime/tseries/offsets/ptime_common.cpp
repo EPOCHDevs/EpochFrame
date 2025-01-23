@@ -20,6 +20,6 @@ namespace epochframe::datetime {
             default:
                 break;
         }
-        throw std::runtime_error("Invalid DateOfMonthOption");
+        return 0;
     }
 }
