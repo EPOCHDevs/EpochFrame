@@ -1,6 +1,7 @@
 add_subdirectory(aggregators)
 add_subdirectory(common_utils)
 add_subdirectory(dataframe)
+add_subdirectory(datetime)
 add_subdirectory(factory)
 add_subdirectory(index)
 add_subdirectory(methods)
@@ -10,7 +11,7 @@ add_subdirectory(series)
 add_subdirectory(vector_functions)
 
 target_link_libraries(epochframe
-        PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only
+        PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only glaze::glaze
         PUBLIC arrow_static curl ssl crypto DataFrame)
 
 #target_compile_options(epochframe PRIVATE -Wall -Wextra -Werror)
