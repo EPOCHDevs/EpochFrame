@@ -11,7 +11,7 @@ add_subdirectory(series)
 add_subdirectory(vector_functions)
 
 target_link_libraries(epochframe
-        PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only
+        PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only glaze::glaze
         PUBLIC arrow_static curl ssl crypto DataFrame)
 
 #target_compile_options(epochframe PRIVATE -Wall -Wextra -Werror)
