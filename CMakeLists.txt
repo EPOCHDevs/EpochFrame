@@ -28,6 +28,5 @@ target_include_directories(epochframe
         ${PROJECT_SOURCE_DIR}/src
 )
 
-INCLUDE_TEST()
-
 add_subdirectory(src)
+INCLUDE_TEST()
