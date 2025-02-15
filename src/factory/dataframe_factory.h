@@ -29,18 +29,11 @@ namespace epochframe {
         arrow::FieldVector fields;
         for (auto const &[name, column]: ranges::view::zip(columnNames, data)) {
             typename arrow::CTypeTraits<ColumnT>::BuilderType columnBuilder;
-            for (auto const& item: column) {
-                if constexpr (std::numeric_limits<ColumnT>::has_quiet_NaN) {
-                    if (std::isnan(item)) {
-                        AssertStatusIsOk(columnBuilder.AppendNull());
-                        continue;
-                    }
-                }
-                AssertStatusIsOk(columnBuilder.Append(item));
-            }
+            AssertStatusIsOk(columnBuilder.AppendValues(column));
+
             arrow::ArrayPtr arr;
             AssertStatusIsOk(columnBuilder.Finish(&arr));
-            columns.push_back(factory::array::make_array(arr));
+            columns.push_back(factory::array::MakeArray(arr));
             fields.push_back(arrow::field(name, columnBuilder.type()));
         }
         return make_dataframe(index,
