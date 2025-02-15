@@ -13,6 +13,10 @@ namespace epochframe {
 
         explicit Scalar(const arrow::ScalarPtr &other);
 
+        [[nodiscard]] arrow::ScalarPtr value() const {
+            return m_scalar;
+        }
+
     private:
         arrow::ScalarPtr m_scalar;
     };

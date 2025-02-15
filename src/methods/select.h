@@ -54,6 +54,15 @@ namespace epochframe {
         arrow::RecordBatchPtr replace_with_mask(arrow::ArrayPtr const &replace_condition,
                                                 arrow::ArrayPtr const &mask) const;
 
+        // selecting / multiplexing
+        arrow::RecordBatchPtr case_when() const;
+
+        arrow::RecordBatchPtr choose() const;
+
+        arrow::RecordBatchPtr coalesce() const;
+
+        arrow::RecordBatchPtr if_else() const;
+
     private:
         TableComponent m_table;
     };

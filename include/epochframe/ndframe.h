@@ -13,9 +13,11 @@ namespace epochframe {
     public:
         NDFrame();
 
-        explicit NDFrame(arrow::RecordBatchPtr const &data);
+        explicit NDFrame(arrow::TablePtr const &data);
 
-        NDFrame(IndexPtr const &index, arrow::RecordBatchPtr const &data);
+        NDFrame(IndexPtr const &index, arrow::TablePtr const &data);
+
+        NDFrame(TableComponent const & tableComponent):NDFrame(tableComponent.first, tableComponent.second) {}
 
         NDFrame(NDFrame const &other) = default;
 
@@ -75,9 +77,11 @@ namespace epochframe {
             return NDFrame{m_arithOp->add(other.m_data)};
         }
 
+        // Serialization
+        friend std::ostream & operator<<(std::ostream &os, NDFrame const&);
     private:
         TableComponent m_data;
-        std::unique_ptr<Arithmetric> m_arithOp;
+        std::shared_ptr<Arithmetric> m_arithOp;
 
     protected:
         Scalar iat(int64_t row, std::string const &col);

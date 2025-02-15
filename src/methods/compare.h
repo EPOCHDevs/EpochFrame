@@ -10,45 +10,45 @@ namespace epochframe {
     class Comparison {
 
     public:
-        Comparison(IndexPtr index, arrow::RecordBatchPtr data);
+        Comparison(IndexPtr index, arrow::TablePtr data);
 
-        arrow::RecordBatchPtr equal(const IndexPtr &otherIndex,
-                                    arrow::RecordBatchPtr other) const;
+        arrow::TablePtr equal(const IndexPtr &otherIndex,
+                              arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr not_equal(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr not_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr less(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr less(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr less_equal(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr less_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr greater(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr greater(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr greater_equal(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr greater_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::ArrayPtr max_element_wise(const std::vector<std::tuple<IndexPtr, arrow::RecordBatchPtr>> &other,
-                                         const arrow::compute::ElementWiseAggregateOptions &) const;
+        arrow::ChunkedArrayPtr max_element_wise(const std::vector<std::tuple<IndexPtr, arrow::TablePtr>> &other,
+                                                const arrow::compute::ElementWiseAggregateOptions &) const;
 
-        arrow::ArrayPtr min_element_wise(const std::vector<std::tuple<IndexPtr, arrow::RecordBatchPtr>> &other,
-                                         const arrow::compute::ElementWiseAggregateOptions &) const;
+        arrow::ChunkedArrayPtr min_element_wise(const std::vector<std::tuple<IndexPtr, arrow::TablePtr>> &other,
+                                                const arrow::compute::ElementWiseAggregateOptions &) const;
 
-        arrow::RecordBatchPtr and_(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr and_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr and_kleene(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr and_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr and_not(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr and_not(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr and_not_kleene(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr and_not_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr or_(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr or_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr or_kleene(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr or_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr xor_(const IndexPtr &otherIndex, arrow::RecordBatchPtr other) const;
+        arrow::TablePtr xor_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
 
-        arrow::RecordBatchPtr invert() const;
+        arrow::TablePtr invert() const;
 
     private:
         IndexPtr m_index;
-        arrow::RecordBatchPtr m_data;
+        arrow::TablePtr m_data;
     };
 }

@@ -7,11 +7,11 @@
 
 
 namespace epochframe {
-    NDFrame make_dataframe(arrow::RecordBatchPtr const &data) {
+    NDFrame make_dataframe(arrow::TablePtr const &data) {
         return NDFrame(data);
     }
 
-    NDFrame make_dataframe(IndexPtr const &index, arrow::RecordBatchPtr const &data) {
+    NDFrame make_dataframe(IndexPtr const &index, arrow::TablePtr const &data) {
         return NDFrame(index, data);
     }
 }

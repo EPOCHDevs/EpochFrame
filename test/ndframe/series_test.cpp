@@ -10,8 +10,7 @@ using namespace epochframe;
 TEST_CASE("Arithmetic Function")
 {
     arrow::DoubleBuilder builder;
-    arrow::ArrayPtr array;
+    arrow::ChunkedArrayPtr array;
 
     REQUIRE(builder.AppendValues(std::vector<double>{1, 2, 3, 4, 5}).ok());
-    REQUIRE(builder.Finish(&array).ok());
 }

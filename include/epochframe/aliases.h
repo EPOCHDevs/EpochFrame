@@ -12,11 +12,14 @@ namespace arrow{
     class ChunkedArray;
     class Array;
     class Scalar;
-    class RecordBatch;
+    class Table;
+    class Schema;
 
     using ArrayPtr = std::shared_ptr<Array>;
+    using ChunkedArrayPtr = std::shared_ptr<ChunkedArray>;
     using ScalarPtr = std::shared_ptr<Scalar>;
-    using RecordBatchPtr = std::shared_ptr<RecordBatch>;
+    using TablePtr = std::shared_ptr<Table>;
+    using SchemaPtr = std::shared_ptr<Schema>;
 }
 
 // Forward-declare Index and NDFrame for pointer aliases:
@@ -37,6 +40,6 @@ namespace epochframe {
     using SliceType = std::pair<Scalar, Scalar>;
     using IntgerSliceType = std::pair<IndexType, IndexType>;
 
-    using TableComponent = std::pair<IndexPtr, arrow::RecordBatchPtr>;
+    using TableComponent = std::pair<IndexPtr, arrow::TablePtr>;
     using TableComponents = std::vector<TableComponent>;
 } // namespace epochframe
