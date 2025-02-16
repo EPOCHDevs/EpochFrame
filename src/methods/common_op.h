@@ -24,15 +24,6 @@ namespace epochframe {
 
         arrow::RecordBatchPtr true_unless_null() const;
 
-        // selecting / multiplexing
-        arrow::RecordBatchPtr case_when() const;
-
-        arrow::RecordBatchPtr choose() const;
-
-        arrow::RecordBatchPtr coalesce() const;
-
-        arrow::RecordBatchPtr if_else() const;
-
         arrow::ArrayPtr cast(arrow::compute::CastOptions const&) const;
 
         // associative transforms

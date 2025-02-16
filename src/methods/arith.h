@@ -7,177 +7,187 @@
 #include <arrow/compute/api.h>
 
 namespace epochframe {
-    class Arithmetric {
+    class Arithmetic {
     public:
-        Arithmetric(TableComponent data);
+        Arithmetic(TableComponent data);
 
-        arrow::RecordBatchPtr abs() const { return apply("abs"); }
+        //------------------------------------------------------------------------------
+        // 1) Basic unary ops
+        //------------------------------------------------------------------------------
+        arrow::TablePtr abs()    const { return apply("abs"); }
+        [[nodiscard]] arrow::TablePtr negate() const { return apply("negate"); }
+        [[nodiscard]] arrow::TablePtr sign()   const { return apply("sign"); }
 
-        arrow::RecordBatchPtr add(const TableComponent &otherData) const {
+        //------------------------------------------------------------------------------
+        // 2) Basic arithmetic: + - * /, plus r* versions
+        //------------------------------------------------------------------------------
+        // addition
+        [[nodiscard]] TableComponent add(const TableComponent &otherData) const {
             return apply("add", otherData);
         }
-
-        arrow::RecordBatchPtr add(const Scalar &other) const {
-            return apply("add", other);
+        [[nodiscard]] arrow::TablePtr add(const Scalar &other) const {
+            return apply("add", other, /*lhs=*/true);
+        }
+        [[nodiscard]] arrow::TablePtr radd(const Scalar &other) const {
+            return rapply("add", other);
         }
 
-        arrow::RecordBatchPtr divide(const TableComponent &otherData) const {
-            return apply("divide", otherData);
+        // subtraction
+        TableComponent subtract(const TableComponent &otherData) const {
+            return apply("subtract", otherData);
+        }
+        arrow::TablePtr subtract(const Scalar &other) const {
+            return apply("subtract", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rsubtract(const Scalar &other) const {
+            return rapply("subtract", other);
         }
 
-        arrow::RecordBatchPtr divide(const Scalar &other) const {
-            return apply("divide", other);
-        }
-
-        arrow::RecordBatchPtr exp() const { return apply("exp"); }
-
-        arrow::RecordBatchPtr expm1() const { return apply("expm1"); }
-
-        arrow::RecordBatchPtr multiply(const TableComponent &otherData) const {
+        // multiplication
+        TableComponent multiply(const TableComponent &otherData) const {
             return apply("multiply", otherData);
         }
-
-        arrow::RecordBatchPtr multiply(const Scalar &other) const {
-            return apply("multiply", other);
+        arrow::TablePtr multiply(const Scalar &other) const {
+            return apply("multiply", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rmultiply(const Scalar &other) const {
+            return rapply("multiply", other);
         }
 
-        arrow::RecordBatchPtr negate() const { return apply("negate"); }
+        // division
+        TableComponent divide(const TableComponent &otherData) const {
+            return apply("divide", otherData);
+        }
+        arrow::TablePtr divide(const Scalar &other) const {
+            return apply("divide", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rdivide(const Scalar &other) const {
+            return rapply("divide", other);
+        }
 
-        arrow::RecordBatchPtr power(const TableComponent &otherData) const {
+        //------------------------------------------------------------------------------
+        // 3) Exponential, power
+        //------------------------------------------------------------------------------
+        arrow::TablePtr exp()    const { return apply("exp"); }
+        arrow::TablePtr expm1()  const { return apply("expm1"); }
+
+        TableComponent power(const TableComponent &otherData) const {
             return apply("power", otherData);
         }
-
-        arrow::RecordBatchPtr power(const Scalar &other) const {
-            return apply("power", other);
+        arrow::TablePtr power(const Scalar &other) const {
+            return apply("power", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rpower(const Scalar &other) const {
+            return rapply("power", other);
         }
 
-        arrow::RecordBatchPtr sign() const { return apply("sign"); }
+        //------------------------------------------------------------------------------
+        // 4) Square roots, logs
+        //------------------------------------------------------------------------------
+        arrow::TablePtr sqrt()  const { return apply("sqrt"); }
+        arrow::TablePtr ln()    const { return apply("ln"); }
+        arrow::TablePtr log10() const { return apply("log10"); }
+        arrow::TablePtr log1p() const { return apply("log1p"); }
+        arrow::TablePtr log2()  const { return apply("log2"); }
 
-        arrow::RecordBatchPtr sqrt() const { return apply("sqrt"); }
-
-        arrow::RecordBatchPtr subtract(const TableComponent &otherData) const {
-            return apply("power", otherData);
-        }
-
-        arrow::RecordBatchPtr subtract(const Scalar &other) const {
-            return apply("power", other);
-        }
-
-        // Bit-wise functions
-        arrow::RecordBatchPtr bit_wise_and(const TableComponent &otherData) const {
-            return apply("bit_wise_and", otherData);
-        }
-
-        arrow::RecordBatchPtr bit_wise_not() const { return apply("bit_wise_not"); }
-
-        arrow::RecordBatchPtr bit_wise_or(const TableComponent &otherData) const {
-            return apply("bit_wise_or", otherData);
-        }
-
-        arrow::RecordBatchPtr bit_wise_xor(const TableComponent &otherData) const {
-            return apply("bit_wise_xor", otherData);
-        }
-
-        arrow::RecordBatchPtr shift_left(const TableComponent &otherData) const {
-            return apply("shift_left", otherData);
-        }
-
-        arrow::RecordBatchPtr shift_right(const TableComponent &otherData) const {
-            return apply("shift_right", otherData);
-        }
-
-        // Rounding Functions
-        arrow::RecordBatchPtr ceil() const { return apply("ceil"); }
-
-        arrow::RecordBatchPtr floor() const { return apply("floor"); }
-
-        arrow::RecordBatchPtr round(arrow::compute::RoundOptions const &options) const {
-            return apply("round", options);
-        }
-
-        arrow::RecordBatchPtr round_to_multiple(arrow::compute::RoundToMultipleOptions const &options) const {
-            return apply("round_to_multiple", options);
-        }
-
-        arrow::RecordBatchPtr round_binary(arrow::compute::RoundBinaryOptions const &options) const {
-            return apply("round_binary", options);
-        }
-
-        arrow::RecordBatchPtr trunc() const { return apply("trunc"); }
-
-        // Logarithmic Functions
-        arrow::RecordBatchPtr ln() const { return apply("ln"); }
-
-        arrow::RecordBatchPtr log10() const { return apply("log10"); }
-
-        arrow::RecordBatchPtr log1p() const { return apply("log1p"); }
-
-        arrow::RecordBatchPtr log2() const { return apply("log2"); }
-
-        arrow::RecordBatchPtr logb(const TableComponent &otherData) const {
+        // NDFrame op NDFrame
+        TableComponent logb(const TableComponent &otherData) const {
             return apply("logb", otherData);
         }
 
-        // Trigonometric Functions
-        arrow::RecordBatchPtr cos() const { return apply("cos"); }
+        //------------------------------------------------------------------------------
+        // 5) Bitwise ops
+        //------------------------------------------------------------------------------
+        TableComponent bit_wise_and(const TableComponent &otherData) const {
+            return apply("bit_wise_and", otherData);
+        }
+        arrow::TablePtr bit_wise_not() const {
+            return apply("bit_wise_not");
+        }
+        TableComponent bit_wise_or(const TableComponent &otherData) const {
+            return apply("bit_wise_or", otherData);
+        }
+        TableComponent bit_wise_xor(const TableComponent &otherData) const {
+            return apply("bit_wise_xor", otherData);
+        }
 
-        arrow::RecordBatchPtr sin() const { return apply("sin"); }
+        TableComponent shift_left(const TableComponent &otherData) const {
+            return apply("shift_left", otherData);
+        }
+        TableComponent shift_right(const TableComponent &otherData) const {
+            return apply("shift_right", otherData);
+        }
 
-        arrow::RecordBatchPtr tan() const { return apply("tan"); }
+        //------------------------------------------------------------------------------
+        // 6) Rounding
+        //------------------------------------------------------------------------------
+        arrow::TablePtr ceil()  const { return apply("ceil"); }
+        arrow::TablePtr floor() const { return apply("floor"); }
+        arrow::TablePtr trunc() const { return apply("trunc"); }
 
-        arrow::RecordBatchPtr acos() const { return apply("acos"); }
+        arrow::TablePtr round(const arrow::compute::RoundOptions &options) const {
+            return apply("round", &options);
+        }
+        arrow::TablePtr round_to_multiple(const arrow::compute::RoundToMultipleOptions &options) const {
+            return apply("round_to_multiple", &options);
+        }
+        arrow::TablePtr round_binary(const arrow::compute::RoundBinaryOptions &options) const {
+            return apply("round_binary", &options);
+        }
 
-        arrow::RecordBatchPtr asin() const { return apply("asin"); }
+        //------------------------------------------------------------------------------
+        // 7) Trig functions
+        //------------------------------------------------------------------------------
+        arrow::TablePtr cos()  const { return apply("cos"); }
+        arrow::TablePtr sin()  const { return apply("sin"); }
+        arrow::TablePtr tan()  const { return apply("tan"); }
+        arrow::TablePtr acos() const { return apply("acos"); }
+        arrow::TablePtr asin() const { return apply("asin"); }
+        arrow::TablePtr atan() const { return apply("atan"); }
 
-        arrow::RecordBatchPtr atan() const { return apply("atan"); }
-
-        arrow::RecordBatchPtr atan2(const TableComponent &otherData) const {
+        TableComponent atan2(const TableComponent &otherData) const {
             return apply("atan2", otherData);
         }
 
-        // Hyperbolic Trigonometric Functions
-        arrow::RecordBatchPtr sinh() const { return apply("sinh"); }
+        // Hyperbolic
+        arrow::TablePtr sinh()  const { return apply("sinh"); }
+        arrow::TablePtr cosh()  const { return apply("cosh"); }
+        arrow::TablePtr tanh()  const { return apply("tanh"); }
+        arrow::TablePtr acosh() const { return apply("acosh"); }
+        arrow::TablePtr asinh() const { return apply("asinh"); }
+        arrow::TablePtr atanh() const { return apply("atanh"); }
 
-        arrow::RecordBatchPtr cosh() const { return apply("cosh"); }
-
-        arrow::RecordBatchPtr tanh() const { return apply("tanh"); }
-
-        arrow::RecordBatchPtr acosh() const { return apply("acosh"); }
-
-        arrow::RecordBatchPtr asinh() const { return apply("asinh"); }
-
-        arrow::RecordBatchPtr atanh() const { return apply("atanh"); }
-
-        // Cumulative
-        arrow::RecordBatchPtr cumulative_sum(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_sum", option);
+        //------------------------------------------------------------------------------
+        // 8) Cumulative
+        //------------------------------------------------------------------------------
+        [[nodiscard]] arrow::TablePtr cumulative_sum(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_sum", &options);
+        }
+        [[nodiscard]] arrow::TablePtr cumulative_prod(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_prod", &options);
+        }
+        [[nodiscard]] arrow::TablePtr cumulative_max(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_max", &options);
+        }
+        [[nodiscard]] arrow::TablePtr cumulative_min(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_min", &options);
+        }
+        arrow::TablePtr cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_mean", &options);
         }
 
-        arrow::RecordBatchPtr cumulative_prod(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_prod", option);
-        }
+    protected:
+        arrow::TablePtr apply(std::string const &op, const arrow::compute::FunctionOptions *options = nullptr) const;
 
-        arrow::RecordBatchPtr cumulative_max(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_max", option);
-        }
+        TableComponent apply(std::string const &op, const TableComponent &otherData) const;
 
-        arrow::RecordBatchPtr cumulative_min(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_min", option);
-        }
+        arrow::TablePtr apply(std::string const &op, const Scalar &other, bool lhs = true) const;
 
-        arrow::RecordBatchPtr cumulative_mean(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_mean", option);
+        arrow::TablePtr rapply(std::string const &op, const Scalar &other) const {
+            return apply(op, other, false);
         }
 
     private:
         TableComponent m_data;
-
-        arrow::RecordBatchPtr apply(std::string const &op) const;
-
-        arrow::RecordBatchPtr apply(std::string const &op, const arrow::compute::FunctionOptions &) const;
-
-        arrow::RecordBatchPtr apply(std::string const &op, const TableComponent &otherData) const;
-
-        arrow::RecordBatchPtr apply(std::string const &op, const Scalar &other) const;
     };
 }

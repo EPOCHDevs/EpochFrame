@@ -10,7 +10,7 @@
 namespace epochframe {
     class Aggregator {
     public:
-        Aggregator(arrow::RecordBatchPtr data);
+        Aggregator(arrow::TablePtr data);
 
         bool all(arrow::compute::ScalarAggregateOptions const &) const;
 
@@ -51,6 +51,6 @@ namespace epochframe {
         Scalar variance(arrow::compute::ScalarAggregateOptions const &) const;
 
     private:
-        const arrow::RecordBatchPtr m_data;
+        const arrow::TablePtr m_data;
     };
 }
