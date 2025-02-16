@@ -28,4 +28,18 @@ namespace epochframe {
                      const std::string &op);
 
     bool has_unique_type(const arrow::SchemaPtr &schema);
+
+    struct DictionaryEncodeResult {
+        std::shared_ptr<arrow::Int32Array> indices;
+        arrow::ArrayPtr array;
+    };
+
+    DictionaryEncodeResult dictionary_encode(const arrow::ArrayPtr &array);
+
+    struct ValueCountResult {
+        std::shared_ptr<arrow::Int64Array> counts;
+        arrow::ArrayPtr values;
+    };
+
+    ValueCountResult value_counts(const arrow::ArrayPtr &array);
 }

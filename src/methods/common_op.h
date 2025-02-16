@@ -3,37 +3,43 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include <arrow/compute/api.h>
+#include "method_base.h"
 
 namespace epochframe {
-    class CommonOperations {
+    class CommonOperations : public MethodBase {
     public:
-        CommonOperations(arrow::RecordBatchPtr data);
+        CommonOperations(TableComponent data) : MethodBase(std::move(data)) {}
 
         // categorization
-        arrow::RecordBatchPtr is_finite() const;
+        arrow::TablePtr is_finite() const {
+            return apply("is_finite");
+        }
 
-        arrow::RecordBatchPtr is_inf() const;
+        arrow::TablePtr is_inf() const {
+            return apply("is_inf");
+        }
 
-        arrow::RecordBatchPtr is_nan() const;
+        arrow::TablePtr is_nan() const {
+            return apply("is_nan");
+        }
 
-        arrow::RecordBatchPtr is_null(arrow::compute::NullOptions const &) const;
+        arrow::TablePtr is_null(arrow::compute::NullOptions const &) const {
+            return apply("is_null");
+        }
 
-        arrow::RecordBatchPtr is_valid() const;
+        arrow::TablePtr is_valid() const {
+            return apply("is_valid");
+        }
 
-        arrow::RecordBatchPtr true_unless_null() const;
+        arrow::TablePtr true_unless_null() const {
+            return apply("true_unless_null");
+        }
 
-        arrow::ArrayPtr cast(arrow::compute::CastOptions const&) const;
+        arrow::TablePtr cast(arrow::compute::CastOptions const & option) const {
+            return apply("cast", &option);
+        }
 
-        // associative transforms
-        arrow::RecordBatchPtr dictionary_encode() const;
-        arrow::RecordBatchPtr unique() const;
-        arrow::RecordBatchPtr value_counts() const;
-
-    private:
-        arrow::RecordBatchPtr m_data;
     };
 
-    arrow::ArrayPtr random(arrow::compute::RandomOptions const&);
+    arrow::ArrayPtr random(arrow::compute::RandomOptions const &);
 }

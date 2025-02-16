@@ -3,13 +3,14 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include <arrow/compute/api.h>
+#include "method_base.h"
+
 
 namespace epochframe {
-    class Arithmetic {
+    class Arithmetic : public MethodBase {
     public:
-        Arithmetic(TableComponent data);
+        Arithmetic(TableComponent data)
+                : MethodBase(std::move(data)) {}
 
         //------------------------------------------------------------------------------
         // 1) Basic unary ops
@@ -175,19 +176,5 @@ namespace epochframe {
         arrow::TablePtr cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_mean", &options);
         }
-
-    protected:
-        arrow::TablePtr apply(std::string const &op, const arrow::compute::FunctionOptions *options = nullptr) const;
-
-        TableComponent apply(std::string const &op, const TableComponent &otherData) const;
-
-        arrow::TablePtr apply(std::string const &op, const Scalar &other, bool lhs = true) const;
-
-        arrow::TablePtr rapply(std::string const &op, const Scalar &other) const {
-            return apply(op, other, false);
-        }
-
-    private:
-        TableComponent m_data;
     };
 }

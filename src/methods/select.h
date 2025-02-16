@@ -63,6 +63,11 @@ namespace epochframe {
 
         arrow::RecordBatchPtr if_else() const;
 
+        // associative transforms
+        arrow::TablePtr unique() const {
+            return apply("unique");
+        }
+
     private:
         TableComponent m_table;
     };

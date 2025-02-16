@@ -5,6 +5,7 @@
 #pragma once
 #include "epochframe/aliases.h"
 #include <arrow/compute/api_aggregate.h>
+#include <arrow/compute/api.h>
 
 
 namespace epochframe {
@@ -31,6 +32,12 @@ namespace epochframe {
         Scalar max(arrow::compute::ScalarAggregateOptions const &) const;
 
         Scalar min(arrow::compute::ScalarAggregateOptions const &) const;
+
+        arrow::ChunkedArrayPtr max_element_wise(const TableComponents &others,
+                                                const arrow::compute::ElementWiseAggregateOptions &) const;
+
+        arrow::ChunkedArrayPtr min_element_wise(const TableComponents &other,
+                                                const arrow::compute::ElementWiseAggregateOptions &) const;
 
         std::array<Scalar, 2> min_max(arrow::compute::ScalarAggregateOptions const &) const;
 

@@ -66,8 +66,7 @@ namespace epochframe {
         AssertWithTraceFromStream(l_index != nullptr, "left Index column not found: " << left_index_name + l_suffix);
         AssertWithTraceFromStream(r_index != nullptr, "right Index column not found: " << right_index_name + r_suffix);
 
-        auto merged =
-                AssertArrayResultIsOk(cp::CallFunction("coalesce", {l_index, r_index}));
+        auto merged = arrow_utils::call_compute_array({l_index, r_index}, "coalesce");
 
         return std::make_shared<ArrowIndex>(merged, index_name);
     }
@@ -185,10 +184,7 @@ namespace epochframe {
             auto const &r_column = right_rb->GetColumnByName(field->name());
             AssertWithTraceFromStream(r_column != nullptr, "column not found: " << field->name());
 
-            auto maybe_result = cp::CallFunction(op, {l_column, r_column});
-            AssertWithTraceFromStream(maybe_result.ok(),
-                                      "Error in '" + op + "' with scalar: " + maybe_result.status().ToString());
-            new_arrays[i] = maybe_result->chunked_array();
+            new_arrays[i] = arrow_utils::call_compute_array({l_column, r_column}, op);
         });
 
         auto new_rb = arrow::Table::Make(schema, new_arrays);
@@ -201,5 +197,34 @@ namespace epochframe {
         }
         auto type = schema->field(0)->type();
         return std::ranges::all_of(schema->fields(), [type](const auto &field) { return field->type() == type; });
+    }
+
+    DictionaryEncodeResult dictionary_encode(const arrow::ArrayPtr &array)
+    {
+        auto dict_res = arrow::compute::DictionaryEncode(array, arrow::compute::DictionaryEncodeOptions{});;
+        if (!dict_res.ok()) {
+            throw std::runtime_error(dict_res.status().ToString());
+        }
+
+        auto dict_array = std::dynamic_pointer_cast<arrow::DictionaryArray>(dict_res->make_array());
+        if (!dict_array) {
+            throw std::runtime_error("duplicated(): dictionary_encode didn't return DictionaryArray");
+        }
+
+        auto codes = std::dynamic_pointer_cast<arrow::Int32Array>(dict_array->indices());
+        return {codes, dict_array->dictionary()};
+    }
+
+    ValueCountResult value_counts(const arrow::ArrayPtr &array) {
+        // call the Arrow "value_counts" kernel
+        auto struct_arr = AssertResultIsOk(arrow::compute::ValueCounts(array));
+
+        // The struct has 2 fields: "values" (same type as m_array) and "counts" (Int64)
+        auto values_arr = struct_arr->GetFieldByName("values");
+        auto counts_arr = std::dynamic_pointer_cast<arrow::Int64Array>(struct_arr->GetFieldByName("counts"));
+        if (!counts_arr) {
+            throw std::runtime_error("value_counts: 'counts' field is not Int64Array");
+        }
+        return {counts_arr, values_arr};
     }
 }

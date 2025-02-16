@@ -1,4 +1,8 @@
-#include "arith.h"
+//
+// Created by adesola on 2/15/25.
+//
+
+#include "method_base.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <epoch_lab_shared/macros.h>    // your assert/throw utilities
@@ -8,24 +12,18 @@
 #include "common/methods_helper.h"
 #include "epochframe/scalar.h"
 #include "index/index.h"
+#include "common/arrow_compute_utils.h"
 #include <tbb/parallel_for_each.h>
 #include <range/v3/view/enumerate.hpp>
 #include <iostream>
 
-namespace ac = arrow::compute;
-
 namespace epochframe {
-
-    Arithmetic::Arithmetic(TableComponent data)
-            : m_data(std::move(data)) {
-    }
-
-//----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 // apply(op, FunctionOptions): unary function with custom options
 // (e.g. "round" with RoundOptions).
 //----------------------------------------------------------------------
     arrow::TablePtr
-    Arithmetic::apply(std::string const &op,
+    MethodBase::apply(std::string const &op,
                       const arrow::compute::FunctionOptions *options) const {
         auto [index, rb] = m_data;
         if (!rb) {
@@ -38,11 +36,7 @@ namespace epochframe {
         new_arrays.resize(schema->num_fields());
 
         tbb::parallel_for(0, schema->num_fields(), [&](int64_t i) {
-            auto const &column = rb->column(i);
-            auto maybe_result = ac::CallFunction(op, {column}, options);
-            AssertWithTraceFromStream(maybe_result.ok(),
-                                      "Error in '" + op + "' with scalar: " + maybe_result.status().ToString());
-            new_arrays[i] = maybe_result->chunked_array();
+            new_arrays[i] = arrow_utils::call_unary_compute_array(rb->column(i), op, options);
         });
 
         auto new_rb = arrow::Table::Make(rb->schema(), new_arrays);
@@ -54,7 +48,7 @@ namespace epochframe {
 // (e.g. df + 10, df * 2).
 //----------------------------------------------------------------------
     arrow::TablePtr
-    Arithmetic::apply(std::string const &op, const Scalar &other, bool lhs) const {
+    MethodBase::apply(std::string const &op, const Scalar &other, bool lhs) const {
         auto [index, rb] = m_data;
         if (!rb) {
             throw std::runtime_error("Arithmetic::apply(scalar): null RecordBatch");
@@ -73,11 +67,8 @@ namespace epochframe {
 
         tbb::parallel_for(0, schema->num_fields(), [&](int64_t i) {
             auto const &column = rb->column(i);
-            auto maybe_result = ac::CallFunction(op, lhs ? std::vector<arrow::Datum>{column, arrow_scalar}
-                                                         : std::vector<arrow::Datum>{arrow_scalar, column});
-            AssertWithTraceFromStream(maybe_result.ok(),
-                                      "Error in '" + op + "' with scalar: " + maybe_result.status().ToString());
-            new_arrays[i] = maybe_result->chunked_array();
+            new_arrays[i] = arrow_utils::call_compute_array(lhs ? std::vector<arrow::Datum>{column, arrow_scalar}
+                                                                : std::vector<arrow::Datum>{arrow_scalar, column}, op);
         });
 
         auto new_rb = arrow::Table::Make(rb->schema(), new_arrays);
@@ -92,7 +83,7 @@ namespace epochframe {
 // for columns with the same name. This is the simplest "Pandas-like" approach.
 //----------------------------------------------------------------------
     TableComponent
-    Arithmetic::apply(std::string const &op, const TableComponent &otherData) const {
+    MethodBase::apply(std::string const &op, const TableComponent &otherData) const {
         auto left_index = m_data.first;
         auto right_index = otherData.first;
 
@@ -123,5 +114,4 @@ namespace epochframe {
         auto out = unsafe_binary_op(aligned_left, aligned_right, op);
         return {new_index, out};
     }
-
-} // namespace epochframe
+}

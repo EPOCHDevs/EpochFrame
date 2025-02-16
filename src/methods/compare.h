@@ -3,52 +3,152 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include <arrow/compute/api.h>
+#include "method_base.h"
+
 
 namespace epochframe {
-    class Comparison {
+    class Comparison : public MethodBase {
 
     public:
-        Comparison(IndexPtr index, arrow::TablePtr data);
+        explicit Comparison(TableComponent data): MethodBase(data) {}
 
-        arrow::TablePtr equal(const IndexPtr &otherIndex,
-                              arrow::TablePtr other) const;
+        //==================
+        // Comparison ops
+        //==================
+        TableComponent equal(const TableComponent &other) const {
+            return apply("equal", other);
+        }
 
-        arrow::TablePtr not_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr equal(const Scalar &other) const {
+            // NDFrame op scalar
+            return apply("equal", other, true);
+        }
 
-        arrow::TablePtr less(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr requal(const Scalar &other) const {
+            // scalar op NDFrame
+            return rapply("equal", other);
+        }
 
-        arrow::TablePtr less_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        TableComponent not_equal(const TableComponent &other) const {
+            return apply("not_equal", other);
+        }
 
-        arrow::TablePtr greater(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr not_equal(const Scalar &other) const {
+            return apply("not_equal", other, true);
+        }
 
-        arrow::TablePtr greater_equal(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr rnot_equal(const Scalar &other) const {
+            return rapply("not_equal", other);
+        }
 
-        arrow::ChunkedArrayPtr max_element_wise(const std::vector<std::tuple<IndexPtr, arrow::TablePtr>> &other,
-                                                const arrow::compute::ElementWiseAggregateOptions &) const;
+        TableComponent less(const TableComponent &other) const {
+            return apply("less", other);
+        }
 
-        arrow::ChunkedArrayPtr min_element_wise(const std::vector<std::tuple<IndexPtr, arrow::TablePtr>> &other,
-                                                const arrow::compute::ElementWiseAggregateOptions &) const;
+        arrow::TablePtr less(const Scalar &other) const {
+            return apply("less", other, true);
+        }
 
-        arrow::TablePtr and_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr rless(const Scalar &other) const {
+            return rapply("less", other);
+        }
 
-        arrow::TablePtr and_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        TableComponent less_equal(const TableComponent &other) const {
+            return apply("less_equal", other);
+        }
 
-        arrow::TablePtr and_not(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr less_equal(const Scalar &other) const {
+            return apply("less_equal", other, true);
+        }
 
-        arrow::TablePtr and_not_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr rless_equal(const Scalar &other) const {
+            return rapply("less_equal", other);
+        }
 
-        arrow::TablePtr or_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        TableComponent greater(const TableComponent &other) const {
+            return apply("greater", other);
+        }
 
-        arrow::TablePtr or_kleene(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr greater(const Scalar &other) const {
+            return apply("greater", other, true);
+        }
 
-        arrow::TablePtr xor_(const IndexPtr &otherIndex, arrow::TablePtr other) const;
+        arrow::TablePtr rgreater(const Scalar &other) const {
+            return rapply("greater", other);
+        }
 
-        arrow::TablePtr invert() const;
+        TableComponent greater_equal(const TableComponent &other) const {
+            return apply("greater_equal", other);
+        }
+
+        arrow::TablePtr greater_equal(const Scalar &other) const {
+            return apply("greater_equal", other, true);
+        }
+
+        arrow::TablePtr rgreater_equal(const Scalar &other) const {
+            return rapply("greater_equal", other);
+        }
+
+        //========================
+        // Logical ops (and/or/xor)
+        //========================
+        TableComponent and_(const TableComponent &other) const {
+            return apply("and", other);
+        }
+
+        arrow::TablePtr and_(const Scalar &other) const {
+            return apply("and", other, true);
+        }
+
+        arrow::TablePtr rand_(const Scalar &other) const {
+            return rapply("and", other);
+        }
+
+        TableComponent and_kleene(const TableComponent &other) const {
+            return apply("and_kleene", other);
+        }
+
+        TableComponent and_not(const TableComponent &other) const {
+            return apply("and_not", other);
+        }
+
+        TableComponent and_not_kleene(const TableComponent &other) const {
+            return apply("and_not_kleene", other);
+        }
+
+        TableComponent or_(const TableComponent &other) const {
+            return apply("or", other);
+        }
+
+        arrow::TablePtr or_(const Scalar &other) const {
+            return apply("or", other, true);
+        }
+
+        arrow::TablePtr ror_(const Scalar &other) const {
+            return rapply("or", other);
+        }
+
+        TableComponent or_kleene(const TableComponent &other) const {
+            return apply("or_kleene", other);
+        }
+
+        TableComponent xor_(const TableComponent &other) const {
+            return apply("xor", other);
+        }
+
+        arrow::TablePtr xor_(const Scalar &other) const {
+            return apply("xor", other, true);
+        }
+
+        arrow::TablePtr rxor_(const Scalar &other) const {
+            return rapply("xor", other);
+        }
+
+        arrow::TablePtr invert() const {
+            return apply("invert"); // or a simpler apply("invert") if you like
+        }
 
     private:
-        IndexPtr m_index;
-        arrow::TablePtr m_data;
+        TableComponent m_data;
     };
 }
