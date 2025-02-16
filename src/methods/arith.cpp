@@ -16,7 +16,7 @@ namespace ac = arrow::compute;
 
 namespace epochframe {
 
-    Arithmetric::Arithmetric(TableComponent data)
+    Arithmetic::Arithmetic(TableComponent data)
             : m_data(std::move(data)) {
     }
 
@@ -25,11 +25,11 @@ namespace epochframe {
 // (e.g. "round" with RoundOptions).
 //----------------------------------------------------------------------
     arrow::TablePtr
-    Arithmetric::apply(std::string const &op,
-                       const arrow::compute::FunctionOptions *options) const {
+    Arithmetic::apply(std::string const &op,
+                      const arrow::compute::FunctionOptions *options) const {
         auto [index, rb] = m_data;
         if (!rb) {
-            throw std::runtime_error("Arithmetric::apply(op, options): null RecordBatch");
+            throw std::runtime_error("Arithmetic::apply(op, options): null RecordBatch");
         }
 
         auto schema = rb->schema();
@@ -54,16 +54,16 @@ namespace epochframe {
 // (e.g. df + 10, df * 2).
 //----------------------------------------------------------------------
     arrow::TablePtr
-    Arithmetric::apply(std::string const &op, const Scalar &other) const {
+    Arithmetic::apply(std::string const &op, const Scalar &other, bool lhs) const {
         auto [index, rb] = m_data;
         if (!rb) {
-            throw std::runtime_error("Arithmetric::apply(scalar): null RecordBatch");
+            throw std::runtime_error("Arithmetic::apply(scalar): null RecordBatch");
         }
 
         // Convert epochframe::Scalar -> arrow::ScalarPtr
         arrow::ScalarPtr arrow_scalar = other.value();
         if (!arrow_scalar) {
-            throw std::runtime_error("Arithmetric::apply(scalar): null arrow scalar");
+            throw std::runtime_error("Arithmetic::apply(scalar): null arrow scalar");
         }
 
         auto schema = rb->schema();
@@ -73,7 +73,8 @@ namespace epochframe {
 
         tbb::parallel_for(0, schema->num_fields(), [&](int64_t i) {
             auto const &column = rb->column(i);
-            auto maybe_result = ac::CallFunction(op, {column, arrow_scalar});
+            auto maybe_result = ac::CallFunction(op, lhs ? std::vector<arrow::Datum>{column, arrow_scalar}
+                                                         : std::vector<arrow::Datum>{arrow_scalar, column});
             AssertWithTraceFromStream(maybe_result.ok(),
                                       "Error in '" + op + "' with scalar: " + maybe_result.status().ToString());
             new_arrays[i] = maybe_result->chunked_array();
@@ -91,12 +92,12 @@ namespace epochframe {
 // for columns with the same name. This is the simplest "Pandas-like" approach.
 //----------------------------------------------------------------------
     TableComponent
-    Arithmetric::apply(std::string const &op, const TableComponent &otherData) const {
+    Arithmetic::apply(std::string const &op, const TableComponent &otherData) const {
         auto left_index = m_data.first;
         auto right_index = otherData.first;
 
         if (!left_index || !right_index) {
-            throw std::runtime_error("Arithmetric::apply(TableComponent): index pointer is null");
+            throw std::runtime_error("Arithmetic::apply(TableComponent): index pointer is null");
         }
 
         // 1) If indexes already match in shape & order, skip alignment

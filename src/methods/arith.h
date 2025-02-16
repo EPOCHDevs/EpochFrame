@@ -7,73 +7,106 @@
 #include <arrow/compute/api.h>
 
 namespace epochframe {
-    class Arithmetric {
+    class Arithmetic {
     public:
-        Arithmetric(TableComponent data);
+        Arithmetic(TableComponent data);
 
-        arrow::TablePtr abs() const { return apply("abs"); }
+        //------------------------------------------------------------------------------
+        // 1) Basic unary ops
+        //------------------------------------------------------------------------------
+        arrow::TablePtr abs()    const { return apply("abs"); }
+        [[nodiscard]] arrow::TablePtr negate() const { return apply("negate"); }
+        [[nodiscard]] arrow::TablePtr sign()   const { return apply("sign"); }
 
-        TableComponent add(const TableComponent &otherData) const {
+        //------------------------------------------------------------------------------
+        // 2) Basic arithmetic: + - * /, plus r* versions
+        //------------------------------------------------------------------------------
+        // addition
+        [[nodiscard]] TableComponent add(const TableComponent &otherData) const {
             return apply("add", otherData);
         }
-
-        arrow::TablePtr add(const Scalar &other) const {
-            return apply("add", other);
+        [[nodiscard]] arrow::TablePtr add(const Scalar &other) const {
+            return apply("add", other, /*lhs=*/true);
+        }
+        [[nodiscard]] arrow::TablePtr radd(const Scalar &other) const {
+            return rapply("add", other);
         }
 
-        TableComponent divide(const TableComponent &otherData) const {
-            return apply("divide", otherData);
+        // subtraction
+        TableComponent subtract(const TableComponent &otherData) const {
+            return apply("subtract", otherData);
+        }
+        arrow::TablePtr subtract(const Scalar &other) const {
+            return apply("subtract", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rsubtract(const Scalar &other) const {
+            return rapply("subtract", other);
         }
 
-        arrow::TablePtr divide(const Scalar &other) const {
-            return apply("divide", other);
-        }
-
-        arrow::TablePtr exp() const { return apply("exp"); }
-
-        arrow::TablePtr expm1() const { return apply("expm1"); }
-
+        // multiplication
         TableComponent multiply(const TableComponent &otherData) const {
             return apply("multiply", otherData);
         }
-
         arrow::TablePtr multiply(const Scalar &other) const {
-            return apply("multiply", other);
+            return apply("multiply", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rmultiply(const Scalar &other) const {
+            return rapply("multiply", other);
         }
 
-        arrow::TablePtr negate() const { return apply("negate"); }
+        // division
+        TableComponent divide(const TableComponent &otherData) const {
+            return apply("divide", otherData);
+        }
+        arrow::TablePtr divide(const Scalar &other) const {
+            return apply("divide", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rdivide(const Scalar &other) const {
+            return rapply("divide", other);
+        }
+
+        //------------------------------------------------------------------------------
+        // 3) Exponential, power
+        //------------------------------------------------------------------------------
+        arrow::TablePtr exp()    const { return apply("exp"); }
+        arrow::TablePtr expm1()  const { return apply("expm1"); }
 
         TableComponent power(const TableComponent &otherData) const {
             return apply("power", otherData);
         }
-
         arrow::TablePtr power(const Scalar &other) const {
-            return apply("power", other);
+            return apply("power", other, /*lhs=*/true);
+        }
+        arrow::TablePtr rpower(const Scalar &other) const {
+            return rapply("power", other);
         }
 
-        arrow::TablePtr sign() const { return apply("sign"); }
+        //------------------------------------------------------------------------------
+        // 4) Square roots, logs
+        //------------------------------------------------------------------------------
+        arrow::TablePtr sqrt()  const { return apply("sqrt"); }
+        arrow::TablePtr ln()    const { return apply("ln"); }
+        arrow::TablePtr log10() const { return apply("log10"); }
+        arrow::TablePtr log1p() const { return apply("log1p"); }
+        arrow::TablePtr log2()  const { return apply("log2"); }
 
-        arrow::TablePtr sqrt() const { return apply("sqrt"); }
-
-        TableComponent subtract(const TableComponent &otherData) const {
-            return apply("power", otherData);
+        // NDFrame op NDFrame
+        TableComponent logb(const TableComponent &otherData) const {
+            return apply("logb", otherData);
         }
 
-        arrow::TablePtr subtract(const Scalar &other) const {
-            return apply("power", other);
-        }
-
-        // Bit-wise functions
+        //------------------------------------------------------------------------------
+        // 5) Bitwise ops
+        //------------------------------------------------------------------------------
         TableComponent bit_wise_and(const TableComponent &otherData) const {
             return apply("bit_wise_and", otherData);
         }
-
-        arrow::TablePtr bit_wise_not() const { return apply("bit_wise_not"); }
-
+        arrow::TablePtr bit_wise_not() const {
+            return apply("bit_wise_not");
+        }
         TableComponent bit_wise_or(const TableComponent &otherData) const {
             return apply("bit_wise_or", otherData);
         }
-
         TableComponent bit_wise_xor(const TableComponent &otherData) const {
             return apply("bit_wise_xor", otherData);
         }
@@ -81,92 +114,66 @@ namespace epochframe {
         TableComponent shift_left(const TableComponent &otherData) const {
             return apply("shift_left", otherData);
         }
-
         TableComponent shift_right(const TableComponent &otherData) const {
             return apply("shift_right", otherData);
         }
 
-        // Rounding Functions
-        arrow::TablePtr ceil() const { return apply("ceil"); }
-
+        //------------------------------------------------------------------------------
+        // 6) Rounding
+        //------------------------------------------------------------------------------
+        arrow::TablePtr ceil()  const { return apply("ceil"); }
         arrow::TablePtr floor() const { return apply("floor"); }
+        arrow::TablePtr trunc() const { return apply("trunc"); }
 
-        arrow::TablePtr round(arrow::compute::RoundOptions const &options) const {
+        arrow::TablePtr round(const arrow::compute::RoundOptions &options) const {
             return apply("round", &options);
         }
-
-        arrow::TablePtr round_to_multiple(arrow::compute::RoundToMultipleOptions const &options) const {
+        arrow::TablePtr round_to_multiple(const arrow::compute::RoundToMultipleOptions &options) const {
             return apply("round_to_multiple", &options);
         }
-
-        arrow::TablePtr round_binary(arrow::compute::RoundBinaryOptions const &options) const {
+        arrow::TablePtr round_binary(const arrow::compute::RoundBinaryOptions &options) const {
             return apply("round_binary", &options);
         }
 
-        arrow::TablePtr trunc() const { return apply("trunc"); }
-
-        // Logarithmic Functions
-        arrow::TablePtr ln() const { return apply("ln"); }
-
-        arrow::TablePtr log10() const { return apply("log10"); }
-
-        arrow::TablePtr log1p() const { return apply("log1p"); }
-
-        arrow::TablePtr log2() const { return apply("log2"); }
-
-        TableComponent logb(const TableComponent &otherData) const {
-            return apply("logb", otherData);
-        }
-
-        // Trigonometric Functions
-        arrow::TablePtr cos() const { return apply("cos"); }
-
-        arrow::TablePtr sin() const { return apply("sin"); }
-
-        arrow::TablePtr tan() const { return apply("tan"); }
-
+        //------------------------------------------------------------------------------
+        // 7) Trig functions
+        //------------------------------------------------------------------------------
+        arrow::TablePtr cos()  const { return apply("cos"); }
+        arrow::TablePtr sin()  const { return apply("sin"); }
+        arrow::TablePtr tan()  const { return apply("tan"); }
         arrow::TablePtr acos() const { return apply("acos"); }
-
         arrow::TablePtr asin() const { return apply("asin"); }
-
         arrow::TablePtr atan() const { return apply("atan"); }
 
         TableComponent atan2(const TableComponent &otherData) const {
             return apply("atan2", otherData);
         }
 
-        // Hyperbolic Trigonometric Functions
-        arrow::TablePtr sinh() const { return apply("sinh"); }
-
-        arrow::TablePtr cosh() const { return apply("cosh"); }
-
-        arrow::TablePtr tanh() const { return apply("tanh"); }
-
+        // Hyperbolic
+        arrow::TablePtr sinh()  const { return apply("sinh"); }
+        arrow::TablePtr cosh()  const { return apply("cosh"); }
+        arrow::TablePtr tanh()  const { return apply("tanh"); }
         arrow::TablePtr acosh() const { return apply("acosh"); }
-
         arrow::TablePtr asinh() const { return apply("asinh"); }
-
         arrow::TablePtr atanh() const { return apply("atanh"); }
 
-        // Cumulative
-        arrow::TablePtr cumulative_sum(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_sum", &option);
+        //------------------------------------------------------------------------------
+        // 8) Cumulative
+        //------------------------------------------------------------------------------
+        [[nodiscard]] arrow::TablePtr cumulative_sum(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_sum", &options);
         }
-
-        arrow::TablePtr cumulative_prod(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_prod", &option);
+        [[nodiscard]] arrow::TablePtr cumulative_prod(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_prod", &options);
         }
-
-        arrow::TablePtr cumulative_max(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_max", &option);
+        [[nodiscard]] arrow::TablePtr cumulative_max(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_max", &options);
         }
-
-        arrow::TablePtr cumulative_min(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_min", &option);
+        [[nodiscard]] arrow::TablePtr cumulative_min(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_min", &options);
         }
-
-        arrow::TablePtr cumulative_mean(arrow::compute::CumulativeOptions const &option) const {
-            return apply("cumulative_mean", &option);
+        arrow::TablePtr cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
+            return apply("cumulative_mean", &options);
         }
 
     protected:
@@ -174,7 +181,11 @@ namespace epochframe {
 
         TableComponent apply(std::string const &op, const TableComponent &otherData) const;
 
-        arrow::TablePtr apply(std::string const &op, const Scalar &other) const;
+        arrow::TablePtr apply(std::string const &op, const Scalar &other, bool lhs = true) const;
+
+        arrow::TablePtr rapply(std::string const &op, const Scalar &other) const {
+            return apply(op, other, false);
+        }
 
     private:
         TableComponent m_data;
