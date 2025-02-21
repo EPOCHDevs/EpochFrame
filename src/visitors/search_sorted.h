@@ -1,7 +1,7 @@
 #pragma once
 
 #include "epochframe/aliases.h"
-#include "common/enums.h"
+#include "epochframe/enums.h"
 #include <arrow/api.h>
 #include <algorithm>        // for std::lower_bound, std::upper_bound
 #include <stdexcept>

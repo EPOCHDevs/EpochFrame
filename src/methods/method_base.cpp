@@ -16,63 +16,63 @@
 #include <tbb/parallel_for_each.h>
 #include <range/v3/view/enumerate.hpp>
 #include <iostream>
+#include "index/arrow_index.h"
+#include "common/table_or_array.h"
 
 namespace epochframe {
+    MethodBase::MethodBase(const TableComponent& data): m_data(data) {
+        if (m_data.second.is_table()) {
+           AssertWithTraceFromStream(m_data.second.table(), "Table is nullptr");
+        }
+        else if (m_data.second.is_chunked_array()) {
+            AssertWithTraceFromStream(m_data.second.chunked_array(), "ChunkedArray is nullptr");
+        }
+    }
     //----------------------------------------------------------------------
 // apply(op, FunctionOptions): unary function with custom options
 // (e.g. "round" with RoundOptions).
 //----------------------------------------------------------------------
-    arrow::TablePtr
+    TableOrArray
     MethodBase::apply(std::string const &op,
                       const arrow::compute::FunctionOptions *options) const {
-        auto [index, rb] = m_data;
-        if (!rb) {
-            throw std::runtime_error("Arithmetic::apply(op, options): null RecordBatch");
+        auto [index, data] = m_data;
+
+        if (data.is_chunked_array()) {
+            return TableOrArray{arrow_utils::call_unary_compute_array(data.datum(), op, options)};
         }
 
-        auto schema = rb->schema();
-
-        std::vector<arrow::ChunkedArrayPtr> new_arrays;
-        new_arrays.resize(schema->num_fields());
-
-        tbb::parallel_for(0, schema->num_fields(), [&](int64_t i) {
-            new_arrays[i] = arrow_utils::call_unary_compute_array(rb->column(i), op, options);
-        });
-
-        auto new_rb = arrow::Table::Make(rb->schema(), new_arrays);
-        return new_rb;
+        return TableOrArray{arrow_utils::apply_function_to_table(data.table(), [&](const arrow::Datum &column, std::string const& _) {
+            return arrow_utils::call_unary_compute_array(column, op, options);
+        })};
     }
 
 //----------------------------------------------------------------------
-// apply(op, Scalar): binary function with a single scalar
+// apply(op, Scalar|Series): binary function with a single scalar
 // (e.g. df + 10, df * 2).
 //----------------------------------------------------------------------
-    arrow::TablePtr
-    MethodBase::apply(std::string const &op, const Scalar &other, bool lhs) const {
-        auto [index, rb] = m_data;
-        if (!rb) {
-            throw std::runtime_error("Arithmetic::apply(scalar): null RecordBatch");
+    TableOrArray
+    MethodBase::apply(std::string const &op, const arrow::Datum &other, bool lhs) const {
+        AssertWithTraceFromStream(other.kind() == arrow::Datum::SCALAR || other.kind() == arrow::Datum::CHUNKED_ARRAY || other.kind() == arrow::Datum::ARRAY, "Invalid other type");
+
+        auto [index, data] = m_data;
+        auto get_lhs_or_rhs = [&] (arrow::Datum const& column) {
+            return lhs ? std::vector{column, other} : std::vector{other, column};
+        };
+
+        if (data.is_chunked_array()) {
+            return TableOrArray{arrow_utils::call_compute_array(get_lhs_or_rhs(data.datum()), op)};
         }
 
-        // Convert epochframe::Scalar -> arrow::ScalarPtr
-        arrow::ScalarPtr arrow_scalar = other.value();
-        if (!arrow_scalar) {
-            throw std::runtime_error("Arithmetic::apply(scalar): null arrow scalar");
-        }
+        auto table = data.table();
 
-        auto schema = rb->schema();
+        auto schema = table->schema();
 
         std::vector<arrow::ChunkedArrayPtr> new_arrays;
         new_arrays.resize(schema->num_fields());
 
-        tbb::parallel_for(0, schema->num_fields(), [&](int64_t i) {
-            auto const &column = rb->column(i);
-            new_arrays[i] = arrow_utils::call_compute_array(lhs ? std::vector<arrow::Datum>{column, arrow_scalar}
-                                                                : std::vector<arrow::Datum>{arrow_scalar, column}, op);
-        });
-
-        auto new_rb = arrow::Table::Make(rb->schema(), new_arrays);
-        return new_rb;
+        return TableOrArray{arrow_utils::apply_function_to_table(table, [&](const arrow::Datum &column, std::string const&) {
+            return arrow_utils::call_compute_array(get_lhs_or_rhs(column), op);
+        })};
     }
 
 //----------------------------------------------------------------------
@@ -98,12 +98,16 @@ namespace epochframe {
         // 2) Otherwise, do a full outer join on the "index" column.
         auto left_rb = m_data.second;
         auto right_rb = otherData.second;
-        if (!left_rb || !right_rb) {
-            throw std::runtime_error("Null RecordBatch in apply(TableComponent)");
-        }
 
-        if (left_index->equals(right_index) && left_rb->schema()->Equals(right_rb->schema())) {
-            return {left_index, unsafe_binary_op(left_rb, right_rb, op)};
+        if (left_index->equals(right_index))
+        {
+            if (left_rb.is_chunked_array() && right_rb.is_chunked_array()) {
+                return TableComponent{left_index, arrow_utils::call_compute_array(std::vector{left_rb.datum(), right_rb.datum()}, op)};
+            }
+
+            if (left_rb.is_table() && right_rb.is_table() && left_rb.table()->schema()->Equals(right_rb.table()->schema())) {
+                return TableComponent{left_index, unsafe_binary_op(left_rb.table(), right_rb.table(), op)};
+            }
         }
 
         // We'll call a helper that handles the Arrow "hash_join" behind the scenes:
@@ -112,6 +116,25 @@ namespace epochframe {
         // Now we have two RecordBatches with the same row count and the same ordering of 'index'.
         // Perform the actual binary operation column by column.
         auto out = unsafe_binary_op(aligned_left, aligned_right, op);
-        return {new_index, out};
+        return TableComponent{new_index, out};
+    }
+
+    arrow::TablePtr MethodBase::merge_index() const {
+        return add_column(m_data.second.get_table("__series_MethodBase__"), RESERVED_INDEX_NAME, m_data.first->array());
+    }
+
+    TableComponent MethodBase::unzip_index(arrow::TablePtr const &table) const {
+        auto field_index = table->schema()->GetFieldIndex(RESERVED_INDEX_NAME);
+        AssertFalseFromStream(field_index == -1, "table schema can not reference index name");
+
+        auto newIndex = table->column(field_index);
+        auto newTable = table->RemoveColumn(field_index);
+        AssertWithTraceFromStream(newTable.ok(), "unzip index failed");
+
+        return TableComponent{std::make_shared<ArrowIndex>(newIndex), TableOrArray{newTable.MoveValueUnsafe()}};
+    }
+
+    TableOrArray MethodBase::rapply(std::string const &op, const arrow::Datum &other) const {
+            return apply(op, other, false);
     }
 }

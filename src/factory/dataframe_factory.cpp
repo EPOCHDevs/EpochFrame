@@ -4,14 +4,15 @@
 
 #include "dataframe_factory.h"
 #include <arrow/api.h>
+#include "common/table_or_array.h"
 
 
 namespace epochframe {
-    NDFrame make_dataframe(arrow::TablePtr const &data) {
-        return NDFrame(data);
+    DataFrame make_dataframe(arrow::TablePtr const &data) {
+        return DataFrame(data);
     }
 
-    NDFrame make_dataframe(IndexPtr const &index, arrow::TablePtr const &data) {
-        return NDFrame(index, data);
+    DataFrame make_dataframe(IndexPtr const &index, arrow::TablePtr const &data) {
+        return DataFrame(index, data);
     }
 }

@@ -3,72 +3,104 @@
 //
 
 #pragma once
+#include "method_base.h"
+#include "epochframe/enums.h"
+#include "common/arrow_compute_utils.h"
 #include "epochframe/aliases.h"
-#include <arrow/compute/api.h>
+#include "common/table_or_array.h"
 
 namespace epochframe {
-    class Selections {
+    class Selections : public MethodBase {
     public:
-        Selections(TableComponent const &);
+        explicit Selections(TableComponent const & table): MethodBase(table) {}
 
-        // selections
-        arrow::RecordBatchPtr array_filter(arrow::RecordBatchPtr const &data, arrow::ArrayPtr const &,
-                                           arrow::compute::FilterOptions const &) const;
+        // TODO: drop_duplicates
 
-        arrow::RecordBatchPtr array_take(arrow::RecordBatchPtr const &data, arrow::ArrayPtr const &,
-                                         arrow::compute::TakeOptions const &) const;
+        TableComponent drop(arrow::ArrayPtr const &index = {},
+                             StringVector const &columns = {}) const;
 
-        arrow::RecordBatchPtr drop_null(arrow::RecordBatchPtr const &data) const;
+        TableComponent drop_null(DropMethod how = DropMethod::Any,
+                                AxisType axis = AxisType::Row,
+                                std::vector<std::string> const &subset = {},
+                                bool ignore_index = false) const;
 
-        arrow::RecordBatchPtr
-        filter(arrow::RecordBatchPtr const &data, arrow::ArrayPtr const &, arrow::compute::FilterOptions const &) const;
+        TableComponent
+        filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const;
 
-        arrow::RecordBatchPtr
-        array(arrow::RecordBatchPtr const &data, arrow::ArrayPtr const &, arrow::compute::TakeOptions const &) const;
+        TableComponent
+        take(arrow::ArrayPtr const &indices,
+             arrow::compute::TakeOptions const &option) const;
 
-        // containment
-        arrow::RecordBatchPtr index_in(arrow::compute::SetLookupOptions const &) const;
+        // // containment
+        // TableComponent index_in(arrow::compute::SetLookupOptions const &options) const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "index_in", &options));
+        // }
 
-        arrow::RecordBatchPtr is_in(arrow::compute::SetLookupOptions const &) const;
+        // TableComponent is_in(arrow::compute::SetLookupOptions const &options) const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "is_in", &options));
+        // }
 
-        arrow::RecordBatchPtr indices_nonzero(arrow::RecordBatchPtr const &data) const;
+        // TableComponent indices_nonzero() const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "indices_nonzero"));
+        // }
 
-        // sorts and partitions
-        arrow::RecordBatchPtr array_sort_indices(arrow::compute::ArraySortOptions const &) const;
+        // // sorts and partitions
 
-        arrow::RecordBatchPtr partition_nth_indices(arrow::compute::PartitionNthOptions const &) const;
+        // TableComponent partition_nth_indices(arrow::compute::PartitionNthOptions const &options) const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "partition_nth_indices", &options));
+        // }
 
-        arrow::RecordBatchPtr rank(arrow::compute::RankOptions const &) const;
+        // TableComponent rank(arrow::compute::RankOptions const &options) const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "rank", &options));
+        // }
 
-        arrow::RecordBatchPtr select_k_unstable(arrow::compute::SelectKOptions const &) const;
+        // TableComponent select_k_unstable(arrow::compute::SelectKOptions const &options) const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "select_k_unstable", &options));
+        // }
 
-        arrow::RecordBatchPtr sort_indices(arrow::compute::SortOptions const &) const;
+        TableComponent sort_index(bool place_na_last=true, bool ascending=true) const;
 
-        arrow::RecordBatchPtr pairwise_diff(arrow::compute::PairwiseOptions const &) const;
+        TableComponent sort_values(std::vector<std::string> const& by, bool place_na_last=true, bool ascending=true) const;
 
-        // replace
-        arrow::RecordBatchPtr fill_null_backward() const;
+        // // replace
+        TableOrArray fill_null(arrow::ScalarPtr const& value, AxisType axis = AxisType::Row) const;
 
-        arrow::RecordBatchPtr fill_null_forward() const;
-
-        arrow::RecordBatchPtr replace_with_mask(arrow::ArrayPtr const &replace_condition,
-                                                arrow::ArrayPtr const &mask) const;
-
-        // selecting / multiplexing
-        arrow::RecordBatchPtr case_when() const;
-
-        arrow::RecordBatchPtr choose() const;
-
-        arrow::RecordBatchPtr coalesce() const;
-
-        arrow::RecordBatchPtr if_else() const;
-
-        // associative transforms
-        arrow::TablePtr unique() const {
-            return apply("unique");
+        TableOrArray fill_null_backward(AxisType axis = AxisType::Row) const {
+            AssertWithTraceFromFormat(axis == AxisType::Row, "fill_null_backward only supports row-wise filling");
+            return arrow_utils::call_unary_compute_table_or_array(m_data.second, "fill_null_backward");
         }
 
-    private:
-        TableComponent m_table;
+        TableOrArray fill_null_forward(AxisType axis = AxisType::Row) const {
+            AssertWithTraceFromFormat(axis == AxisType::Row, "fill_null_forward only supports row-wise filling");
+            return arrow_utils::call_unary_compute_table_or_array(m_data.second, "fill_null_forward");
+        }
+
+        // TableComponent replace_with_mask(arrow::ArrayPtr const &replace_condition,
+        //                                  arrow::ArrayPtr const &mask) const {
+        //     return unzip_index(
+        //             arrow_utils::call_compute_table(std::vector<arrow::Datum>{merge_index(), replace_condition, mask},
+        //                                             "replace_with_mask"));
+        // }
+
+        // // selecting / multiplexing
+        // TableComponent case_when() const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "case_when"));
+        // }
+
+        // TableComponent choose() const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "choose"));
+        // }
+
+        // TableComponent coalesce() const {
+        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "coalesce"));
+        // }
+
+        // similar to if_else
+        TableOrArray where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const;
+
+        // // associative transforms
+        // arrow::TablePtr unique() const {
+        //     return apply("unique");
+        // }
     };
 }

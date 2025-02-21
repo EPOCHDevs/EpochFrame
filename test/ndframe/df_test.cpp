@@ -17,8 +17,5 @@ namespace cp = ::arrow::compute;
 
 TEST_CASE("Arithmetic Test")
 {
-    auto df1 = ef::make_dataframe<double>(effi::from_range(1, 4), {{2.0, 4.0, 6.0}, {1.0, 1.0, 1.0}}, std::vector<std::string>{"a", "b"});
-    auto df2 = ef::make_dataframe<double>(effi::from_range(1, 3), {{20.0, 20.0}}, std::vector<std::string>{"a"});
 
-    std::cout << (df1 + df2) << std::endl;
 }
