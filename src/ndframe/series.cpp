@@ -9,12 +9,21 @@
 #include <tabulate/table.hpp>
 #include "epochframe/dataframe.h"
 #include "methods/arith.h"
+#include <arrow/chunked_array.h>
+#include <factory/array_factory.h>
+#include <vector_functions/arrow_vector_functions.h>
 
+#include "index/index.h"
+#include "common/table_or_array.h"
+#include "common/methods_helper.h"
 
 namespace epochframe {
-    Series::Series() : NDFrame<Series, arrow::ChunkedArray>() {}
+    // ------------------------------------------------------------------------
+    // Constructors / Destructor / Assignment
+    // ------------------------------------------------------------------------
+    Series::Series() = default;
 
-    Series::Series(epochframe::IndexPtr index, arrow::ChunkedArrayPtr array, const std::optional<std::string> &name):NDFrame<Series, arrow::ChunkedArray>(index, array), m_name(name) {}
+    Series::Series(IndexPtr index, arrow::ChunkedArrayPtr array, const std::optional<std::string> &name):NDFrame<Series, arrow::ChunkedArray>(index, array), m_name(name) {}
 
     Series::Series(IndexPtr index, arrow::ArrayPtr array, const std::optional<std::string> &name) :
             Series(index, AssertArrayResultIsOk(arrow::ChunkedArray::Make({array})), name) {}
@@ -23,6 +32,9 @@ namespace epochframe {
 
     Series::Series(arrow::ChunkedArrayPtr const &data, std::optional<std::string> const &name):Series(factory::index::from_range(0, data->length()), data, name) {}
 
+    // ------------------------------------------------------------------------
+    // General Attributes
+    // ------------------------------------------------------------------------
 
     DataFrame Series::to_frame(std::optional<std::string> const &name) const {
         return DataFrame(m_index,
@@ -31,29 +43,89 @@ namespace epochframe {
                                {m_table}));
     }
 
-//--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 2) Basic arithmetic: +, -, *, / with NDFrame and Scalar
     //--------------------------------------------------------------------------
 
     DataFrame Series::operator+(DataFrame const &other) const {
-        // return from_base(other.arithmetic().radd(*m_tableComponent));
-        return DataFrame();
+        return other.from_base(m_arithOp->add(other.tableComponent()));
     }
 
     DataFrame Series::operator-(DataFrame const &other) const {
-        // return from_base(other.arithmetic().rsubtract(*m_tableComponent));
-        return DataFrame();
+        return other.from_base(m_arithOp->subtract(other.tableComponent()));
     }
 
     DataFrame Series::operator*(DataFrame const &other) const {
-        // return from_base(other.arithmetic().rmultiply(*m_tableComponent));
-        return DataFrame();
+        return other.from_base(m_arithOp->multiply(other.tableComponent()));
     }
 
     DataFrame Series::operator/(DataFrame const &other) const {
-        // return from_base(other.arithmetic().rdivide(*m_tableComponent));
-        return DataFrame();
+        return other.from_base(m_arithOp->divide(other.tableComponent()));
     }
+
+    //--------------------------------------------------------------------------
+    // 3) Exponential, Power, sqrt, logs, trig
+    //--------------------------------------------------------------------------
+
+    DataFrame Series::power(DataFrame const &other) const {
+        return other.from_base(m_arithOp->power(other.tableComponent()));
+    }
+
+    DataFrame Series::logb(DataFrame const &other) const {
+        return other.from_base(m_arithOp->logb(other.tableComponent()));
+    }
+
+    //--------------------------------------------------------------------------
+    // 4) Bitwise ops
+    //--------------------------------------------------------------------------
+
+    DataFrame Series::bitwise_and(DataFrame const &other) const {
+        return other.from_base(m_arithOp->bit_wise_and(other.tableComponent()));
+    }
+
+    DataFrame Series::bitwise_or(DataFrame const &other) const {
+        return other.from_base(m_arithOp->bit_wise_or(other.tableComponent()));
+    }
+
+    DataFrame Series::bitwise_xor(DataFrame const &other) const {
+        return other.from_base(m_arithOp->bit_wise_xor(other.tableComponent()));
+    }
+
+    DataFrame Series::shift_left(DataFrame const &other) const {
+        return other.from_base(m_arithOp->shift_left(other.tableComponent()));
+    }
+
+    DataFrame Series::shift_right(DataFrame const &other) const {
+        return other.from_base(m_arithOp->shift_right(other.tableComponent()));
+    }
+
+    //--------------------------------------------------------------------------
+    // 8) Indexing ops
+    //--------------------------------------------------------------------------
+
+    Scalar Series::iloc(int64_t row) const {
+        row = resolve_integer_index(row, m_table->length());
+        return Scalar(AssertResultIsOk(m_table->GetScalar(row)));
+    }
+
+    Scalar Series::loc(const Scalar &index_label) const {
+        return iloc(m_index->get_loc(index_label));
+    }
+
+    Series Series::loc(const SeriesToSeriesCallable &callable) const {
+        return NDFrame<Series, arrow::ChunkedArray>::loc(callable(*this));
+    }
+
+    //--------------------------------------------------------------------------
+    // 13) Selection & Transform
+    //--------------------------------------------------------------------------
+    arrow::ArrayPtr Series::unique() const {
+        return vector::unique(factory::array::make_contiguous_array(arrow::Datum{m_table}));
+    }
+
+    //--------------------------------------------------------------------------
+    // Serialization
+    //--------------------------------------------------------------------------
 
     std::ostream &operator<<(std::ostream &os, Series const &df) {
         tabulate::Table table;
@@ -70,101 +142,11 @@ namespace epochframe {
         return os;
     }
 
-///** duplicated() */
-//    std::shared_ptr<arrow::BooleanArray>
-//    ArrowIndex::duplicated(DropDuplicatesKeepPolicy keep) const {
-//        // Implementation idea:
-//        // 1) dictionary_encode => we get 'codes'
-//        // 2) track the first or last occurrence
-//        // 3) mark all others as duplicates
-//
-//        using namespace arrow::compute;
-//        auto [codes, _] = dictionary_encode(m_array);
-//        auto length = codes->length();
-//
-//        // build boolean array
-//        arrow::BooleanBuilder builder;
-//        AssertStatusIsOk(builder.Reserve(length));
-//
-//        // We store code->first/last occurrence index
-//        std::unordered_map<int32_t, int64_t> seen;
-//
-//        if (keep == DropDuplicatesKeepPolicy::First) {
-//            // forward pass
-//            for (int64_t i = 0; i < length; ++i) {
-//                auto c = codes->Value(i);
-//                if (seen.find(c) == seen.end()) {
-//                    // first time => not duplicate
-//                    builder.UnsafeAppend(false);
-//                    seen[c] = i;
-//                } else {
-//                    // subsequent => true
-//                    builder.UnsafeAppend(true);
-//                }
-//            }
-//        } else if (keep == DropDuplicatesKeepPolicy::Last) {
-//            // We'll do a reverse pass to mark duplicates from the end
-//            // Then we invert the logic after
-//            std::vector<bool> temp(length, false);
-//            for (int64_t i = length - 1; i >= 0; --i) {
-//                auto c = codes->Value(i);
-//                if (seen.find(c) == seen.end()) {
-//                    // first time from the end => not duplicate
-//                    temp[i] = false;
-//                    seen[c] = i;
-//                } else {
-//                    // subsequent => duplicate
-//                    temp[i] = true;
-//                }
-//            }
-//            // Now append in forward order
-//            for (int64_t i = 0; i < length; ++i) {
-//                builder.UnsafeAppend(temp[i]);
-//            }
-//        } else {
-//            // keep == DropDuplicatesKeepPolicy::False => everything that's repeated is duplicate
-//            // So *all* occurrences of repeated items are true except possibly the first, or maybe all occurrences?
-//            // "False" in Pandas means "mark all duplicates"
-//            // So let's do two passes or a map of counts
-//            std::unordered_map<int32_t, int64_t> counts;
-//            for (int64_t i = 0; i < length; ++i) {
-//                counts[codes->Value(i)]++;
-//            }
-//            for (int64_t i = 0; i < length; ++i) {
-//                auto c = codes->Value(i);
-//                if (counts[c] > 1) {
-//                    // repeated
-//                    builder.UnsafeAppend(true);
-//                } else {
-//                    builder.UnsafeAppend(false);
-//                }
-//            }
-//        }
-//
-//        std::shared_ptr<arrow::BooleanArray> result;
-//        auto st = builder.Finish(&result);
-//        if (!st.ok()) {
-//            throw std::runtime_error(st.ToString());
-//        }
-//        return result;
-//    }
-//
-///** drop_duplicates() */
-//    std::shared_ptr<Index>
-//    ArrowIndex::drop_duplicates(DropDuplicatesKeepPolicy keep) const {
-//        auto mask = AssertContiguousArrayResultIsOk(arrow::compute::Invert(duplicated(keep)));
-//
-//        // Now filter the original array
-//        arrow::compute::FilterOptions filter_opts{};
-//        auto filtered_arr = AssertContiguousArrayResultIsOk(arrow::compute::Filter(m_array, mask, filter_opts));
-//
-//        return std::make_shared<ArrowIndex>(filtered_arr, m_name);
-//    }
-//
-//    std::shared_ptr<Index> putmask(arrow::ArrayPtr const &mask,
-//                                   arrow::ArrayPtr const &replacements) const final {
-//    return std::make_shared<ArrowIndex>(
-//            AssertContiguousArrayResultIsOk(arrow::compute::ReplaceWithMask(m_array, mask, replacements)),
-//            m_name);
-//}
+    Series Series::from_base(IndexPtr const &index, ArrowPtrType const &table) const  {
+        return Series(index, table, m_name);
+    }
+
+    Series Series::from_base(TableComponent const &tableComponent) const {
+        return Series(tableComponent.first, tableComponent.second.chunked_array(), m_name);
+    }
 }

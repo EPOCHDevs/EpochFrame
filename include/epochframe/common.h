@@ -7,19 +7,25 @@
 #include "enums.h"
 #include <variant>
 #include <vector>
-
+#include "frame_or_series.h"
 
 namespace epochframe {
-    NDFrame concat(std::vector<FrameOrSeries> const &frames,
-                   JoinType joinType,
-                   AxisType axis,
-                   bool ignore_index = false,
-                   bool sort = false);
+    struct ConcatOptions {
+        std::vector<FrameOrSeries> frames;
+        JoinType joinType{JoinType::Inner};
+        AxisType axis{AxisType::Row};
+        bool ignore_index{false};
+        bool sort{false};
+    };
+    DataFrame concat(ConcatOptions const &options);
 
-    NDFrame merge(FrameOrSeries const &left,
-                  FrameOrSeries const& right,
-                  JoinType joinType,
-                  AxisType axis,
-                  bool ignore_index = false,
-                  bool sort = false);
+    struct MergeOptions {   
+        FrameOrSeries left;
+        FrameOrSeries right;
+        JoinType joinType{JoinType::Inner};
+        AxisType axis{AxisType::Row};
+        bool ignore_index{false};
+        bool sort{false};
+    };
+    DataFrame merge(MergeOptions const &options);
 }

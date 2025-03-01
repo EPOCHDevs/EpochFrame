@@ -19,10 +19,6 @@ namespace epochframe {
             return apply("is_inf");
         }
 
-        TableOrArray is_nan() const {
-            return apply("is_nan");
-        }
-
         TableOrArray is_null(arrow::compute::NullOptions const &) const {
             return apply("is_null");
         }

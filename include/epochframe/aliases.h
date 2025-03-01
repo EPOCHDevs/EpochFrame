@@ -13,12 +13,15 @@
 
 namespace arrow{
     class ChunkedArray;
+    class Datum;
     class Array;
     class Scalar;
     class Table;
     class Schema;
     class Field;
     class DataType;
+    template<typename T>
+    class Result;
 
     using ArrayPtr = std::shared_ptr<Array>;
     using ChunkedArrayPtr = std::shared_ptr<ChunkedArray>;

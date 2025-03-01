@@ -22,11 +22,11 @@ namespace epochframe {
     make_table(arrow::ArrayVector const &chunks, uint64_t num_rows,
                std::shared_ptr<arrow::Schema> const &);
 
-    std::tuple<IndexPtr, arrow::TablePtr, arrow::TablePtr>
+    std::tuple<IndexPtr, TableOrArray, TableOrArray>
     align_by_index_and_columns(const TableComponent &left_table_,
                                const TableComponent &right_table_);
 
-    arrow::TablePtr
+    TableOrArray
     align_by_index(const TableComponent &left_table_,
                    const IndexPtr &,
                    const Scalar & scalar = Scalar{});
@@ -34,8 +34,8 @@ namespace epochframe {
     // Perform the actual column-wise binary op once two RecordBatches
     // are aligned by row.
     arrow::TablePtr
-    unsafe_binary_op(const arrow::TablePtr &left_rb,
-                     const arrow::TablePtr &right_rb,
+    unsafe_binary_op(const TableOrArray &left_rb,
+                     const TableOrArray &right_rb,
                      const std::string &op);
 
     bool has_unique_type(const arrow::SchemaPtr &schema);
@@ -122,6 +122,8 @@ namespace epochframe {
     DataFrame get_variant_column(DataFrame const &, const LocColArgumentVariant &);
 
     DataFrame get_variant_row(DataFrame const &, const LocRowArgumentVariant &);
+
+    Series get_variant_row(Series const &, const LocRowArgumentVariant &);
 
     std::pair<bool, IndexPtr> combine_index(std::vector<FrameOrSeries> const& objs, bool intersect);
 

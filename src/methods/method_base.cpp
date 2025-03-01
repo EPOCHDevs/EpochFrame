@@ -105,8 +105,10 @@ namespace epochframe {
                 return TableComponent{left_index, arrow_utils::call_compute_array(std::vector{left_rb.datum(), right_rb.datum()}, op)};
             }
 
-            if (left_rb.is_table() && right_rb.is_table() && left_rb.table()->schema()->Equals(right_rb.table()->schema())) {
-                return TableComponent{left_index, unsafe_binary_op(left_rb.table(), right_rb.table(), op)};
+            if ((left_rb.is_table() && right_rb.is_table() && left_rb.table()->schema()->Equals(right_rb.table()->schema())) ||
+                (left_rb.is_table() && right_rb.is_table()) ||
+                (left_rb.is_chunked_array() || right_rb.is_chunked_array())) {
+                return TableComponent{left_index, unsafe_binary_op(left_rb, right_rb, op)};
             }
         }
 

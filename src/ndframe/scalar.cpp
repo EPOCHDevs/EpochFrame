@@ -6,7 +6,7 @@
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
 #include <methods/compare.h>
-
+#include <arrow/compute/api.h>
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
 #include "epochframe/dataframe.h"
@@ -18,6 +18,12 @@ namespace epochframe {
     template<typename T>
     requires std::is_scalar_v<T>
     arrow::ScalarPtr MakeScalar(T const &value) {
+        if constexpr (std::numeric_limits<T>::has_quiet_NaN) {
+            if (std::isnan(value)) {
+                return MakeNullScalar(arrow::float64());
+            }
+        }
+
         return arrow::MakeScalar(value);
     }
 
@@ -34,36 +40,12 @@ namespace epochframe {
     Scalar::Scalar(std::string const &other)
             : Scalar(arrow::MakeScalar(other)) {}
 
+    Scalar::Scalar(arrow::Result<arrow::Datum> const &scalar):m_scalar(AssertScalarResultIsOk(scalar)) {}
+
     // --- Non-Template Methods ---
 
     arrow::ScalarPtr Scalar::value() const {
         return m_scalar;
-    }
-
-    bool Scalar::operator==(Scalar const &other) const {
-        // Call Arrow’s "equal" function and extract the Boolean value.
-        auto result = arrow::compute::CallFunction("equal", {this->m_scalar, other.m_scalar});
-        return AssertCastScalarResultIsOk<arrow::BooleanScalar>(result).value;
-    }
-
-    bool Scalar::operator<(Scalar const &other) const {
-        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
-                {this->m_scalar, other.m_scalar}, "less").value;
-    }
-
-    bool Scalar::operator<=(Scalar const &other) const {
-        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
-                {this->m_scalar, other.m_scalar}, "less_equal").value;
-    }
-
-    bool Scalar::operator>(Scalar const &other) const {
-        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
-                {this->m_scalar, other.m_scalar}, "greater").value;
-    }
-
-    bool Scalar::operator>=(Scalar const &other) const {
-        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
-                {this->m_scalar, other.m_scalar}, "greater_equal").value;
     }
 
     bool Scalar::is_valid() const {
@@ -86,39 +68,70 @@ namespace epochframe {
         return m_scalar->ToString();
     }
 
-    //--------------------------------------------------------------------------
-    // 5) Basic Arithmetic Ops
-    //--------------------------------------------------------------------------
 
-    Series Scalar::operator+(Series const &other) const {
+    //--------------------------------------------------------------------------
+    // 4) Basic Unary Ops
+    //--------------------------------------------------------------------------
+    Scalar Scalar::abs() const {
+        return arrow::compute::AbsoluteValue(m_scalar);
+    }
+
+    Scalar Scalar::operator-() const {
+            return arrow::compute::Negate(m_scalar);
+        }
+
+    Scalar Scalar::sign() const {
+        return arrow::compute::Sign(m_scalar);
+    }
+
+            //--------------------------------------------------------------------------
+        // 5) Basic Arithmetic Ops
+        //--------------------------------------------------------------------------
+    Scalar Scalar::operator+(Scalar const &other) const {
+        return arrow::compute::Add(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator+(Series const& other) const {
         return other.radd(*this);
     }
 
-    DataFrame Scalar::operator+(DataFrame const &other) const {
+    DataFrame Scalar::operator+(DataFrame const& other) const {
         return other.radd(*this);
     }
 
-    Series Scalar::operator-(Series const &other) const {
+    Scalar Scalar::operator-(Scalar const &other) const {
+        return arrow::compute::Subtract(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator-(Series const& other) const {
         return other.rsubtract(*this);
     }
 
-    DataFrame Scalar::operator-(DataFrame const &other) const {
+    DataFrame Scalar::operator-(DataFrame const& other) const {
         return other.rsubtract(*this);
     }
 
-    Series Scalar::operator*(Series const &other) const {
+    Scalar Scalar::operator*(Scalar const &other) const {
+        return arrow::compute::Multiply(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator*(Series const& other) const {
         return other.rmultiply(*this);
     }
 
-    DataFrame Scalar::operator*(DataFrame const &other) const {
+    DataFrame Scalar::operator*(DataFrame const& other) const {
         return other.rmultiply(*this);
     }
 
-    Series Scalar::operator/(Series const &other) const {
+    Scalar Scalar::operator/(Scalar const &other) const {
+        return arrow::compute::Divide(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator/(Series const& other) const {
         return other.rdivide(*this);
     }
 
-    DataFrame Scalar::operator/(DataFrame const &other) const {
+    DataFrame Scalar::operator/(DataFrame const& other) const {
         return other.rdivide(*this);
     }
 
@@ -147,64 +160,109 @@ namespace epochframe {
     //--------------------------------------------------------------------------
     // 10) Comparison ops
     //--------------------------------------------------------------------------
-    Series Scalar::operator==(Series const &other) const {
-        return other.from_base(other.comparator().requal(m_scalar));
+    bool Scalar::operator==(Scalar const &other) const {
+        if (other.is_null() && is_null()) {
+            return true;
+        }
+
+        // Call Arrow’s "equal" function and extract the Boolean value.
+        auto result = arrow::compute::CallFunction("equal", {this->m_scalar, other.m_scalar});
+        return AssertCastScalarResultIsOk<arrow::BooleanScalar>(result).value;
     }
 
-    DataFrame Scalar::operator==(DataFrame const &other) const {
-        return other.from_base(other.comparator().requal(m_scalar));
-    }
-
-    Series Scalar::operator!=(Series const &other) const {
-        return other.from_base(other.comparator().not_equal(m_scalar));
-    }
-
-    DataFrame Scalar::operator!=(DataFrame const &other) const {
-        return other.from_base(other.comparator().not_equal(m_scalar));
+    bool Scalar::operator<(Scalar const &other) const {
+        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
+                {this->m_scalar, other.m_scalar}, "less").value;
     }
 
     Series Scalar::operator<(Series const &other) const {
-        return other.from_base(other.comparator().less(m_scalar));
+        return other.rless(*this);
+    }
+
+    bool Scalar::operator<=(Scalar const &other) const {
+        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
+                {this->m_scalar, other.m_scalar}, "less_equal").value;
     }
 
     DataFrame Scalar::operator<(DataFrame const &other) const {
-        return other.from_base(other.comparator().less(m_scalar));
+        return other.rless(*this);
     }
 
     Series Scalar::operator<=(Series const &other) const {
-        return other.from_base(other.comparator().less_equal(m_scalar));
+        return other.rless_equal(*this);
     }
 
     DataFrame Scalar::operator<=(DataFrame const &other) const {
-        return other.from_base(other.comparator().less_equal(m_scalar));
+        return other.rless_equal(*this);
+    }
+
+    bool Scalar::operator>(Scalar const &other) const {
+        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
+                {this->m_scalar, other.m_scalar}, "greater").value;
     }
 
     Series Scalar::operator>(Series const &other) const {
-        return other.from_base(other.comparator().greater(m_scalar));
+        return other.rgreater(*this);
     }
 
     DataFrame Scalar::operator>(DataFrame const &other) const {
-        return other.from_base(other.comparator().greater(m_scalar));
+        return other.rgreater(*this);
+    }
+
+    bool Scalar::operator>=(Scalar const &other) const {
+        return arrow_utils::call_compute_scalar_as<arrow::BooleanScalar>(
+                {this->m_scalar, other.m_scalar}, "greater_equal").value;
     }
 
     Series Scalar::operator>=(Series const &other) const {
-        return other.from_base(other.comparator().greater_equal(m_scalar));
+        return other.rgreater_equal(*this);
     }
 
     DataFrame Scalar::operator>=(DataFrame const &other) const {
-        return other.from_base(other.comparator().greater_equal(m_scalar));
+        return other.rgreater_equal(*this);
     }
 
-    DataFrame Scalar::operator||(DataFrame const &other) const {
-        return other.from_base(other.comparator().or_(m_scalar));
+    //--------------------------------------------------------------------------
+    // 11) Logical ops (and/or/xor)
+    //--------------------------------------------------------------------------
+    Scalar Scalar::operator&&(Scalar const &other) const {
+        return arrow::compute::And(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator&&(Series const &other) const {
+        return other.rand(*this);
     }
 
     DataFrame Scalar::operator&&(DataFrame const &other) const {
-        return other.from_base(other.comparator().and_(m_scalar));
+        return other.rand(*this);
+    }
+
+    Scalar Scalar::operator||(Scalar const &other) const {
+        return arrow::compute::Or(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator||(Series const &other) const {
+        return other.ror(*this);
+    }
+
+    DataFrame Scalar::operator||(DataFrame const &other) const {
+        return other.ror(*this);
+    }
+
+    Scalar Scalar::operator^(Scalar const &other) const {
+        return arrow::compute::Xor(m_scalar, other.m_scalar);
+    }
+
+    Series Scalar::operator^(Series const &other) const {
+        return other.rxor(*this);
     }
 
     DataFrame Scalar::operator^(DataFrame const &other) const {
-        return other.from_base(other.comparator().xor_(m_scalar));
+        return other.rxor(*this);
+    }
+
+    Scalar Scalar::operator!() const {
+        return arrow::compute::Invert(m_scalar);
     }
 
     // --- Template Method Definition ---
@@ -245,4 +303,20 @@ namespace epochframe {
     template arrow::ScalarPtr MakeScalar<>(bool const &value);
 
     template std::optional<bool> Scalar::value<bool>() const;
+
+    Scalar operator""_scalar(unsigned long long value) {
+        return Scalar(static_cast<int64_t>(value));
+    }
+
+    Scalar operator""_scalar(long double value) {
+        return Scalar(static_cast<double>(value));
+    }
+
+    Scalar operator""_uscalar(unsigned long long value) {
+        return Scalar(static_cast<uint64_t>(value));
+    }
+
+    Scalar operator""_scalar(const char* value, std::size_t N) {
+        return Scalar(std::string(value, N ));
+    }
 } // namespace epochframe

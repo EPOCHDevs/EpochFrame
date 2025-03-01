@@ -4,7 +4,6 @@
 
 #pragma once
 #include <optional>
-#include <array>
 #include <cinttypes>
 
 
@@ -22,4 +21,8 @@ namespace epochframe {
     };
 
     ResolvedIntegerSliceBound resolve_integer_slice(UnResolvedIntegerSliceBound const&, size_t length);
+
+    inline uint64_t resolve_integer_index(int64_t index, size_t length){
+        return index < 0 ? length + index : index;
+    }
 }

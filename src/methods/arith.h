@@ -109,9 +109,12 @@ namespace epochframe {
 
         TableOrArray log2() const { return apply("log2"); }
 
-        // NDFrame op NDFrame
         TableComponent logb(const TableComponent &otherData) const {
             return apply("logb", otherData);
+        }
+
+        TableOrArray rlogb(const arrow::Datum &other) const {
+            return rapply("logb", other);
         }
 
         //------------------------------------------------------------------------------
@@ -119,6 +122,14 @@ namespace epochframe {
         //------------------------------------------------------------------------------
         TableComponent bit_wise_and(const TableComponent &otherData) const {
             return apply("bit_wise_and", otherData);
+        }
+
+        TableOrArray bit_wise_and(const arrow::Datum &other) const {
+            return apply("bit_wise_and", other);
+        }
+
+        TableOrArray rbit_wise_and(const arrow::Datum &other) const {
+            return rapply("bit_wise_and", other);
         }
 
         TableOrArray bit_wise_not() const {
@@ -129,16 +140,48 @@ namespace epochframe {
             return apply("bit_wise_or", otherData);
         }
 
+        TableOrArray bit_wise_or(const arrow::Datum &other) const {
+            return apply("bit_wise_or", other);
+        }
+
+        TableOrArray rbit_wise_or(const arrow::Datum &other) const {
+            return rapply("bit_wise_or", other);
+        }
+
         TableComponent bit_wise_xor(const TableComponent &otherData) const {
             return apply("bit_wise_xor", otherData);
+        }
+
+        TableOrArray bit_wise_xor(const arrow::Datum &other) const {
+            return apply("bit_wise_xor", other);
+        }
+
+        TableOrArray rbit_wise_xor(const arrow::Datum &other) const {
+            return rapply("bit_wise_xor", other);
         }
 
         TableComponent shift_left(const TableComponent &otherData) const {
             return apply("shift_left", otherData);
         }
 
+        TableOrArray shift_left(const arrow::Datum &other) const {
+            return apply("shift_left", other);
+        }
+
+        TableOrArray rshift_left(const arrow::Datum &other) const {
+            return rapply("shift_left", other);
+        }
+
         TableComponent shift_right(const TableComponent &otherData) const {
             return apply("shift_right", otherData);
+        }
+
+        TableOrArray shift_right(const arrow::Datum &other) const {
+            return apply("shift_right", other);
+        }
+
+        TableOrArray rshift_right(const arrow::Datum &other) const {
+            return rapply("shift_right", other);
         }
 
         //------------------------------------------------------------------------------
@@ -179,6 +222,14 @@ namespace epochframe {
 
         TableComponent atan2(const TableComponent &otherData) const {
             return apply("atan2", otherData);
+        }
+
+        TableOrArray atan2(const arrow::Datum &other) const {
+            return apply("atan2", other);
+        }
+
+        TableOrArray ratan2(const arrow::Datum &other) const {
+            return rapply("atan2", other);
         }
 
         // Hyperbolic

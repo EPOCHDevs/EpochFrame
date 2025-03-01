@@ -31,33 +31,16 @@ namespace epochframe {
         take(arrow::ArrayPtr const &indices,
              arrow::compute::TakeOptions const &option) const;
 
-        // // containment
-        // TableComponent index_in(arrow::compute::SetLookupOptions const &options) const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "index_in", &options));
-        // }
+        // containment
+        TableOrArray index_in(arrow::ArrayPtr const &values) const {
+            return arrow_utils::call_compute_index_in(m_data.second, values);
+        }
 
-        // TableComponent is_in(arrow::compute::SetLookupOptions const &options) const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "is_in", &options));
-        // }
+        TableOrArray is_in(arrow::ArrayPtr const &values) const {
+            return arrow_utils::call_compute_is_in(m_data.second, values);
+        }
 
-        // TableComponent indices_nonzero() const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "indices_nonzero"));
-        // }
-
-        // // sorts and partitions
-
-        // TableComponent partition_nth_indices(arrow::compute::PartitionNthOptions const &options) const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "partition_nth_indices", &options));
-        // }
-
-        // TableComponent rank(arrow::compute::RankOptions const &options) const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "rank", &options));
-        // }
-
-        // TableComponent select_k_unstable(arrow::compute::SelectKOptions const &options) const {
-        //     return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "select_k_unstable", &options));
-        // }
-
+        // sorts and partitions
         TableComponent sort_index(bool place_na_last=true, bool ascending=true) const;
 
         TableComponent sort_values(std::vector<std::string> const& by, bool place_na_last=true, bool ascending=true) const;
@@ -98,9 +81,5 @@ namespace epochframe {
         // similar to if_else
         TableOrArray where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const;
 
-        // // associative transforms
-        // arrow::TablePtr unique() const {
-        //     return apply("unique");
-        // }
     };
 }
