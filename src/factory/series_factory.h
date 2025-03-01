@@ -3,11 +3,14 @@
 //
 
 #pragma once
-#include "epochframe/ndframe.h"
+#include "array_factory.h"
+#include "epochframe/series.h"
 
 
 namespace epochframe {
-    NDFrame make_series(arrow::ChunkedArrayPtr const &data, std::string const &name = "");
-
-    NDFrame make_series(IndexPtr const &index, arrow::ChunkedArrayPtr const &data, std::string const &name = "");
+    template<typename ColumnT>
+Series make_series(IndexPtr const &index, std::vector<ColumnT> const &data,
+                       std::optional<std::string> const &name={}) {
+        return Series(index, factory::array::make_array(data), name);
+    }
 }

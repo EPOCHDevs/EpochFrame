@@ -1,54 +1,201 @@
 //
 // Created by adesola on 2/13/25.
 //
-
 #pragma once
 
-#include <arrow/scalar.h>
 #include "aliases.h"
 #include <numeric>
+#include <optional>
+#include <type_traits>
+#include <string>
+
 
 namespace epochframe {
+
+    template<typename T>
+    requires std::is_scalar_v<T>
+    arrow::ScalarPtr MakeScalar(T const &value);
+
     class Scalar {
     public:
+        // ------------------------------------------------------------------------
+        // Default and non-template constructors
+        // ------------------------------------------------------------------------
         Scalar();
 
         explicit Scalar(const arrow::ScalarPtr &other);
 
+        explicit Scalar(std::string const &other);
+
+        // Template constructor for primitive types.
+        // (Definition is inline.)
         template<typename T>
         requires std::is_scalar_v<T>
-        explicit Scalar(T &&other): Scalar(arrow::MakeScalar(std::forward<T>(other))) {}
+        explicit Scalar(T &&other)
+                : Scalar(MakeScalar(std::forward<T>(other))) {}
 
-        [[nodiscard]] arrow::ScalarPtr value() const {
-            return m_scalar;
-        }
+        // ------------------------------------------------------------------------
+        // General Attributes
+        // ------------------------------------------------------------------------
+        [[nodiscard]] arrow::ScalarPtr value() const;
+
+        template<typename T>
+        requires std::is_scalar_v<T>
+        std::optional<T> value() const;
+
+        bool is_valid() const;
+
+        bool is_null() const;
+
+        bool is_type(arrow::DataTypePtr const &type) const;
+
+        arrow::DataTypePtr type() const;
+
+        std::string repr() const;
 
         //--------------------------------------------------------------------------
-        // 1) Compare ops
+        // 4) Basic Unary Ops
+        //--------------------------------------------------------------------------
+        Scalar abs() const;
+
+        Scalar operator-() const;
+
+        Scalar sign() const;
+
+        //--------------------------------------------------------------------------
+        // 5) Basic Arithmetic Ops
+        //--------------------------------------------------------------------------
+        Scalar operator+(Scalar const &other) const;
+
+         Series operator+(Series const&) const;
+
+        DataFrame operator+(DataFrame const&) const;
+
+        Scalar operator-(Scalar const &other) const;
+
+         Series operator-(Series const&) const;
+
+         DataFrame operator-(DataFrame const&) const;
+
+        Scalar operator*(Scalar const &other) const;
+
+         Series operator*(Series const&) const;
+
+         DataFrame operator*(DataFrame const&) const;
+
+        Scalar operator/(Scalar const &other) const;
+
+         Series operator/(Series const&) const;
+
+         DataFrame operator/(DataFrame const&) const;
+
+        //--------------------------------------------------------------------------
+        // 3) Power
+        //--------------------------------------------------------------------------
+
+        Series power(Series const&) const;
+
+        DataFrame power(DataFrame const&) const;
+
+        Series logb(Series const&) const;
+
+        DataFrame logb(DataFrame const&) const;
+
+        //--------------------------------------------------------------------------
+        // 10) Comparison ops
         //--------------------------------------------------------------------------
         bool operator==(Scalar const &other) const;
+
+        bool operator!=(Scalar const &other) const;
+
+        bool operator<(Scalar const &other) const;
+
+        Series operator<(Series const &other) const;
+
+        DataFrame operator<(DataFrame const &other) const;
+
+        bool operator<=(Scalar const &other) const;
+
+        Series operator<=(Series const &other) const;
+
+        DataFrame operator<=(DataFrame const &other) const;
+
+        bool operator>(Scalar const &other) const;
+
+        Series operator>(Series const &other) const;
+
+        DataFrame operator>(DataFrame const &other) const;
+
+        bool operator>=(Scalar const &other) const;
+
+        Series operator>=(Series const &other) const;
+
+        DataFrame operator>=(DataFrame const &other) const;
+
+        //--------------------------------------------------------------------------
+        // 11) Logical ops (and/or/xor)
+        //--------------------------------------------------------------------------
+
+        Scalar operator&&(Scalar const &other) const;
+
+        Series operator&&(Series const &other) const;
+
+        DataFrame operator&&(DataFrame const &other) const;
+
+        Scalar operator||(Scalar const &other) const;
+
+        Series operator||(Series const &other) const;
+
+        DataFrame operator||(DataFrame const &other) const;
+
+        Scalar operator^(Scalar const &other) const;
+
+        Series operator^(Series const &other) const;
+
+        DataFrame operator^(DataFrame const &other) const;
+
+        Scalar operator!() const;
 
         //--------------------------------------------------------------------------
         // 2) Serialization
         //--------------------------------------------------------------------------
         friend std::ostream &operator<<(std::ostream &os, Scalar const &x) {
-            return os << x.m_scalar->ToString();
-        }
-
-        //--------------------------------------------------------------------------
-        // 3) General Attributes
-        //--------------------------------------------------------------------------
-        template<typename T>
-        requires std::is_scalar_v<T>
-        std::optional<T> value() const {
-            auto scalar = std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ScalarType>(m_scalar);
-            return scalar ? std::make_optional(scalar->value) : std::nullopt;
+            return os << x.repr();
         }
 
     private:
         arrow::ScalarPtr m_scalar;
+
+        Scalar(arrow::Result<arrow::Datum> const &scalar);
     };
 
-//    const Scalar INF{std::numeric_limits<double>::infinity()};
-//    const Scalar NAN{std::numeric_limits<double>::quiet_NaN()};
-}
+    extern template arrow::ScalarPtr MakeScalar<>(uint64_t const &value);
+    extern template std::optional<uint64_t> Scalar::value<uint64_t>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(uint32_t const &value);
+    extern template std::optional<uint32_t> Scalar::value<uint32_t>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(int64_t const &value);
+    extern template std::optional<int64_t> Scalar::value<int64_t>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(int32_t const &value);
+    extern template std::optional<int32_t> Scalar::value<int32_t>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(double const &value);
+    extern template std::optional<double> Scalar::value<double>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(float const &value);
+    extern template std::optional<float> Scalar::value<float>() const;
+
+    extern template arrow::ScalarPtr MakeScalar<>(bool const &value);
+    extern template std::optional<bool> Scalar::value<bool>() const;
+
+    Scalar operator""_scalar(unsigned long long value);
+
+    Scalar operator""_scalar(long double value);
+
+    Scalar operator""_uscalar(unsigned long long value);
+
+    Scalar operator""_scalar(const char* value, std::size_t N);
+
+} // namespace epochframe

@@ -4,20 +4,23 @@
 
 #pragma once
 #include "method_base.h"
+#include "common/table_or_array.h"
 
 
 namespace epochframe {
     class Arithmetic : public MethodBase {
     public:
-        Arithmetic(TableComponent data)
-                : MethodBase(std::move(data)) {}
+        Arithmetic(const TableComponent& data)
+                : MethodBase(data) {}
 
         //------------------------------------------------------------------------------
         // 1) Basic unary ops
         //------------------------------------------------------------------------------
-        arrow::TablePtr abs()    const { return apply("abs"); }
-        [[nodiscard]] arrow::TablePtr negate() const { return apply("negate"); }
-        [[nodiscard]] arrow::TablePtr sign()   const { return apply("sign"); }
+        TableOrArray abs() const { return apply("abs"); }
+
+        [[nodiscard]] TableOrArray negate() const { return apply("negate"); }
+
+        [[nodiscard]] TableOrArray sign() const { return apply("sign"); }
 
         //------------------------------------------------------------------------------
         // 2) Basic arithmetic: + - * /, plus r* versions
@@ -26,10 +29,12 @@ namespace epochframe {
         [[nodiscard]] TableComponent add(const TableComponent &otherData) const {
             return apply("add", otherData);
         }
-        [[nodiscard]] arrow::TablePtr add(const Scalar &other) const {
+
+        [[nodiscard]] TableOrArray add(const arrow::Datum &other) const {
             return apply("add", other, /*lhs=*/true);
         }
-        [[nodiscard]] arrow::TablePtr radd(const Scalar &other) const {
+
+        [[nodiscard]] TableOrArray radd(const arrow::Datum &other) const {
             return rapply("add", other);
         }
 
@@ -37,10 +42,12 @@ namespace epochframe {
         TableComponent subtract(const TableComponent &otherData) const {
             return apply("subtract", otherData);
         }
-        arrow::TablePtr subtract(const Scalar &other) const {
+
+        TableOrArray subtract(const arrow::Datum &other) const {
             return apply("subtract", other, /*lhs=*/true);
         }
-        arrow::TablePtr rsubtract(const Scalar &other) const {
+
+        TableOrArray rsubtract(const arrow::Datum &other) const {
             return rapply("subtract", other);
         }
 
@@ -48,10 +55,12 @@ namespace epochframe {
         TableComponent multiply(const TableComponent &otherData) const {
             return apply("multiply", otherData);
         }
-        arrow::TablePtr multiply(const Scalar &other) const {
+
+        TableOrArray multiply(const arrow::Datum &other) const {
             return apply("multiply", other, /*lhs=*/true);
         }
-        arrow::TablePtr rmultiply(const Scalar &other) const {
+
+        TableOrArray rmultiply(const arrow::Datum &other) const {
             return rapply("multiply", other);
         }
 
@@ -59,41 +68,53 @@ namespace epochframe {
         TableComponent divide(const TableComponent &otherData) const {
             return apply("divide", otherData);
         }
-        arrow::TablePtr divide(const Scalar &other) const {
+
+        TableOrArray divide(const arrow::Datum &other) const {
             return apply("divide", other, /*lhs=*/true);
         }
-        arrow::TablePtr rdivide(const Scalar &other) const {
+
+        TableOrArray rdivide(const arrow::Datum &other) const {
             return rapply("divide", other);
         }
 
         //------------------------------------------------------------------------------
         // 3) Exponential, power
         //------------------------------------------------------------------------------
-        arrow::TablePtr exp()    const { return apply("exp"); }
-        arrow::TablePtr expm1()  const { return apply("expm1"); }
+        TableOrArray exp() const { return apply("exp"); }
+
+        TableOrArray expm1() const { return apply("expm1"); }
 
         TableComponent power(const TableComponent &otherData) const {
             return apply("power", otherData);
         }
-        arrow::TablePtr power(const Scalar &other) const {
+
+        [[nodiscard]] TableOrArray power(const arrow::Datum &other) const {
             return apply("power", other, /*lhs=*/true);
         }
-        arrow::TablePtr rpower(const Scalar &other) const {
+
+        [[nodiscard]] TableOrArray rpower(const arrow::Datum &other) const {
             return rapply("power", other);
         }
 
         //------------------------------------------------------------------------------
         // 4) Square roots, logs
         //------------------------------------------------------------------------------
-        arrow::TablePtr sqrt()  const { return apply("sqrt"); }
-        arrow::TablePtr ln()    const { return apply("ln"); }
-        arrow::TablePtr log10() const { return apply("log10"); }
-        arrow::TablePtr log1p() const { return apply("log1p"); }
-        arrow::TablePtr log2()  const { return apply("log2"); }
+        TableOrArray sqrt() const { return apply("sqrt"); }
 
-        // NDFrame op NDFrame
+        TableOrArray ln() const { return apply("ln"); }
+
+        TableOrArray log10() const { return apply("log10"); }
+
+        TableOrArray log1p() const { return apply("log1p"); }
+
+        TableOrArray log2() const { return apply("log2"); }
+
         TableComponent logb(const TableComponent &otherData) const {
             return apply("logb", otherData);
+        }
+
+        TableOrArray rlogb(const arrow::Datum &other) const {
+            return rapply("logb", other);
         }
 
         //------------------------------------------------------------------------------
@@ -102,79 +123,156 @@ namespace epochframe {
         TableComponent bit_wise_and(const TableComponent &otherData) const {
             return apply("bit_wise_and", otherData);
         }
-        arrow::TablePtr bit_wise_not() const {
+
+        TableOrArray bit_wise_and(const arrow::Datum &other) const {
+            return apply("bit_wise_and", other);
+        }
+
+        TableOrArray rbit_wise_and(const arrow::Datum &other) const {
+            return rapply("bit_wise_and", other);
+        }
+
+        TableOrArray bit_wise_not() const {
             return apply("bit_wise_not");
         }
+
         TableComponent bit_wise_or(const TableComponent &otherData) const {
             return apply("bit_wise_or", otherData);
         }
+
+        TableOrArray bit_wise_or(const arrow::Datum &other) const {
+            return apply("bit_wise_or", other);
+        }
+
+        TableOrArray rbit_wise_or(const arrow::Datum &other) const {
+            return rapply("bit_wise_or", other);
+        }
+
         TableComponent bit_wise_xor(const TableComponent &otherData) const {
             return apply("bit_wise_xor", otherData);
+        }
+
+        TableOrArray bit_wise_xor(const arrow::Datum &other) const {
+            return apply("bit_wise_xor", other);
+        }
+
+        TableOrArray rbit_wise_xor(const arrow::Datum &other) const {
+            return rapply("bit_wise_xor", other);
         }
 
         TableComponent shift_left(const TableComponent &otherData) const {
             return apply("shift_left", otherData);
         }
+
+        TableOrArray shift_left(const arrow::Datum &other) const {
+            return apply("shift_left", other);
+        }
+
+        TableOrArray rshift_left(const arrow::Datum &other) const {
+            return rapply("shift_left", other);
+        }
+
         TableComponent shift_right(const TableComponent &otherData) const {
             return apply("shift_right", otherData);
+        }
+
+        TableOrArray shift_right(const arrow::Datum &other) const {
+            return apply("shift_right", other);
+        }
+
+        TableOrArray rshift_right(const arrow::Datum &other) const {
+            return rapply("shift_right", other);
         }
 
         //------------------------------------------------------------------------------
         // 6) Rounding
         //------------------------------------------------------------------------------
-        arrow::TablePtr ceil()  const { return apply("ceil"); }
-        arrow::TablePtr floor() const { return apply("floor"); }
-        arrow::TablePtr trunc() const { return apply("trunc"); }
+        TableOrArray ceil() const { return apply("ceil"); }
 
-        arrow::TablePtr round(const arrow::compute::RoundOptions &options) const {
+        TableOrArray floor() const { return apply("floor"); }
+
+        TableOrArray trunc() const { return apply("trunc"); }
+
+        TableOrArray round(const arrow::compute::RoundOptions &options) const {
             return apply("round", &options);
         }
-        arrow::TablePtr round_to_multiple(const arrow::compute::RoundToMultipleOptions &options) const {
+
+        TableOrArray round_to_multiple(const arrow::compute::RoundToMultipleOptions &options) const {
             return apply("round_to_multiple", &options);
         }
-        arrow::TablePtr round_binary(const arrow::compute::RoundBinaryOptions &options) const {
+
+        TableOrArray round_binary(const arrow::compute::RoundBinaryOptions &options) const {
             return apply("round_binary", &options);
         }
 
         //------------------------------------------------------------------------------
         // 7) Trig functions
         //------------------------------------------------------------------------------
-        arrow::TablePtr cos()  const { return apply("cos"); }
-        arrow::TablePtr sin()  const { return apply("sin"); }
-        arrow::TablePtr tan()  const { return apply("tan"); }
-        arrow::TablePtr acos() const { return apply("acos"); }
-        arrow::TablePtr asin() const { return apply("asin"); }
-        arrow::TablePtr atan() const { return apply("atan"); }
+        TableOrArray cos() const { return apply("cos"); }
+
+        TableOrArray sin() const { return apply("sin"); }
+
+        TableOrArray tan() const { return apply("tan"); }
+
+        TableOrArray acos() const { return apply("acos"); }
+
+        TableOrArray asin() const { return apply("asin"); }
+
+        TableOrArray atan() const { return apply("atan"); }
 
         TableComponent atan2(const TableComponent &otherData) const {
             return apply("atan2", otherData);
         }
 
+        TableOrArray atan2(const arrow::Datum &other) const {
+            return apply("atan2", other);
+        }
+
+        TableOrArray ratan2(const arrow::Datum &other) const {
+            return rapply("atan2", other);
+        }
+
         // Hyperbolic
-        arrow::TablePtr sinh()  const { return apply("sinh"); }
-        arrow::TablePtr cosh()  const { return apply("cosh"); }
-        arrow::TablePtr tanh()  const { return apply("tanh"); }
-        arrow::TablePtr acosh() const { return apply("acosh"); }
-        arrow::TablePtr asinh() const { return apply("asinh"); }
-        arrow::TablePtr atanh() const { return apply("atanh"); }
+        TableOrArray sinh() const { return apply("sinh"); }
+
+        TableOrArray cosh() const { return apply("cosh"); }
+
+        TableOrArray tanh() const { return apply("tanh"); }
+
+        TableOrArray acosh() const { return apply("acosh"); }
+
+        TableOrArray asinh() const { return apply("asinh"); }
+
+        TableOrArray atanh() const { return apply("atanh"); }
 
         //------------------------------------------------------------------------------
         // 8) Cumulative
         //------------------------------------------------------------------------------
-        [[nodiscard]] arrow::TablePtr cumulative_sum(arrow::compute::CumulativeOptions const &options) const {
+        [[nodiscard]] TableOrArray cumulative_sum(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_sum", &options);
         }
-        [[nodiscard]] arrow::TablePtr cumulative_prod(arrow::compute::CumulativeOptions const &options) const {
+
+        [[nodiscard]] TableOrArray cumulative_prod(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_prod", &options);
         }
-        [[nodiscard]] arrow::TablePtr cumulative_max(arrow::compute::CumulativeOptions const &options) const {
+
+        [[nodiscard]] TableOrArray cumulative_max(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_max", &options);
         }
-        [[nodiscard]] arrow::TablePtr cumulative_min(arrow::compute::CumulativeOptions const &options) const {
+
+        [[nodiscard]] TableOrArray cumulative_min(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_min", &options);
         }
-        arrow::TablePtr cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
+
+        [[nodiscard]] TableOrArray cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_mean", &options);
+        }
+
+        //------------------------------------------------------------------------------
+        // 8) Pairwise
+        //------------------------------------------------------------------------------
+        [[nodiscard]] TableOrArray  pairwise_diff(arrow::compute::PairwiseOptions const &options) const {
+            return apply("pairwise_diff", &options);
         }
     };
 }

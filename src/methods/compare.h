@@ -10,7 +10,7 @@ namespace epochframe {
     class Comparison : public MethodBase {
 
     public:
-        explicit Comparison(TableComponent data): MethodBase(data) {}
+        explicit Comparison(TableComponent const& data): MethodBase(data) {}
 
         //==================
         // Comparison ops
@@ -19,12 +19,12 @@ namespace epochframe {
             return apply("equal", other);
         }
 
-        arrow::TablePtr equal(const Scalar &other) const {
+        TableOrArray equal(const arrow::Datum &other) const {
             // NDFrame op scalar
             return apply("equal", other, true);
         }
 
-        arrow::TablePtr requal(const Scalar &other) const {
+        TableOrArray requal(const arrow::Datum &other) const {
             // scalar op NDFrame
             return rapply("equal", other);
         }
@@ -33,11 +33,11 @@ namespace epochframe {
             return apply("not_equal", other);
         }
 
-        arrow::TablePtr not_equal(const Scalar &other) const {
+        TableOrArray not_equal(const arrow::Datum &other) const {
             return apply("not_equal", other, true);
         }
 
-        arrow::TablePtr rnot_equal(const Scalar &other) const {
+        TableOrArray rnot_equal(const arrow::Datum &other) const {
             return rapply("not_equal", other);
         }
 
@@ -45,11 +45,11 @@ namespace epochframe {
             return apply("less", other);
         }
 
-        arrow::TablePtr less(const Scalar &other) const {
+        TableOrArray less(const arrow::Datum &other) const {
             return apply("less", other, true);
         }
 
-        arrow::TablePtr rless(const Scalar &other) const {
+        TableOrArray rless(const arrow::Datum &other) const {
             return rapply("less", other);
         }
 
@@ -57,11 +57,11 @@ namespace epochframe {
             return apply("less_equal", other);
         }
 
-        arrow::TablePtr less_equal(const Scalar &other) const {
+        TableOrArray less_equal(const arrow::Datum &other) const {
             return apply("less_equal", other, true);
         }
 
-        arrow::TablePtr rless_equal(const Scalar &other) const {
+        TableOrArray rless_equal(const arrow::Datum &other) const {
             return rapply("less_equal", other);
         }
 
@@ -69,11 +69,11 @@ namespace epochframe {
             return apply("greater", other);
         }
 
-        arrow::TablePtr greater(const Scalar &other) const {
+        TableOrArray greater(const arrow::Datum &other) const {
             return apply("greater", other, true);
         }
 
-        arrow::TablePtr rgreater(const Scalar &other) const {
+        TableOrArray rgreater(const arrow::Datum &other) const {
             return rapply("greater", other);
         }
 
@@ -81,11 +81,11 @@ namespace epochframe {
             return apply("greater_equal", other);
         }
 
-        arrow::TablePtr greater_equal(const Scalar &other) const {
+        TableOrArray greater_equal(const arrow::Datum &other) const {
             return apply("greater_equal", other, true);
         }
 
-        arrow::TablePtr rgreater_equal(const Scalar &other) const {
+        TableOrArray rgreater_equal(const arrow::Datum &other) const {
             return rapply("greater_equal", other);
         }
 
@@ -96,11 +96,11 @@ namespace epochframe {
             return apply("and", other);
         }
 
-        arrow::TablePtr and_(const Scalar &other) const {
+        TableOrArray and_(const arrow::Datum &other) const {
             return apply("and", other, true);
         }
 
-        arrow::TablePtr rand_(const Scalar &other) const {
+        TableOrArray rand_(const arrow::Datum &other) const {
             return rapply("and", other);
         }
 
@@ -120,11 +120,11 @@ namespace epochframe {
             return apply("or", other);
         }
 
-        arrow::TablePtr or_(const Scalar &other) const {
+        TableOrArray or_(const arrow::Datum &other) const {
             return apply("or", other, true);
         }
 
-        arrow::TablePtr ror_(const Scalar &other) const {
+        TableOrArray ror_(const arrow::Datum &other) const {
             return rapply("or", other);
         }
 
@@ -136,19 +136,16 @@ namespace epochframe {
             return apply("xor", other);
         }
 
-        arrow::TablePtr xor_(const Scalar &other) const {
+        TableOrArray xor_(const arrow::Datum &other) const {
             return apply("xor", other, true);
         }
 
-        arrow::TablePtr rxor_(const Scalar &other) const {
+        TableOrArray rxor_(const arrow::Datum &other) const {
             return rapply("xor", other);
         }
 
-        arrow::TablePtr invert() const {
-            return apply("invert"); // or a simpler apply("invert") if you like
+        TableOrArray invert() const {
+            return apply("invert");
         }
-
-    private:
-        TableComponent m_data;
     };
 }

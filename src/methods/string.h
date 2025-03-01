@@ -3,14 +3,15 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include <arrow/compute/api.h>
+#include "method_base.h"
+#include "common/table_or_array.h"
+
 
 namespace epochframe {
-    class StringOperations {
+    class StringOperations : public MethodBase {
 
     public:
-        StringOperations(TableComponent data);
+        StringOperations(const TableComponent& data) : MethodBase(data) {}
 
         // String Predicates
         arrow::TablePtr ascii_is_alnum() const;
@@ -109,8 +110,5 @@ namespace epochframe {
 
         arrow::TablePtr index_in(arrow::compute::SetLookupOptions const&) const;
         arrow::TablePtr is_in(arrow::compute::SetLookupOptions const&) const;
-
-    private:
-        TableComponent m_table;
     };
 }

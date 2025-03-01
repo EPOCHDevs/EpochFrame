@@ -3,28 +3,34 @@
 //
 
 #pragma once
+#include "common/table_or_array.h"
 #include "epochframe/aliases.h"
 #include <arrow/compute/api.h>
+#include <utility>
 
 
 namespace epochframe {
     class MethodBase {
 
     public:
-        MethodBase(TableComponent const &data): m_data(data) {}
+        explicit MethodBase(const TableComponent&  data);
 
     protected:
-        arrow::TablePtr apply(std::string const &op, const arrow::compute::FunctionOptions *options = nullptr) const;
+        [[nodiscard]] TableOrArray apply(std::string const &op, const arrow::compute::FunctionOptions *options = nullptr) const;
 
-        TableComponent apply(std::string const &op, const TableComponent &otherData) const;
+        [[nodiscard]] TableComponent apply(std::string const &op, const TableComponent &otherData) const;
 
-        arrow::TablePtr apply(std::string const &op, const Scalar &other, bool lhs = true) const;
+        [[nodiscard]] TableOrArray apply(std::string const &op, const arrow::Datum &other, bool lhs = true) const;
 
-        arrow::TablePtr rapply(std::string const &op, const Scalar &other) const {
-            return apply(op, other, false);
-        }
+        [[nodiscard]] TableOrArray rapply(std::string const &op, const arrow::Datum &other) const;
 
-    private:
-        TableComponent m_data;
+        arrow::TablePtr merge_index() const;
+
+        TableComponent unzip_index(arrow::TablePtr const&) const;
+
+    protected:
+        const TableComponent& m_data;
+
+        static constexpr const char * RESERVED_INDEX_NAME = "__RESERVED_INDEX__";
     };
 }
