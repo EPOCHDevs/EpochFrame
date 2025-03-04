@@ -40,4 +40,25 @@ namespace epochframe {
         return make_dataframe(index,
                               arrow::Table::Make(arrow::schema(fields), columns));
     }
+
+    DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<Scalar>> const &data,
+                             arrow::FieldVector const &fields) {
+        arrow::ChunkedArrayVector columns;
+        for (auto const &[column, field]: ranges::v3::view::zip(data, fields)) {
+            auto columnBuilder = MakeBuilder(field->type()).MoveValueUnsafe();
+            for (auto const& item: column) {
+                if (item.is_null()) {
+                    AssertStatusIsOk(columnBuilder->AppendNull());
+                }
+                else {
+                    AssertStatusIsOk(columnBuilder->AppendScalar(*item.value()));
+                }
+            }
+            arrow::ArrayPtr arr;
+            AssertStatusIsOk(columnBuilder->Finish(&arr));
+            columns.push_back(factory::array::make_array(arr));
+        }
+        return make_dataframe(index,
+                              arrow::Table::Make(schema(fields), columns));
+    }
 }

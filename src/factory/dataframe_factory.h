@@ -15,8 +15,12 @@ namespace epochframe {
     DataFrame make_dataframe(arrow::TablePtr const &data);
 
     DataFrame make_dataframe(IndexPtr const &index, arrow::TablePtr const &data);
+
    DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<Scalar>> const &data,
                           std::vector<std::string> const &columnNames, arrow::DataTypePtr const &type);
+                            
+    DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<Scalar>> const &data,
+                             arrow::FieldVector const &fields);
 
     template<typename ColumnT>
     DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<ColumnT>> const &data,

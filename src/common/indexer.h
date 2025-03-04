@@ -7,5 +7,6 @@
 
 
 namespace epochframe {
-    using Indexer = std::map<Scalar, int64_t>;
+    using MonotonicIndexer = std::map<Scalar, int64_t>;
+    using NonMonotonicIndexer = std::unordered_map<Scalar, int64_t, ScalarHash>;
 }

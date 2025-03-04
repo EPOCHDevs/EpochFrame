@@ -127,13 +127,13 @@ namespace epochframe {
 
     TableComponent MethodBase::unzip_index(arrow::TablePtr const &table) const {
         auto field_index = table->schema()->GetFieldIndex(RESERVED_INDEX_NAME);
-        AssertFalseFromStream(field_index == -1, "table schema can not reference index name");
+        AssertFalseFromStream(field_index == -1, "table schema can not reference index name\n" + table->ToString());
 
-        auto newIndex = table->column(field_index);
+        auto newIndex = factory::array::make_contiguous_array(table->column(field_index));
         auto newTable = table->RemoveColumn(field_index);
         AssertWithTraceFromStream(newTable.ok(), "unzip index failed");
 
-        return TableComponent{std::make_shared<ArrowIndex>(newIndex), TableOrArray{newTable.MoveValueUnsafe()}};
+        return TableComponent{m_data.first->Make(newIndex), TableOrArray{newTable.MoveValueUnsafe()}};
     }
 
     TableOrArray MethodBase::rapply(std::string const &op, const arrow::Datum &other) const {

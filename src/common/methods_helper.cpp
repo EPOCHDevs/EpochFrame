@@ -77,11 +77,15 @@ namespace epochframe {
 
         auto merged_index = arrow_utils::call_compute_array({l_index, r_index}, "coalesce");
 
+        if (arrow::is_binary_like(merged_index->type()->id()) || arrow::is_nested(merged_index->type()->id())) {
+            return {factory::index::make_index(merged_index, std::nullopt, index_name), table };
+        }
+
         auto sort_indices = arrow_utils::call_compute_array({merged_index}, "sort_indices");
         auto sorted_index = AssertArrayResultIsOk(arrow::compute::Take(merged_index, sort_indices));
         auto sorted_table = AssertTableResultIsOk(arrow::compute::Take(table, sort_indices));
 
-        return {std::make_shared<ArrowIndex>(sorted_index, index_name), sorted_table};
+        return {factory::index::make_index(sorted_index, MonotonicDirection::Increasing, index_name), sorted_table };
     }
 
     TableOrArray collect_table_or_array(arrow::TablePtr const &table,
@@ -337,8 +341,8 @@ namespace epochframe {
         AssertWithTraceFromStream(indexField != -1, "Failed to find index");
 
         auto index = merged->column(indexField);
-        return DataFrame(std::make_shared<ArrowIndex>(index),
-                       AssertResultIsOk(merged->RemoveColumn(indexField)));
+        return DataFrame(factory::index::make_index(index, std::nullopt, ""),
+                         AssertResultIsOk(merged->RemoveColumn(indexField)));
     }
 
     DataFrame concat(const ConcatOptions &options) {

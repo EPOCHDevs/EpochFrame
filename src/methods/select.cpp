@@ -14,17 +14,22 @@ namespace epochframe {
     TableComponent
     Selections::filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const {
         return TableComponent{m_data.first->filter(AssertContiguousArrayResultIsOk(_filter)),
-            arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{_filter}}, 
+            arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{_filter}},
             fmt::format("{}filter", m_data.second.is_table() ? "" : "array_"), &option)};
     }
 
     TableComponent
     Selections::take(arrow::ArrayPtr const &indices,
             arrow::compute::TakeOptions const &option) const {
-            auto integer_indexes = m_data.first->loc(indices);
-            return TableComponent{m_data.first->take(PtrCast<arrow::UInt64Array>(integer_indexes)),
-            arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{integer_indexes}}, 
-            fmt::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
+        return itake(m_data.first->loc(indices), option);
+    }
+
+    TableComponent
+    Selections::itake(arrow::ArrayPtr const &integer_indexes,
+        arrow::compute::TakeOptions const &option) const {
+        return TableComponent{m_data.first->take(PtrCast<arrow::UInt64Array>(integer_indexes)),
+        arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{integer_indexes}},
+        fmt::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
     }
 
     TableComponent Selections::drop_null(epochframe::DropMethod how,

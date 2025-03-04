@@ -31,6 +31,10 @@ namespace epochframe {
         take(arrow::ArrayPtr const &indices,
              arrow::compute::TakeOptions const &option) const;
 
+        TableComponent
+        itake(arrow::ArrayPtr const &indices,
+            arrow::compute::TakeOptions const &option) const;
+
         // containment
         TableOrArray index_in(arrow::ArrayPtr const &values) const {
             return arrow_utils::call_compute_index_in(m_data.second, values);

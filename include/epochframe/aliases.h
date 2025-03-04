@@ -65,5 +65,4 @@ namespace epochframe {
     using LocColArgumentVariant = std::variant<StringVector, arrow::ArrayPtr, StringVectorCallable>;
     using WhereConditionVariant = std::variant<Series, DataFrame, arrow::ArrayPtr, DataFrameToSeriesCallable, DataFrameToDataFrameCallable>;
     using WhereOtherVariant = std::variant<Scalar, DataFrame, DataFrameToDataFrameCallable>;
-
 } // namespace epochframe

@@ -8,6 +8,7 @@
 #include <optional>
 #include <type_traits>
 #include <string>
+#include <arrow/scalar.h>
 
 
 namespace epochframe {
@@ -15,6 +16,8 @@ namespace epochframe {
     template<typename T>
     requires std::is_scalar_v<T>
     arrow::ScalarPtr MakeScalar(T const &value);
+
+    arrow::ScalarPtr MakeStructScalar(std::unordered_map<std::string, Scalar> const &other);
 
     class Scalar {
     public:
@@ -26,6 +29,8 @@ namespace epochframe {
         explicit Scalar(const arrow::ScalarPtr &other);
 
         explicit Scalar(std::string const &other);
+
+        explicit Scalar(std::vector<std::pair<std::string, Scalar>> const &other);
 
         // Template constructor for primitive types.
         // (Definition is inline.)
@@ -40,7 +45,7 @@ namespace epochframe {
         [[nodiscard]] arrow::ScalarPtr value() const;
 
         template<typename T>
-        requires std::is_scalar_v<T>
+        requires (std::is_scalar_v<T> || std::is_same_v<T, std::string>)
         std::optional<T> value() const;
 
         bool is_valid() const;
@@ -169,6 +174,14 @@ namespace epochframe {
         Scalar(arrow::Result<arrow::Datum> const &scalar);
     };
 
+    struct ScalarHash {
+        size_t operator()(Scalar const &x) const {
+            return x.value()->hash();
+        }
+    };
+    template<typename T>
+    using ScalarMapping = std::unordered_map<Scalar, T, ScalarHash>;
+
     extern template arrow::ScalarPtr MakeScalar<>(uint64_t const &value);
     extern template std::optional<uint64_t> Scalar::value<uint64_t>() const;
 
@@ -190,6 +203,8 @@ namespace epochframe {
     extern template arrow::ScalarPtr MakeScalar<>(bool const &value);
     extern template std::optional<bool> Scalar::value<bool>() const;
 
+    extern template std::optional<std::string> Scalar::value<std::string>() const;
+
     Scalar operator""_scalar(unsigned long long value);
 
     Scalar operator""_scalar(long double value);
@@ -197,5 +212,4 @@ namespace epochframe {
     Scalar operator""_uscalar(unsigned long long value);
 
     Scalar operator""_scalar(const char* value, std::size_t N);
-
 } // namespace epochframe

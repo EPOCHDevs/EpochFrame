@@ -27,6 +27,21 @@ namespace epochframe {
         return arrow::MakeScalar(value);
     }
 
+    arrow::ScalarPtr MakeStructScalar(std::vector<std::pair<std::string, Scalar>> const &other) {
+        std::vector<arrow::ScalarPtr> fields;
+        StringVector field_names;
+        arrow::StructScalar::ValueType values;
+        for (auto const &[key, value] : other) {
+            field_names.push_back(key);
+            values.push_back(value.value());
+        }
+        auto result = arrow::StructScalar::Make(values, field_names);
+        if (result.ok()) {
+            return result.ValueOrDie();
+        }
+        throw std::runtime_error("Failed to make struct scalar" + result.status().message());
+    }
+
     // --- Constructors ---
 
     Scalar::Scalar()
@@ -39,6 +54,9 @@ namespace epochframe {
 
     Scalar::Scalar(std::string const &other)
             : Scalar(arrow::MakeScalar(other)) {}
+
+    Scalar::Scalar(std::vector<std::pair<std::string, Scalar>> const &other)
+            : Scalar(MakeStructScalar(other)) {}
 
     Scalar::Scalar(arrow::Result<arrow::Datum> const &scalar):m_scalar(AssertScalarResultIsOk(scalar)) {}
 
@@ -166,7 +184,10 @@ namespace epochframe {
         }
 
         // Call Arrow’s "equal" function and extract the Boolean value.
-        auto result = arrow::compute::CallFunction("equal", {this->m_scalar, other.m_scalar});
+        const auto result = arrow::compute::CallFunction("equal", {this->m_scalar, other.m_scalar});
+        if (result.status().IsNotImplemented()) {
+            return m_scalar->Equals(*other.m_scalar);
+        }
         return AssertCastScalarResultIsOk<arrow::BooleanScalar>(result).value;
     }
 
@@ -268,11 +289,15 @@ namespace epochframe {
     // --- Template Method Definition ---
 
     template<typename T>
-    requires std::is_scalar_v<T>
+    requires (std::is_scalar_v<T> || std::is_same_v<T, std::string>)
     std::optional<T> Scalar::value() const {
-        // Attempt to cast the internal Arrow scalar to the appropriate type.
-        auto casted = std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ScalarType>(m_scalar);
-        return casted ? std::make_optional(casted->value) : std::nullopt;
+        if constexpr (std::is_same_v<T, std::string>) { 
+            return std::make_optional(m_scalar->ToString());
+        } else {
+            // Attempt to cast the internal Arrow scalar to the appropriate type.
+            auto casted = std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ScalarType>(m_scalar);
+            return casted ? std::make_optional(casted->value) : std::nullopt;
+        }
     }
 
     // --- Explicit Template Instantiations ---
@@ -303,6 +328,8 @@ namespace epochframe {
     template arrow::ScalarPtr MakeScalar<>(bool const &value);
 
     template std::optional<bool> Scalar::value<bool>() const;
+
+    template std::optional<std::string> Scalar::value<std::string>() const;
 
     Scalar operator""_scalar(unsigned long long value) {
         return Scalar(static_cast<int64_t>(value));

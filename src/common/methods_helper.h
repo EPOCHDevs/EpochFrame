@@ -9,6 +9,8 @@
 #include <epoch_lab_shared/macros.h>
 #include "common/exceptions.h"
 #include <optional>
+#include <factory/array_factory.h>
+
 #include "epochframe/dataframe.h"
 
 namespace epochframe {
@@ -130,4 +132,44 @@ namespace epochframe {
     arrow::TablePtr make_table_from_array_schema(arrow::Table const& table, arrow::ChunkedArrayPtr const &array);
 
     arrow::ChunkedArrayPtr get_array(arrow::Table const &table, std::string const &name, arrow::Scalar const &default_value);
+
+    template <typename T>
+    std::vector<arrow::Datum> make_datum_vector(std::vector<T> const& v) {
+        std::vector<arrow::Datum> result(v.size());
+        std::ranges::transform(v, result.begin(), [](auto const &s) {
+            return arrow::Datum(s);
+        });
+        return result;
+    }
+
+    inline std::vector<arrow::Datum> make_datum_cont_array(arrow::ChunkedArrayVector const& v) {
+        std::vector<arrow::Datum> result(v.size());
+        std::ranges::transform(v, result.begin(), [](auto const &s) {
+            return arrow::Datum(factory::array::make_contiguous_array(s));
+        });
+        return result;
+    }
+
+    template <typename T>
+    std::vector<std::shared_ptr<T>> from_datum_vector(std::vector<arrow::Datum> const& v) {
+        std::vector<std::shared_ptr<T>> result(v.size());
+        std::ranges::transform(v, result.begin(), [](arrow::Datum const &s) {
+            if constexpr (std::is_same_v<T, arrow::Table>) {
+                return s.table();
+            }
+            if constexpr (std::is_same_v<T, arrow::ChunkedArray>) {
+                return s.chunked_array();
+            }
+            if constexpr (std::is_same_v<T, arrow::Array>) {
+                return s.make_array();
+            }
+
+            if constexpr (std::is_same_v<T, arrow::Scalar>) {
+                return s.scalar();
+            }
+
+            throw std::runtime_error("invalid type for from_datum_vector ");
+        });
+        return result;
+    }
 }
