@@ -2,10 +2,11 @@
 .idea
 .vscode
 
+
 # Local dev files
 .env
 
 # Generated files
 cmake-build-*
-
+build
 *.txt
