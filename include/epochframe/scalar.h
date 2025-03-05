@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <string>
 #include <arrow/scalar.h>
+#include <methods/temporal.h>
 
 
 namespace epochframe {
@@ -166,6 +167,10 @@ namespace epochframe {
         //--------------------------------------------------------------------------
         friend std::ostream &operator<<(std::ostream &os, Scalar const &x) {
             return os << x.repr();
+        }
+
+        [[nodiscard]] TemporalOperation<false> dt() const {
+            return TemporalOperation<false>(m_scalar);
         }
 
     private:

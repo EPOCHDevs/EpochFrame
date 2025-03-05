@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <factory/array_factory.h>
+
 #include "ndframe/ndframe.h"
 
 
@@ -104,6 +106,10 @@ namespace epochframe {
         // 13) Selection & Transform
         //--------------------------------------------------------------------------
         arrow::ArrayPtr unique() const;
+
+        [[nodiscard]] TemporalOperation<true> dt() const {
+            return TemporalOperation<true>(factory::array::make_contiguous_array(m_table));
+        }
 
         using NDFrame::from_base;
 

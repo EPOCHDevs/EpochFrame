@@ -12,7 +12,7 @@ namespace epochframe {
         StructOperation(arrow::ArrayPtr const&);
 
         // structural transforms
-        arrow::RecordBatchPtr list_value_length() const;
+        arrow::TablePtr list_value_length() const;
         arrow::ArrayPtr make_struct() const;
 
         arrow::ArrayPtr list_element(arrow::ArrayPtr const&) const;

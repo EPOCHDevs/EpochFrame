@@ -11,6 +11,7 @@
 #include "common/arrow_agg.h"
 #include "factory/array_factory.h"
 #include "common/indexer.h"
+#include "methods/temporal.h"
 
 
 namespace epochframe {
@@ -215,6 +216,11 @@ namespace epochframe {
         }
 
         arrow::TablePtr to_table(const std::optional<std::string> &name) const final;
+
+        // Temporal Operation
+        [[nodiscard]] TemporalOperation<true> dt() const {
+            return TemporalOperation<true>(m_array);
+        }
 
     private:
         const arrow::ArrayPtr m_array;
