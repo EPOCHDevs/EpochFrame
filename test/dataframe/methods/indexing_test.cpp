@@ -77,14 +77,14 @@ TEST_CASE("Indexing Test") {
 
         std::vector<TestCase> params;
         params.push_back(TestCase{
-            .title = "Positive Index",
+            .title = "Positive IIndex",
             .frame = default_frame,
             .input = std::make_tuple(2, "B"),
             .output = Scalar{30}
         });
 
         params.push_back(TestCase{
-        .title = "Negative Index",
+        .title = "Negative IIndex",
             .frame = default_frame,
         .input = std::make_tuple(-2, "A"),
         .output = Scalar{4}
@@ -465,7 +465,7 @@ TEST_CASE("Indexing Test") {
             }
         }
 
-        SECTION("loc - Selecting with a New Index") {
+        SECTION("loc - Selecting with a New IIndex") {
             SECTION("selecting with index") {
                 auto new_index = from_range(1, 3);
 

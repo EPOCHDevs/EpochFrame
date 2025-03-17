@@ -9,8 +9,7 @@
 #include <type_traits>
 #include <string>
 #include <arrow/scalar.h>
-#include <methods/temporal.h>
-
+#include "calendar/day_of_week.h"
 
 namespace epochframe {
 
@@ -28,6 +27,10 @@ namespace epochframe {
         Scalar();
 
         explicit Scalar(const arrow::ScalarPtr &other);
+
+        explicit Scalar(const arrow::TimestampScalar &other);
+
+        explicit Scalar(const struct DateTime &other);
 
         explicit Scalar(std::string const &other);
 
@@ -169,9 +172,42 @@ namespace epochframe {
             return os << x.repr();
         }
 
-        [[nodiscard]] TemporalOperation<false> dt() const {
-            return TemporalOperation<false>(m_scalar);
+        Scalar cast(arrow::DataTypePtr const &type) const;
+
+        Scalar cast_int64() const {
+            return cast(arrow::int64());
         }
+
+        Scalar cast_int32() const {
+            return cast(arrow::int32());
+        }
+
+        int64_t get_month_interval() const;
+
+        Scalar cast_uint64() const {
+            return cast(arrow::uint64());
+        }
+
+        Scalar cast_uint32() const {
+            return cast(arrow::uint32());
+        }
+
+        Scalar cast_double() const {
+            return cast(arrow::float64());
+        }
+
+        Scalar cast_float() const {
+            return cast(arrow::float32());
+        }
+
+        [[nodiscard]] TemporalOperation<false> dt() const;
+
+        [[nodiscard]] arrow::TimestampScalar timestamp(std::string const &format="%Y-%m-%d %H:%M:%S") const;
+
+        DateTime to_datetime(std::string const &format="%Y-%m-%d %H:%M:%S") const;
+        DateTime to_date(std::string const &format="%Y-%m-%d") const;
+
+        [[nodiscard]] EpochDayOfWeek weekday() const;
 
     private:
         arrow::ScalarPtr m_scalar;
@@ -217,4 +253,8 @@ namespace epochframe {
     Scalar operator""_uscalar(unsigned long long value);
 
     Scalar operator""_scalar(const char* value, std::size_t N);
+
+    class TimeDelta operator-(arrow::TimestampScalar const &a, arrow::TimestampScalar const &b);
+    arrow::TimestampScalar operator+(arrow::TimestampScalar const &a, TimeDelta const &b);
+    arrow::TimestampScalar operator-(arrow::TimestampScalar const &a, TimeDelta const &b);
 } // namespace epochframe

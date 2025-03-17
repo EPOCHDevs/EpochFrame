@@ -11,10 +11,12 @@
 #include "methods/arith.h"
 #include "common/methods_helper.h"
 #include "epochframe/series.h"
+#include "epochframe/common.h"
 #include "factory/index_factory.h"
 #include "factory/array_factory.h"
 #include <tabulate/table.hpp>
 #include "methods/groupby.h"
+#include "common/arrow_compute_utils.h"
 
 
 namespace epochframe {
@@ -251,7 +253,7 @@ namespace epochframe {
 
             table.add_row(header);
             for (int64_t i = 0; i < df.m_index->size(); ++i) {
-                auto index = df.m_index->array()->GetScalar(i).MoveValueUnsafe()->ToString();
+                auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();
                 tabulate::Table::Row_t row{index};
                 for (auto const &col : df.m_table->ColumnNames()) {
                     row.push_back(get_column_by_name(*df.m_table, col)
@@ -264,7 +266,7 @@ namespace epochframe {
             os << table;
         }catch (const std::exception &e) {
             os << "Failed to print table: " << e.what() << std::endl;
-            os << "index\n" << df.m_index->array()->ToString() << std::endl;
+            os << "index\n" << df.m_index->array().value()->ToString() << std::endl;
             os << "table:\n" << df.m_table->ToString() << std::endl;
         }
         return os;
@@ -292,5 +294,23 @@ namespace epochframe {
 
     GroupByApply DataFrame::group_by_apply(arrow::ChunkedArrayVector const &by, bool groupKeys) const {
         return factory::group_by::make_apply_by_array(*this, by, groupKeys);
+    }
+
+    DataFrame DataFrame::apply(const std::function<Series(const Series&)>& func, AxisType axis) const {
+        if (axis == AxisType::Row) {
+            std::vector<FrameOrSeries> rows;
+            for (int64_t i = 0; i < m_table->num_rows(); ++i) {
+                rows.emplace_back(func(iloc(i)).transpose());
+            }
+            return concat(ConcatOptions{.frames = rows, .axis = AxisType::Row, .ignore_index = true}).reindex(m_index);
+        }
+        else {
+            std::vector<FrameOrSeries> columns(num_cols());
+            std::ranges::transform(column_names(), columns.begin(), [&](const std::string &name) {
+                auto column = get_column_by_name(*m_table, name);
+                return FrameOrSeries(func(Series(m_index, column, name)));
+            });
+            return concat(ConcatOptions{.frames = columns, .axis = AxisType::Column, .ignore_index = true}).reindex(m_index);
+        }
     }
 } // namespace epochframe

@@ -109,7 +109,7 @@ TEST_CASE("putmask") {
 
     REQUIRE(replaced->size() == idx->size());
 
-    auto replacedArr = std::static_pointer_cast<ArrowType>(replaced->array());
+    auto replacedArr = std::static_pointer_cast<ArrowType>(replaced->array().value());
     REQUIRE(replacedArr->Value(1) == static_cast<CType>(999));
     REQUIRE(replacedArr->Value(3) == static_cast<CType>(999));
 }

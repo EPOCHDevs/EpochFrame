@@ -17,6 +17,7 @@
 #include "common/table_or_array.h"
 #include "common/methods_helper.h"
 
+
 namespace epochframe {
     // ------------------------------------------------------------------------
     // Constructors / Destructor / Assignment
@@ -29,6 +30,7 @@ namespace epochframe {
             Series(index, AssertArrayResultIsOk(arrow::ChunkedArray::Make({array})), name) {}
 
     Series::Series(arrow::ArrayPtr const &data, std::optional<std::string> const &name):Series(factory::index::from_range(0, data->length()), data, name) {}
+    Series::Series(arrow::ScalarPtr const &data, IndexPtr const& index, std::optional<std::string> const &name):Series(index, AssertResultIsOk(arrow::MakeArrayFromScalar(*data, index->size())), name) {}
 
     Series::Series(arrow::ChunkedArrayPtr const &data, std::optional<std::string> const &name):Series(factory::index::from_range(0, data->length()), data, name) {}
 
@@ -41,6 +43,21 @@ namespace epochframe {
                        arrow::Table::Make(
                                arrow::schema({arrow::field(name.value_or(m_name.value_or("")), m_table->type())}),
                                {m_table}));
+    }
+
+    DataFrame Series::transpose() const {
+        auto type = m_table->type();
+        arrow::FieldVector fields;
+        arrow::ArrayVector columns;
+        fields.reserve(m_index->size());
+        columns.reserve(m_index->size());
+        for (int64_t i = 0; i < m_index->size(); ++i) {
+            fields.push_back(arrow::field(m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString(), type));
+            columns.push_back(AssertResultIsOk(arrow::MakeArrayFromScalar(*iloc(i).value(), 1)));
+        }
+        return DataFrame(arrow::Table::Make(
+                               arrow::schema(fields),
+                               columns));
     }
 
     //--------------------------------------------------------------------------
@@ -133,7 +150,7 @@ namespace epochframe {
         header.push_back(fmt::format("{}({})", df.m_name.value_or(""), df.m_table->type()->ToString()));
         table.add_row(header);
         for (int64_t i = 0; i < df.m_index->size(); ++i) {
-            auto index = df.m_index->array()->GetScalar(i).MoveValueUnsafe()->ToString();
+            auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();
             tabulate::Table::Row_t row{index};
             row.push_back(df.m_table->GetScalar(i).MoveValueUnsafe()->ToString());
             table.add_row(row);

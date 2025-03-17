@@ -10,3 +10,9 @@
 cmake-build-*
 build
 *.txt
+
+# Python
+__pycache__
+dateutil
+pandas
+pandas_market_calendars

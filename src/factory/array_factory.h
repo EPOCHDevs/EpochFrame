@@ -75,6 +75,9 @@ namespace epochframe::factory::array {
 
     arrow::ArrayPtr make_contiguous_array(const std::vector<Scalar> &set_array,
                                         std::shared_ptr<arrow::DataType> const &type);
+    
+    arrow::ArrayPtr make_timestamp_array(const std::vector<arrow::TimestampScalar> &set_array, arrow::TimeUnit::type unit=arrow::TimeUnit::NANO, std::string const &timezone="");
+
 
     arrow::Result<std::shared_ptr<arrow::Array>>
     array_to_struct_single_chunk(const std::vector<std::shared_ptr<arrow::Array>>& columns,

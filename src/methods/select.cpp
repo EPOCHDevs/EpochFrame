@@ -13,7 +13,7 @@ namespace epochframe {
 
     TableComponent
     Selections::filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const {
-        return TableComponent{m_data.first->filter(AssertContiguousArrayResultIsOk(_filter)),
+        return TableComponent{m_data.first->filter(Array(AssertContiguousArrayResultIsOk(_filter))),
             arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{_filter}},
             fmt::format("{}filter", m_data.second.is_table() ? "" : "array_"), &option)};
     }
@@ -21,13 +21,13 @@ namespace epochframe {
     TableComponent
     Selections::take(arrow::ArrayPtr const &indices,
             arrow::compute::TakeOptions const &option) const {
-        return itake(m_data.first->loc(indices), option);
+        return itake(m_data.first->loc(Array(indices)).value(), option);
     }
 
     TableComponent
     Selections::itake(arrow::ArrayPtr const &integer_indexes,
         arrow::compute::TakeOptions const &option) const {
-        return TableComponent{m_data.first->take(PtrCast<arrow::UInt64Array>(integer_indexes)),
+        return TableComponent{m_data.first->take(Array(integer_indexes)),
         arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{integer_indexes}},
         fmt::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
     }
@@ -54,7 +54,7 @@ namespace epochframe {
         }
 
         if (index->length() != 0) {
-            auto filter_ = AssertArrayResultIsOk(arrow::compute::Invert(m_data.first->isin(index)));
+            auto filter_ = AssertArrayResultIsOk(arrow::compute::Invert(m_data.first->isin(Array(index)).value()));
             return filter(filter_, arrow::compute::FilterOptions{arrow::compute::FilterOptions::NullSelectionBehavior::DROP});
         }
 
@@ -140,17 +140,22 @@ namespace epochframe {
                 return TableOrArray{AssertArrayResultIsOk(arrow::compute::IfElse(condition, m_data.second.datum(), other_))};
             }
 
+    auto complete_sort = [](IndexPtr const& index, TableOrArray const& data, arrow::Datum const& key, const auto* options) {
+        auto sort_indices = arrow_utils::call_unary_compute_contiguous_array(key, "array_sort_indices", options);
+        auto sorted_index = arrow_utils::call_compute_contiguous_array({index->array().value(), sort_indices}, "take");
+        auto sorted_values = arrow_utils::call_compute_table_or_array(data, {sort_indices}, "take");
+        return TableComponent{
+            index->Make(sorted_index), sorted_values
+    };
+    };
+
     TableComponent Selections::sort_index(bool place_na_last, bool ascending) const {
         using namespace arrow::compute;
-        SortOptions options;
-        options.null_placement = place_na_last ? NullPlacement::AtEnd : NullPlacement::AtStart;
-        options.sort_keys.push_back(
-                SortKey(RESERVED_INDEX_NAME, ascending ? SortOrder::Ascending : SortOrder::Descending));
-        auto sorted_index = arrow_utils::call_unary_compute_table(merge_index(), "sort_indices", &options);
-        auto [index, data] = unzip_index(sorted_index);
-        return {
-                index, data
-        };
+        arrow::compute::ArraySortOptions options{
+            ascending ? arrow::compute::SortOrder::Ascending : arrow::compute::SortOrder::Descending,
+                        place_na_last ? arrow::compute::NullPlacement::AtEnd : arrow::compute::NullPlacement::AtStart
+                    };
+        return complete_sort(m_data.first, m_data.second, m_data.first->array().value(), &options);
     }
 
     TableComponent
@@ -159,23 +164,14 @@ namespace epochframe {
         NullPlacement null_placement = place_na_last ? NullPlacement::AtEnd : NullPlacement::AtStart;
         SortOrder order = ascending ? SortOrder::Ascending : SortOrder::Descending;
 
-        if (m_data.second.is_table()) {
-            SortOptions options;
-            options.null_placement = null_placement;
-            for (auto const &key: by) {
-                options.sort_keys.push_back(
-                        SortKey(key, order));
-            }
-            auto sorted_data = arrow_utils::call_unary_compute_table(m_data.second.table(), "sort_indices", &options);
-                    return TableComponent{
-                            m_data.first, sorted_data
-                    };
+        auto [index, data] = m_data;
+        SortOptions options;
+        options.null_placement = null_placement;
+        for (auto const &key: by) {
+            options.sort_keys.push_back(
+                    SortKey(key, order));
         }
 
-        ArraySortOptions options{order, null_placement};
-        auto sorted_data = arrow_utils::call_unary_compute_array(m_data.second.chunked_array(), "array_sort_indices", &options);
-        return TableComponent{
-                m_data.first, sorted_data
-        };
+        return complete_sort(m_data.first, m_data.second, m_data.second.datum(), &options);
     }
 }

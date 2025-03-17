@@ -9,8 +9,8 @@
 #include <epoch_lab_shared/macros.h>
 #include "common/exceptions.h"
 #include <optional>
-#include <factory/array_factory.h>
-
+#include "factory/array_factory.h"
+#include "factory/scalar_factory.h"
 #include "epochframe/dataframe.h"
 
 namespace epochframe {
@@ -71,7 +71,7 @@ namespace epochframe {
     template<typename T>
     std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> get_view(arrow::ArrayPtr const &array) {
         AssertWithTraceFromFormat(array != nullptr, "array is null");
-
+    
         if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id()) {
             if (!can_cast_to_int64_from_timestamp<T>(array)) {
                 throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(),
@@ -85,38 +85,57 @@ namespace epochframe {
     std::vector<T> get_values(arrow::ArrayPtr const &array) {
         AssertWithTraceFromFormat(array != nullptr, "array is null");
 
-        auto requested_type = arrow::CTypeTraits<T>::type_singleton();
-        if (requested_type != array->type()) {
-            if (!can_cast_to_int64_from_timestamp<T>(array)) {
-                throw RawArrayCastException(requested_type, array->type());
+        constexpr bool is_datetime = std::same_as<T, DateTime>;
+
+        if constexpr (!is_datetime) {
+            auto requested_type = arrow::CTypeTraits<T>::type_singleton();
+            if (requested_type != array->type()) {
+                if (!can_cast_to_int64_from_timestamp<T>(array)) {
+                    throw RawArrayCastException(requested_type, array->type());
+                }
             }
         }
+        else {
+            AssertWithTraceFromFormat(array->type()->id() == arrow::Type::TIMESTAMP, "Expected DATE64 type for DateTime");
+        }
 
-        if (array->null_count() != 0 && (array->type_id() != arrow::Type::DOUBLE)) {
+        if (array->null_count() != 0) {
             throw std::runtime_error("values() called on null array");
         }
 
         std::vector<T> result;
-        if constexpr (!arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value) {
-            result.resize(array->length());
-            auto viewArray = get_view<T>(array);
-            std::ranges::transform(*viewArray, result.begin(), [](auto const &s) {
-                return (*s);
-            });
-        } else if constexpr (std::same_as<T, bool>) {
-            result.reserve(array->length());
-            std::shared_ptr<arrow::BooleanArray> viewArray = get_view<bool>(array);
-            std::transform(viewArray->begin(), viewArray->end(), std::back_inserter(result), [](auto const &s) {
-                return *s;
-            });
-        } else {
-            result.resize(array->length());
-            auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
+        if constexpr (is_datetime) {
+                result.resize(array->length());
+                auto viewArray = std::dynamic_pointer_cast<arrow::TimestampArray>(array);
+                AssertWithTraceFromFormat(viewArray != nullptr, "Expected TIMESTAMP type for DateTime");
 
-            auto N = realArray->length();
-            auto ptr = realArray->raw_values();
+                auto dtype = array->type();
+                std::ranges::transform(*viewArray, result.begin(), [&](std::optional<int64_t> const &s) {
+                    return factory::scalar::to_datetime(arrow::TimestampScalar{*s, dtype});
+                });
+        }
+        else {
+            if constexpr (!arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value) {
+                result.resize(array->length());
+                auto viewArray = get_view<T>(array);
+                std::ranges::transform(*viewArray, result.begin(), [](auto const &s) {
+                    return (*s);
+                });
+            } else if constexpr (std::same_as<T, bool>) {
+                result.reserve(array->length());
+                std::shared_ptr<arrow::BooleanArray> viewArray = get_view<bool>(array);
+                std::transform(viewArray->begin(), viewArray->end(), std::back_inserter(result), [](auto const &s) {
+                    return *s;
+                });
+            } else {
+                result.resize(array->length());
+                auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
 
-            memcpy(result.data(), ptr, sizeof(T) * N);
+                auto N = realArray->length();
+                auto ptr = realArray->raw_values();
+
+                memcpy(result.data(), ptr, sizeof(T) * N);
+            }
         }
         return result;
     }

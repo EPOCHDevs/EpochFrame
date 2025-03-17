@@ -9,7 +9,29 @@
 #include <vector>
 #include <functional>
 #include <variant>
+#include <chrono>
 
+
+using chrono_year = std::chrono::year;
+using chrono_years = std::chrono::years;
+using chrono_month = std::chrono::month;
+using chrono_months = std::chrono::months;
+using chrono_day = std::chrono::day;
+using chrono_days = std::chrono::days;
+using chrono_year_month_day = std::chrono::year_month_day;
+using chrono_time_point = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+using chrono_hour = std::chrono::hours;
+using chrono_hours = std::chrono::hours;
+using chrono_minute = std::chrono::minutes;
+using chrono_minutes = std::chrono::minutes;
+using chrono_second = std::chrono::seconds;
+using chrono_seconds = std::chrono::seconds;
+using chrono_millisecond = std::chrono::milliseconds;
+using chrono_milliseconds = std::chrono::milliseconds;
+using chrono_microsecond = std::chrono::microseconds;
+using chrono_microseconds = std::chrono::microseconds;
+using chrono_nanosecond = std::chrono::nanoseconds;
+using chrono_nanoseconds = std::chrono::nanoseconds;
 
 namespace arrow{
     class ChunkedArray;
@@ -32,9 +54,9 @@ namespace arrow{
     using DataTypePtr = std::shared_ptr<DataType>;
 }
 
-// Forward-declare Index and NDFrame for pointer aliases:
+// Forward-declare IIndex and NDFrame for pointer aliases:
 namespace epochframe {
-    class Index;
+    class IIndex;
 
     class Scalar;
 
@@ -46,8 +68,11 @@ namespace epochframe {
 
     class TableOrArray;
 
+    template<bool is_array>
+    class TemporalOperation;
+
 // Common pointer types used throughout
-    using IndexPtr = std::shared_ptr<Index>;
+    using IndexPtr = std::shared_ptr<IIndex>;
     using IndexType = uint64_t;
     using Shape2D = std::array<size_t, 2>;
     using SliceType = std::pair<Scalar, Scalar>;
@@ -65,4 +90,9 @@ namespace epochframe {
     using LocColArgumentVariant = std::variant<StringVector, arrow::ArrayPtr, StringVectorCallable>;
     using WhereConditionVariant = std::variant<Series, DataFrame, arrow::ArrayPtr, DataFrameToSeriesCallable, DataFrameToDataFrameCallable>;
     using WhereOtherVariant = std::variant<Scalar, DataFrame, DataFrameToDataFrameCallable>;
+
+    namespace calendar {
+        class AbstractHolidayCalendar;
+        using AbstractHolidayCalendarPtr = std::shared_ptr<AbstractHolidayCalendar>;
+    }
 } // namespace epochframe

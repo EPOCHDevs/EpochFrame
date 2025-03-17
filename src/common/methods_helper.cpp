@@ -72,8 +72,8 @@ namespace epochframe {
         auto l_index = table->GetColumnByName(left_index_name);
         auto r_index = table->GetColumnByName(right_index_name);
 
-        AssertWithTraceFromStream(l_index != nullptr, "left Index column not found: " << left_index_name + l_suffix);
-        AssertWithTraceFromStream(r_index != nullptr, "right Index column not found: " << right_index_name + r_suffix);
+        AssertWithTraceFromStream(l_index != nullptr, "left IIndex column not found: " << left_index_name + l_suffix);
+        AssertWithTraceFromStream(r_index != nullptr, "right IIndex column not found: " << right_index_name + r_suffix);
 
         auto merged_index = arrow_utils::call_compute_array({l_index, r_index}, "coalesce");
 
@@ -149,8 +149,8 @@ namespace epochframe {
         auto [unions, intersections] = compute_sets(left_table->ColumnNames(),
                                                     right_table->ColumnNames());
 
-        const arrow::TablePtr left_rb = add_column(left_table, index_name, left_component.first->array());
-        const arrow::TablePtr right_rb = add_column(right_table, index_name, right_component.first->array());
+        const arrow::TablePtr left_rb = add_column(left_table, index_name, left_component.first->array().value());
+        const arrow::TablePtr right_rb = add_column(right_table, index_name, right_component.first->array().value());
 
         ac::Declaration left{"table_source", ac::TableSourceNodeOptions(left_rb)};
         ac::Declaration right{"table_source", ac::TableSourceNodeOptions(right_rb)};
@@ -177,8 +177,8 @@ namespace epochframe {
     align_by_index(const TableComponent &left_table_,
                    const IndexPtr & new_index_,
                    const Scalar &fillValue) {
-        AssertWithTraceFromStream(new_index_ != nullptr, "Index cannot be null");
-        AssertWithTraceFromStream(left_table_.first != nullptr, "Table Index cannot be null");
+        AssertWithTraceFromStream(new_index_ != nullptr, "IIndex cannot be null");
+        AssertWithTraceFromStream(left_table_.first != nullptr, "Table IIndex cannot be null");
 
         if (left_table_.first->equals(new_index_))
         {
@@ -192,7 +192,7 @@ namespace epochframe {
         auto left_type = left_table_.first->dtype();
         auto right_type = new_index_->dtype();
         AssertWithTraceFromStream(left_type->Equals(right_type),
-                                fmt::format("Index type mismatch. Source index type: {}, Target index type: {}",
+                                fmt::format("IIndex type mismatch. Source index type: {}, Target index type: {}",
                                         left_type->ToString(),
                                         right_type->ToString()));
 
@@ -203,7 +203,7 @@ namespace epochframe {
         auto left_index_name = index_name + left_suffix;
         auto right_index_name = index_name + right_suffix;
 
-        const arrow::TablePtr left_rb = add_column(left_table_.second.get_table(series_name), index_name, left_table_.first->array());
+        const arrow::TablePtr left_rb = add_column(left_table_.second.get_table(series_name), index_name, left_table_.first->array().value());
         auto index_table = new_index_->to_table(index_name);
 
         ac::Declaration left{"table_source", ac::TableSourceNodeOptions(left_rb)};
@@ -323,7 +323,7 @@ namespace epochframe {
         tbb::parallel_for(0UL, objs.size(), [&](size_t i) {
             tables[i] = objs[i].table();
             if (!ignore_index) {
-                tables[i] = add_column(tables[i], indexName, objs[i].index()->array());
+                tables[i] = add_column(tables[i], indexName, objs[i].index()->array().value());
             }
         });
 
@@ -356,6 +356,9 @@ namespace epochframe {
         }
 
         std::vector<FrameOrSeries> cleanedObjs = remove_empty_objs(options.frames);
+        if (cleanedObjs.empty()) {
+            return DataFrame{};
+        }
         if (cleanedObjs.size() == 1) {
             return (options.joinType == JoinType::Inner) ? DataFrame{} : cleanedObjs.front().to_frame();
         }

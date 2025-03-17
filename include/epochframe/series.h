@@ -4,7 +4,7 @@
 
 #pragma once
 #include <factory/array_factory.h>
-
+#include <methods/temporal.h>
 #include "ndframe/ndframe.h"
 
 
@@ -19,6 +19,7 @@ namespace epochframe {
 
         Series(arrow::ChunkedArrayPtr const &data, std::optional<std::string> const &name = {});
         Series(arrow::ArrayPtr const &data, std::optional<std::string> const &name = {});
+        Series(arrow::ScalarPtr const &data, IndexPtr const& index, std::optional<std::string> const &name={});
         Series(IndexPtr index, arrow::ChunkedArrayPtr data, std::optional<std::string> const &name = {});
         Series(IndexPtr index, arrow::ArrayPtr data, std::optional<std::string> const &name = {});
 
@@ -35,6 +36,7 @@ namespace epochframe {
         }
 
         DataFrame to_frame(std::optional<std::string> const &name=std::nullopt) const;
+        DataFrame transpose() const;
 
         std::optional<std::string> name() const {
             return m_name;
@@ -108,7 +110,7 @@ namespace epochframe {
         arrow::ArrayPtr unique() const;
 
         [[nodiscard]] TemporalOperation<true> dt() const {
-            return TemporalOperation<true>(factory::array::make_contiguous_array(m_table));
+            return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
 
         using NDFrame::from_base;
