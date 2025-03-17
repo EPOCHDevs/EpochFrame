@@ -13,5 +13,6 @@ build
 
 # Python
 __pycache__
+dateutil
 pandas
 pandas_market_calendars
