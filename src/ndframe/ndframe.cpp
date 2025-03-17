@@ -24,6 +24,7 @@
 #include "common/table_or_array.h"
 #include "common/series_or_scalar.h"
 #include "epochframe/frame_or_series.h"
+#include "common/arrow_compute_utils.h"
 
 
 namespace epochframe {
@@ -34,7 +35,7 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     NDFrame<ChildType, ArrowType>::NDFrame(IndexPtr const &index, std::shared_ptr<ArrowType> const &data) {
-        AssertWithTraceFromStream(index != nullptr, "Index cannot be null");
+        AssertWithTraceFromStream(index != nullptr, "IIndex cannot be null");
         if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
             AssertWithTraceFromStream(data != nullptr, "Table cannot be null");
             AssertWithTraceFromStream(data->num_rows() == 0 || data->num_rows() == index->size(),
@@ -351,17 +352,17 @@ namespace epochframe {
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::round(int ndigits, RoundMode round_mode) const {
+    ChildType NDFrame<ChildType, ArrowType>::round(int ndigits, arrow::compute::RoundMode round_mode) const {
         return from_base(m_arithOp->round(arrow::compute::RoundOptions{ ndigits, static_cast<arrow::compute::RoundMode>(round_mode)}));
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::round_to_multiple(double multiple, RoundMode round_mode) const {
+    ChildType NDFrame<ChildType, ArrowType>::round_to_multiple(double multiple, arrow::compute::RoundMode round_mode) const {
         return from_base(m_arithOp->round_to_multiple(arrow::compute::RoundToMultipleOptions{ multiple, static_cast<arrow::compute::RoundMode>(round_mode)}));
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::round_binary(RoundMode round_mode) const {
+    ChildType NDFrame<ChildType, ArrowType>::round_binary(arrow::compute::RoundMode round_mode) const {
         return from_base(m_arithOp->round_binary(arrow::compute::RoundBinaryOptions{ static_cast<arrow::compute::RoundMode>(round_mode)}));
     }
 
@@ -515,7 +516,7 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const Series &filter_or_labels) const {
-        AssertWithTraceFromStream(filter_or_labels.index()->equals(m_index), "Index mismatch");
+        AssertWithTraceFromStream(filter_or_labels.index()->equals(m_index), "IIndex mismatch");
         if (filter_or_labels.array()->type()->id() == arrow::Type::BOOL) {
             return from_base(m_select->filter(filter_or_labels.array(), arrow::compute::FilterOptions{}));
         }
@@ -536,7 +537,7 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const IndexPtr& newIndex) const {
-        return from_base(m_select->take(newIndex->array(), arrow::compute::TakeOptions{}));
+        return from_base(m_select->take(newIndex->array().value(), arrow::compute::TakeOptions{}));
     }
 
     template<class ChildType, class ArrowType>
@@ -777,6 +778,15 @@ namespace epochframe {
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::sort_values(std::vector<std::string> const& by, bool place_na_last, bool ascending) const {
         return from_base(m_select->sort_values(by, place_na_last, ascending));
+    }
+
+    template<class ChildType, class ArrowType>
+    ChildType NDFrame<ChildType, ArrowType>::map(const std::function<Scalar(const Scalar&)>& func, 
+                                                bool ignore_nulls) const {        
+        return from_base(TableOrArray(arrow_utils::map(
+                m_table, 
+                func, 
+                ignore_nulls)));
     }
 
     //--------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <epochframe/enums.h>
+#include <epochframe/scalar.h>
 #include <fmt/format.h>
 #include "epochframe/aliases.h"
 #include "common/asserts.h"
@@ -41,11 +42,13 @@ namespace epochframe::arrow_utils {
             const std::string &function_name,
             const arrow::compute::FunctionOptions *options = nullptr
     ) {
+        arrow::Datum result;
         try {
-            return call_unary_compute(input, function_name, options).table();
+            result = call_unary_compute(input, function_name, options);
+            return result.table();
         } catch (const std::exception &e) {
             throw std::runtime_error(
-                    fmt::format("Failed to call unary compute function {}: {}", function_name, e.what()));
+                    fmt::format("Failed to call unary compute function {}: {}\n{}", function_name, e.what(), result.ToString()));
         }
     }
 
@@ -83,6 +86,14 @@ namespace epochframe::arrow_utils {
             const arrow::compute::FunctionOptions *options = nullptr
     ) {
         return AssertArrayResultIsOk(call_compute(inputs, function_name, options));
+    }
+
+    inline arrow::ArrayPtr call_compute_contiguous_array(
+        const std::vector<arrow::Datum> &inputs,
+        const std::string &function_name,
+        const arrow::compute::FunctionOptions *options = nullptr
+) {
+        return AssertContiguousArrayResultIsOk(call_compute(inputs, function_name, options));
     }
 
     inline arrow::TablePtr call_compute_table(
@@ -271,7 +282,100 @@ namespace epochframe::arrow_utils {
         return TableOrArray{call_unary_compute_contiguous_array(table.datum(), "index_in", &options)};
     }
 
-    IndexPtr integer_slice_index(const Index &index, size_t start, size_t end);
-    IndexPtr integer_slice_index(const Index &index, size_t start, size_t end, size_t step);
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end);
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end, size_t step);
 
+    /**
+     * @brief Apply a function to each element in an array
+     *
+     * This applies a function to each scalar value in the array and returns
+     * a new array with the results.
+     *
+     * @param array The input array
+     * @param func A function that takes a Scalar and returns a Scalar
+     * @param ignore_na If true, nulls are preserved rather than passed to the function
+     * @return A new array with the results
+     */
+    arrow::ArrayPtr map(const arrow::ArrayPtr& array,
+                        const std::function<Scalar(const Scalar&)>& func,
+                        bool ignore_nulls = false);
+
+    arrow::ChunkedArrayPtr map(const arrow::ChunkedArrayPtr& array,
+                        const std::function<Scalar(const Scalar&)>& func,
+                        bool ignore_nulls = false);
+
+    /**
+     * @brief Apply a function to each element in each column of a table
+     *
+     * This applies a function to each scalar value in each column of the table and returns
+     * a new table with the results.
+     *
+     * @param table The input table
+     * @param func A function that takes a Scalar and returns a Scalar
+     * @param ignore_na If true, nulls are preserved rather than passed to the function
+     * @return A new table with the results
+     */
+    arrow::TablePtr map(const arrow::TablePtr& table,
+                        const std::function<Scalar(const Scalar&)>& func,
+                        bool ignore_nulls = false);
+
+    chrono_year_month_day get_year_month_day(const arrow::TimestampScalar &scalar);
+
+    inline chrono_time_point get_time_point(const arrow::TimestampScalar &scalar) {
+        return chrono_time_point(std::chrono::nanoseconds(scalar.value));
+    }
+
+    chrono_time_point get_time_point(const Scalar &scalar);
+
+    chrono_year get_year(const arrow::TimestampScalar &scalar);
+    chrono_month get_month(const arrow::TimestampScalar &scalar);
+    chrono_day get_day(const arrow::TimestampScalar &scalar);
+
+   std::chrono::nanoseconds duration(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2);
+
+    inline int64_t years(const std::chrono::duration<int64_t> &duration){
+        return std::chrono::duration_cast<std::chrono::years>(duration).count();
+    }
+
+    inline int64_t years(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2){
+        return static_cast<int64_t>(static_cast<int32_t>(get_year(scalar1)) - static_cast<int32_t>(get_year(scalar2)));
+    }
+
+    inline int64_t months(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2){
+        return static_cast<int64_t>(static_cast<uint32_t>(get_month(scalar1))) - static_cast<int64_t>(static_cast<uint32_t>(get_month(scalar2)));
+    }
+
+    inline int64_t days(chrono_nanoseconds const& n){
+        return std::chrono::duration_cast<std::chrono::days>(n).count();
+    }
+
+    inline int64_t seconds(const chrono_nanoseconds &duration){
+        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    }
+
+    inline int64_t seconds(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2){
+        return std::chrono::duration_cast<std::chrono::seconds>(duration(scalar1, scalar2)).count();
+    }
+
+    inline int64_t microseconds(const chrono_nanoseconds &duration){
+        return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+    }
+
+    inline int64_t microseconds(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2){
+        return std::chrono::duration_cast<std::chrono::microseconds>(duration(scalar1, scalar2)).count();
+    }
+
+    inline int64_t nanoseconds(const std::chrono::duration<int64_t> &duration){
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+    }
+
+    inline int64_t nanoseconds(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2){
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(duration(scalar1, scalar2)).count();
+    }
+
+    std::string get_tz(const arrow::DataTypePtr &type);
+
+    inline std::string get_tz(const arrow::TimestampScalar &scalar) {
+        return get_tz(scalar.type);
+    }
 } // namespace epochframe::arrow_utils

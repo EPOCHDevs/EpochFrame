@@ -6,12 +6,15 @@
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
 #include <methods/compare.h>
+#include <methods/temporal.h>
 #include <arrow/compute/api.h>
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
 #include "epochframe/dataframe.h"
 #include "epochframe/series.h"
-
+#include "calendar/time_delta.h"
+#include "factory/scalar_factory.h"
+#include "calendar/datetime.h"
 
 namespace epochframe {
 
@@ -52,6 +55,12 @@ namespace epochframe {
         AssertWithTraceFromStream(other != nullptr, "Scalar pointer cannot be null");
     }
 
+    Scalar::Scalar(const DateTime &other)
+            : m_scalar(std::make_shared<arrow::TimestampScalar>(other.timestamp())) {}
+
+    Scalar::Scalar(const arrow::TimestampScalar &other)
+            : m_scalar(std::make_shared<arrow::TimestampScalar>(other)) {}
+
     Scalar::Scalar(std::string const &other)
             : Scalar(arrow::MakeScalar(other)) {}
 
@@ -76,6 +85,15 @@ namespace epochframe {
 
     bool Scalar::is_type(arrow::DataTypePtr const &type) const {
         return m_scalar->type->Equals(type);
+    }
+
+    int64_t Scalar::get_month_interval() const {
+        auto month_interval = PtrCast<arrow::MonthIntervalScalar>(m_scalar);
+        return month_interval->value;
+    }
+
+    Scalar Scalar::cast(arrow::DataTypePtr const &type) const {
+        return Scalar{AssertResultIsOk(m_scalar->CastTo(type))};
     }
 
     arrow::DataTypePtr Scalar::type() const {
@@ -183,7 +201,7 @@ namespace epochframe {
             return true;
         }
 
-        // Call Arrow’s "equal" function and extract the Boolean value.
+        // Call Arrow's "equal" function and extract the Boolean value.
         const auto result = arrow::compute::CallFunction("equal", {this->m_scalar, other.m_scalar});
         if (result.status().IsNotImplemented()) {
             return m_scalar->Equals(*other.m_scalar);
@@ -291,13 +309,46 @@ namespace epochframe {
     template<typename T>
     requires (std::is_scalar_v<T> || std::is_same_v<T, std::string>)
     std::optional<T> Scalar::value() const {
-        if constexpr (std::is_same_v<T, std::string>) { 
+        if constexpr (std::is_same_v<T, std::string>) {
             return std::make_optional(m_scalar->ToString());
         } else {
             // Attempt to cast the internal Arrow scalar to the appropriate type.
             auto casted = std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ScalarType>(m_scalar);
             return casted ? std::make_optional(casted->value) : std::nullopt;
         }
+    }
+
+    TemporalOperation<false> Scalar::dt() const {
+        if (!value() || !value()->type || value()->type->id() != arrow::Type::TIMESTAMP) {
+            throw std::runtime_error("dt accessor can only be used with timestamp data");
+        }
+
+        return TemporalOperation<false>(*this);
+    }
+
+    arrow::TimestampScalar Scalar::timestamp(std::string const &format) const {
+        if (arrow::is_string(m_scalar->type->id())) {
+            auto scalar = std::make_shared<arrow::StringScalar>("2024-01-01");
+            auto result = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::Strptime(scalar, arrow::compute::StrptimeOptions{format, arrow::TimeUnit::NANO}));
+            return result;
+        }
+        auto scalarPtr = std::dynamic_pointer_cast<arrow::TimestampScalar>(m_scalar);
+        if (!scalarPtr) {
+            throw std::runtime_error("Scalar is not a timestamp");
+        }
+        return *scalarPtr;
+    }
+
+    DateTime Scalar::to_datetime(std::string const &format) const {
+        return factory::scalar::to_datetime(timestamp(format));
+    }
+
+    DateTime Scalar::to_date(std::string const &format) const {
+        return factory::scalar::to_datetime(timestamp(format));
+    }
+
+    EpochDayOfWeek Scalar::weekday() const {
+        return static_cast<EpochDayOfWeek>(to_datetime().weekday());
     }
 
     // --- Explicit Template Instantiations ---
@@ -345,5 +396,29 @@ namespace epochframe {
 
     Scalar operator""_scalar(const char* value, std::size_t N) {
         return Scalar(std::string(value, N ));
+    }
+
+     TimeDelta operator-(arrow::TimestampScalar const &a, arrow::TimestampScalar const &b) {
+        auto dt0 = factory::scalar::to_datetime(a);
+        auto dt1 = factory::scalar::to_datetime(b);
+
+        auto ms = AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::MicrosecondsBetween(a, b)).value;
+        ms = a.value < b.value ? -ms : ms;
+
+        return TimeDelta{
+            TimeDelta::Components{
+                .microseconds = static_cast<double>(ms)
+            }
+        };
+    }
+
+    arrow::TimestampScalar operator+(arrow::TimestampScalar const &a, TimeDelta const &b) {
+        auto ns = a.value + std::chrono::duration_cast<chrono_nanoseconds>(chrono_microseconds(b.to_microseconds())).count();
+        return {ns, a.type};
+    }
+
+    arrow::TimestampScalar operator-(arrow::TimestampScalar const &a, TimeDelta const &b) {
+        auto ns = a.value - std::chrono::duration_cast<chrono_nanoseconds>(chrono_microseconds(b.to_microseconds())).count();
+        return {ns, a.type};
     }
 } // namespace epochframe

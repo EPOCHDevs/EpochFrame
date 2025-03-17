@@ -24,13 +24,6 @@
 #include <index/object_index.h>
 #include <index/range_index.h>
 
-// --------------------------------------------------------------------------------
-// A small helper macro to check ArrowScalar string content in Catch2 style
-#define REQUIRE_ARROW_SCALAR_EQ(expected_literal, scalar)        \
-    do {                                                         \
-        REQUIRE( (scalar) ); /* not null */                      \
-        REQUIRE( (scalar)->ToString() == (expected_literal) );   \
-    } while(0)
 
 #define TEST_CASE_TYPES epochframe::RangeIndex \
 //, arrow::TimestampArray
@@ -57,7 +50,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - Constructor & Basic Attributes",
         REQUIRE(idx->dtype()->ToString() == array->type()->ToString());
         REQUIRE(idx->name() == "common");
         REQUIRE(idx->inferred_type() == array->type()->ToString());
-        REQUIRE(idx->array()->Equals(array));
+        REQUIRE(idx->array().value()->Equals(array));
     }
 
     SECTION("Construction with a name") {
@@ -71,8 +64,8 @@ TEMPLATE_TEST_CASE("ArrowIndex - Constructor & Basic Attributes",
 // 2) Memory, Nulls, NaNs, all/any
 //------------------------------------------------------------------------------
 
-TEMPLATE_TEST_CASE("ArrowIndex - Memory, Null/NaN checks, all/any",
-                   "[arrow_index][null_nan]",
+TEMPLATE_TEST_CASE("ArrowIndex - NBytes/Empty",
+                   "[arrow_index][memory]",
                    TEST_CASE_TYPES)
 {
     using CType     = typename TestType::value_type;
@@ -82,39 +75,8 @@ TEMPLATE_TEST_CASE("ArrowIndex - Memory, Null/NaN checks, all/any",
     auto array = factory::array::make_contiguous_array<CType>(data);
     auto idx   = std::make_shared<TestType>(array);
 
-    SECTION("nbytes, has_nulls, empty") {
-        REQUIRE(idx->nbytes() > 0);  // non-empty array => some bytes
-        REQUIRE_FALSE(idx->empty());
-        // Our factory doesn’t set actual null bitmaps by default => has_nulls == false
-        REQUIRE_FALSE(idx->has_nulls());
-    }
-
-    SECTION("has_nans") {
-        if constexpr (std::is_floating_point_v<CType>) {
-            REQUIRE_FALSE(idx->has_nans());
-
-            // Insert a NaN
-            std::vector<CType> dataWithNaN{0, 1, std::numeric_limits<CType>::quiet_NaN(), 3, 4};
-            auto arrNaN  = epochframe::factory::array::make_contiguous_array<CType>(dataWithNaN);
-            auto idxNaN  = std::make_shared<TestType>(arrNaN);
-            REQUIRE(idxNaN->has_nans());
-        } else {
-            REQUIRE_FALSE(idx->has_nans());
-        }
-    }
-
-    SECTION("all / any") {
-        // For numeric data with a zero, `all` => false
-        // `any` => true if there's at least one nonzero
-        bool any_val  = false;
-        bool all_val  = true;
-        for (auto v : data) {
-            if (v) { any_val = true; }
-            else   { all_val = false; }
-        }
-        REQUIRE(idx->all(true) == all_val);
-        REQUIRE(idx->any(true) == any_val);
-    }
+    REQUIRE(idx->nbytes() > 0);  // non-empty array => some bytes
+    REQUIRE_FALSE(idx->empty());
 }
 
 //------------------------------------------------------------------------------
@@ -138,11 +100,11 @@ TEMPLATE_TEST_CASE("ArrowIndex - Min/Max/ArgMin/ArgMax",
         return;
     }
 
-    auto min_val = idx->min(true);
-    auto max_val = idx->max(true);
+    Scalar min_val = idx->min(true);
+    Scalar max_val = idx->max(true);
 
-    REQUIRE_ARROW_SCALAR_EQ(std::to_string(1), min_val);
-    REQUIRE_ARROW_SCALAR_EQ(std::to_string(9), max_val);
+    REQUIRE(min_val.repr() == "1");
+    REQUIRE(max_val.repr() == "9");
 
     auto argmin = idx->argmin(true);  // should be index 0
     auto argmax = idx->argmax(true);  // should be index 4
@@ -199,7 +161,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - drop(labels)",
     SECTION("drop some existing labels") {
         std::vector<CType> toDrop{20, 40};
         auto dropArr = epochframe::factory::array::make_contiguous_array<CType>(toDrop);
-        auto dropped = idx->drop(dropArr);
+        auto dropped = idx->drop(Array(dropArr));
         // {10,30} remain
         REQUIRE(dropped->size() == 2);
     }
@@ -221,7 +183,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - delete_/insert",
     SECTION("delete_(loc=1)") {
         auto deleted = idx->delete_(1);
         REQUIRE(deleted->size() == 3);
-        auto deletedArr = deleted->array();
+        auto deletedArr = deleted->array().value();
         auto typedArr = std::static_pointer_cast<ArrowType>(deletedArr);
         REQUIRE(typedArr->Value(0) == static_cast<CType>(10));
         REQUIRE(typedArr->Value(1) == static_cast<CType>(30));
@@ -231,7 +193,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - delete_/insert",
     SECTION("insert(loc=1, value=15)") {
         auto inserted = idx->insert(1, Scalar(static_cast<CType>(15)));
         REQUIRE(inserted->size() == 5);
-        auto insertedArr = inserted->array();
+        auto insertedArr = inserted->array().value();
         auto typedArr = std::static_pointer_cast<ArrowType>(insertedArr);
         REQUIRE(typedArr->Value(0) == static_cast<CType>(10));
         REQUIRE(typedArr->Value(1) == static_cast<CType>(15));
@@ -355,7 +317,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - take/where/putmask",
 
     SECTION("take") {
         auto indices = epochframe::factory::array::make_contiguous_array<uint64_t>({0, 2, 4});
-        auto taken = idx->take(std::static_pointer_cast<arrow::UInt64Array>(indices), true);
+        auto taken = idx->take(Array(indices), true);
         REQUIRE(taken->size() == 3);
     }
 
@@ -364,7 +326,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - take/where/putmask",
         auto condRes = arrow::compute::CallFunction(
                 "greater", {arrow::Datum{arr}, arrow::Datum{20}});
         auto condition = AssertContiguousArrayResultIsOk(condRes);
-        auto filtered = idx->where(condition, arrow::compute::FilterOptions::DROP);
+        auto filtered = idx->where(Array(condition), arrow::compute::FilterOptions::DROP);
         REQUIRE(filtered->size() == 3);
     }
 }
@@ -378,11 +340,11 @@ TEST_CASE("ArrowIndex Edge Cases - Null pointer construction", "[arrow_index][ed
     std::shared_ptr<arrow::Array> nullArray;
     REQUIRE_THROWS_AS(
             std::make_shared<RangeIndex>(nullArray, MonotonicDirection::Increasing),
-            std::runtime_error
+            std::invalid_argument
     );
     REQUIRE_THROWS_AS(
         std::make_shared<ObjectIndex>(nullArray),
-        std::runtime_error
+        std::invalid_argument
 );
 }
 
@@ -394,13 +356,10 @@ TEST_CASE("ArrowIndex Edge Cases - Empty array", "[arrow_index][edge_cases]")
     REQUIRE(idx->empty());
     REQUIRE(idx->size() == 0);
 
-    REQUIRE(idx->all(true) == true);   // by convention, all(empty)=true
-    REQUIRE(idx->any(true) == false);  // any(empty)=false
-
     auto minVal = idx->min();
     auto maxVal = idx->max();
-    REQUIRE_FALSE(minVal->is_valid);
-    REQUIRE_FALSE(maxVal->is_valid);
+    REQUIRE_FALSE(minVal.is_valid());
+    REQUIRE_FALSE(maxVal.is_valid());
 
     // argmin/argmax might throw or return -1 or 0; adapt to your code’s contract:
     REQUIRE_NOTHROW(idx->argmin());

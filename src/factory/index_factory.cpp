@@ -11,7 +11,7 @@
 #include <arrow/compute/api.h>
 
 namespace epochframe::factory::index {
-    std::shared_ptr<Index> make_range(std::vector<uint64_t> const& x, MonotonicDirection monotonic_direction) {
+    IndexPtr make_range(std::vector<uint64_t> const& x, MonotonicDirection monotonic_direction) {
         return std::make_shared<RangeIndex>(PtrCast<arrow::UInt64Array>(array::make_contiguous_array(x)), monotonic_direction);
     }
 // 1. Range
@@ -40,19 +40,19 @@ namespace epochframe::factory::index {
         return std::static_pointer_cast<arrow::UInt64Array>(resultArr);
     }
 
-    std::shared_ptr<Index> from_range(int64_t start, int64_t stop, int64_t step) {
+    IndexPtr from_range(int64_t start, int64_t stop, int64_t step) {
         auto arr = build_range_array(start, stop, step);
                 MonotonicDirection monotonic_direction = step > 0 ? MonotonicDirection::Increasing : MonotonicDirection::Decreasing;
 
         return std::make_shared<RangeIndex>(arr, monotonic_direction);
     }
 
-    std::shared_ptr<Index> from_range(int64_t stop) {
+    IndexPtr from_range(int64_t stop) {
         return from_range(0, stop, 1);
     }
 
 // 3. String index
-    std::shared_ptr<Index> make_object_index(const std::vector<std::string> &data) {
+    IndexPtr make_object_index(const std::vector<std::string> &data) {
         arrow::StringBuilder builder;
         AssertStatusIsOk(builder.Reserve(data.size()));
 
@@ -63,7 +63,7 @@ namespace epochframe::factory::index {
         return std::make_shared<ObjectIndex>(AssertCastResultIsOk<arrow::StringArray>(builder.Finish()));
     }
 
-    std::shared_ptr<Index> make_object_index(const std::vector<arrow::ScalarPtr> &data) {
+    IndexPtr make_object_index(const std::vector<arrow::ScalarPtr> &data) {
         arrow::StringBuilder builder;
         AssertStatusIsOk(builder.Reserve(data.size()));
 
@@ -114,4 +114,104 @@ namespace epochframe::factory::index {
     IndexPtr make_index(arrow::ChunkedArrayPtr const& index_array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name) {
         return make_index(array::make_contiguous_array(index_array), monotonic_direction, name);
     }
+
+    std::shared_ptr<DateTimeIndex>  date_range(std::vector<int64_t> const& arr, arrow::DataTypePtr const& type) {
+        arrow::TimestampBuilder builder(type, arrow::default_memory_pool());
+        AssertStatusIsOk(builder.AppendValues(arr));
+        return std::make_shared<DateTimeIndex>(AssertContiguousArrayResultIsOk(builder.Finish()), "");
+    }
+
+    std::shared_ptr<DateTimeIndex>  date_range_internal(arrow::TimestampScalar t, uint32_t period, DateOffsetHandlerPtr const& offset) {
+        std::vector<int64_t> result;
+        result.reserve(period);
+
+        if (period == 0) {
+            return std::make_shared<DateTimeIndex>(arrow::MakeEmptyArray(t.type).MoveValueUnsafe());
+        }
+
+        while (period > 0) {
+            result.push_back(t.value);
+            t = offset->add(t);
+            --period;
+        }
+        return date_range(result, t.type);
+    }
+
+    std::string infer_tz_from_endpoints(std::optional<arrow::TimestampScalar> const& start, std::optional<arrow::TimestampScalar> const& end, std::string const& tz) {
+        auto startType = start ? std::dynamic_pointer_cast<arrow::TimestampType>(start->type) : nullptr;
+        auto endType = end ? std::dynamic_pointer_cast<arrow::TimestampType>(end->type) : nullptr;
+
+        if (startType == nullptr && endType == nullptr) {
+            throw std::runtime_error("start and end cannot both be null");
+        }
+
+        std::string inferred_tz;
+        if (startType && endType) {
+            if (startType->Equals(endType)) {
+                inferred_tz = startType->timezone();
+            }
+            else {
+                throw std::runtime_error(fmt::format("start and end must have same type. {} != {}", startType->timezone(), endType->timezone()));
+            }
+        }
+        else if (startType) {
+            inferred_tz = startType->timezone();
+        }
+        else {
+            inferred_tz = endType->timezone();
+        }
+
+        if (!tz.empty() && !inferred_tz.empty()) {
+            AssertWithTraceFromStream(tz == inferred_tz, "Inferred time zone not equal to passed time zone. tz=" << tz << ", inferred_tz=" << inferred_tz);
+        }
+        else if (!inferred_tz.empty()) {
+            return  inferred_tz;
+        }
+        return tz;
+    }
+
+    std::optional<arrow::TimestampScalar> maybe_localize_point(std::optional<arrow::TimestampScalar> const& ts, DateOffsetHandlerPtr const& freq, std::string const& tz, AmbiguousTimeHandling ambigous, NonexistentTimeHandling nonexistent) {
+        if (ts && arrow_utils::get_tz(*ts).empty()) {
+            return Scalar{*ts}.dt().tz_localize(std::dynamic_pointer_cast<TickHandler>(freq) ? tz : "", ambigous, nonexistent).timestamp();
+        }
+        return ts;
+    }
+
+    IndexPtr date_range(DateRangeOptions const& options) {
+        AssertWithTraceFromFormat(options.offset, "date_range requires a freq");
+        AssertWithTraceFromFormat(options.periods || options.end.has_value(), "date_range requires send or start && period");
+
+        auto tz = infer_tz_from_endpoints(options.start, options.end, options.tz);
+        arrow::TimestampScalar start = options.start;
+        std::optional<arrow::TimestampScalar> end = options.end;
+        if (!tz.empty()) {
+            start = maybe_localize_point(start, options.offset, options.tz, options.ambiguous, options.nonexistent).value();
+            end = maybe_localize_point(end, options.offset, options.tz, options.ambiguous, options.nonexistent);
+        }
+
+        if (std::dynamic_pointer_cast<DayHandler>(options.offset)) {
+            start = Scalar{start}.dt().tz_localize("").timestamp();
+            if (end) {
+                end = Scalar{*end}.dt().tz_localize("").timestamp();
+            }
+        }
+
+        start = options.offset->rollforward(start );
+        std::shared_ptr<DateTimeIndex>  index;
+        if (end) {
+            end = options.offset->rollback(*end);
+            index = date_range_internal(start, options.offset->diff(start, *end)+1, options.offset);
+        }
+        else {
+            index = date_range_internal(start, *options.periods, options.offset);
+        }
+
+        auto endpoint_tz = Scalar{options.start}.dt().tz();
+        if (!tz.empty() && endpoint_tz.empty()) {
+            return index->Make(index->dt().tz_localize(tz, options.ambiguous, options.nonexistent).value());
+        }
+        return index;
+    }
+
+
 } // namespace epochframe::factory::index

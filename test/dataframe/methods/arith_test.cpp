@@ -106,7 +106,7 @@ TEST_CASE("Binary operations between DataFrames/Series", "[Arithmetic]")
         {"+", "df1 + df1_3 (some columns intersect)", df1, df1_3, make_dataframe(idx4, {{null, Scalar(3), Scalar(5), null}, {null, null, null, null}, {null, null, null, null}}, {"col1", "col2", "col3"}, arrow::int32())},
         {"+", "df1 + df4 (no columns intersect)", df1, df4, std::nullopt},
 
-        // Index match scenarios
+        // IIndex match scenarios
         {"+", "df1 + df3 (some indices match)", df1, df3, make_dataframe(idx1, {{Scalar(8), Scalar(10), null}, {Scalar(14), Scalar(16), null}}, {"col1", "col2"}, arrow::int32())},
         {"+", "df1 + df5 (no indices match)", df1, df5, make_dataframe(idx1, {{null, null, null}, {null, null, null}}, {"col1", "col2"}, arrow::int32())},
 

@@ -151,6 +151,18 @@ namespace epochframe {
         GroupByApply group_by_apply(arrow::ChunkedArrayPtr const &by, bool groupKeys=true) const {
             return group_by_apply(arrow::ChunkedArrayVector{by}, groupKeys);
         }
+
+        /**
+         * @brief Apply a function to each row/column of the DataFrame
+         *
+         * @param func A function that takes a row/column as a Series and returns a Series
+         * @param axis The axis to apply the function to. If AxisType::Row, the function is applied to each row. If AxisType::Column, the function is applied to each column.
+         * @return A new DataFrame with the results
+         */
+        DataFrame apply(const std::function<Series(const Series&)>& func, AxisType axis = AxisType::Row) const;
+
+        // Inherit map method from NDFrame
+        using NDFrame::map;
     private:
         DataFrame add_prefix_or_suffix(const std::string &prefix_or_suffix, bool is_prefix) const;
     };

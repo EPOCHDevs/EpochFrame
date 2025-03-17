@@ -29,7 +29,7 @@ TEST_CASE("make_object_index from std::vector<std::string>", "[object_index]")
         REQUIRE_FALSE(idx->empty());
 
         // Check that the underlying array is StringArray
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         REQUIRE(arr);
         auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(arr);
         REQUIRE(str_arr);
@@ -50,7 +50,7 @@ TEST_CASE("make_object_index from std::vector<std::string>", "[object_index]")
         REQUIRE(idx->size() == 0);
         REQUIRE(idx->empty());
 
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(arr);
         REQUIRE(str_arr);
         REQUIRE(str_arr->length() == 0);
@@ -60,7 +60,7 @@ TEST_CASE("make_object_index from std::vector<std::string>", "[object_index]")
         std::vector<std::string> data{"", "hello"};
         auto idx = make_object_index(data);
 
-        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array());
+        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array().value());
         REQUIRE(str_arr->length() == 2);
         REQUIRE(str_arr->GetString(0).empty());
         REQUIRE(str_arr->GetString(1) == "hello");
@@ -82,7 +82,7 @@ TEST_CASE("make_object_index from std::vector<arrow::ScalarPtr>", "[object_index
         auto idx = make_object_index(data);
 
         REQUIRE(idx->size() == data.size());
-        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array());
+        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array().value());
         REQUIRE(str_arr->length() == static_cast<int64_t>(data.size()));
         REQUIRE(str_arr->GetString(0) == "one");
         REQUIRE(str_arr->GetString(1) == "two");
@@ -112,7 +112,7 @@ TEST_CASE("make_object_index from std::vector<arrow::ScalarPtr>", "[object_index
         REQUIRE(idx->size() == 0);
         REQUIRE(idx->empty());
 
-        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array());
+        auto str_arr = std::dynamic_pointer_cast<arrow::StringArray>(idx->array().value());
         REQUIRE(str_arr->length() == 0);
     }
 }

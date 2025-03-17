@@ -4,203 +4,276 @@
 
 #pragma once
 #include "epochframe/aliases.h"
+#include "epochframe/array.h"
+#include "epochframe/scalar.h"
 #include <arrow/compute/api.h>
 #include <common/asserts.h>
-
+#include "common/arrow_compute_utils.h"
 
 namespace epochframe {
     struct IsoCalendarArray {
-        arrow::ArrayPtr year, week, day_of_week;
+        Array year, week, day_of_week;
     };
 
     struct YearMonthDayArray {
-        arrow::ArrayPtr  year, month, day;
+        Array year, month, day;
     };
 
     struct IsoCalendarScalar {
-        arrow::ScalarPtr year, week, day_of_week;
+        Scalar year, week, day_of_week;
     };
 
     struct YearMonthDayScalar {
-        arrow::ScalarPtr year, month, day;
+        Scalar year, month, day;
+    };
+
+    /**
+     * @brief Enum for handling ambiguous times during DST transitions
+     */
+    enum class AmbiguousTimeHandling {
+        RAISE,      // Raise an error for ambiguous times
+        EARLIEST,   // Use the earliest possible interpretation
+        LATEST,     // Use the latest possible interpretation
+        NAT         // Return NaT/null for ambiguous times
+    };
+
+    /**
+     * @brief Enum for handling nonexistent times during DST transitions
+     */
+    enum class NonexistentTimeHandling {
+        RAISE,           // Raise an error for nonexistent times
+        SHIFT_FORWARD,   // Shift forward to the closest existing time
+        SHIFT_BACKWARD,  // Shift backward to the closest existing time
+        NAT              // Return NaT/null for nonexistent times
     };
 
     template<bool is_array>
     class TemporalOperation {
     public:
-        using Type = std::conditional_t<is_array, arrow::ArrayPtr , arrow::ScalarPtr>;
+        using Type = std::conditional_t<is_array, Array, Scalar>;
         using ISOCalendarType = std::conditional_t<is_array, IsoCalendarArray, IsoCalendarScalar>;
         using YearMonthDayType = std::conditional_t<is_array, YearMonthDayArray, YearMonthDayScalar>;
 
         explicit TemporalOperation(Type const & data) : m_data(data) {}
 
         Type ceil(arrow::compute::RoundTemporalOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::CeilTemporal(m_data, options));
+            return to_type(arrow::compute::CeilTemporal(m_data.value(), options));
         }
 
         Type floor(arrow::compute::RoundTemporalOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::FloorTemporal(m_data, options));
+            return to_type(arrow::compute::FloorTemporal(m_data.value(), options));
         }
 
         Type round(arrow::compute::RoundTemporalOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::RoundTemporal(m_data, options));
+            return to_type(arrow::compute::RoundTemporal(m_data.value(), options));
         }
 
         Type strftime(arrow::compute::StrftimeOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Strftime(m_data, options));
+            return to_type(arrow::compute::Strftime(m_data.value(), options));
         }
 
         Type strptime(arrow::compute::StrptimeOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Strptime(m_data, options));
+            return to_type(arrow::compute::Strptime(m_data.value(), options));
         }
 
         // component
 
         Type day() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Day(m_data));
+            return to_type(arrow::compute::Day(m_data.value()));
         }
 
         Type day_of_week(arrow::compute::DayOfWeekOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::DayOfWeek(m_data, options));
+            return to_type(arrow::compute::DayOfWeek(m_data.value(), options));
         }
 
         Type day_of_year() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::DayOfYear(m_data));
+            return to_type(arrow::compute::DayOfYear(m_data.value()));
         }
 
         Type hour() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Hour(m_data));
+            return to_type(arrow::compute::Hour(m_data.value()));
         }
 
         Type is_dst() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::IsDaylightSavings(m_data));
+            return to_type(arrow::compute::IsDaylightSavings(m_data.value()));
         }
 
         Type iso_week() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::ISOWeek(m_data));
+            return to_type(arrow::compute::ISOWeek(m_data.value()));
         }
 
         Type iso_year() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::ISOYear(m_data));
+            return to_type(arrow::compute::ISOYear(m_data.value()));
         }
 
         ISOCalendarType iso_calendar() const;
 
         Type is_leap_year() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::IsLeapYear(m_data));
+            return to_type(arrow::compute::IsLeapYear(m_data.value()));
         }
 
         Type microsecond() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Microsecond(m_data));
+            return to_type(arrow::compute::Microsecond(m_data.value()));
         }
 
         Type millisecond() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Millisecond(m_data));
+            return to_type(arrow::compute::Millisecond(m_data.value()));
         }
 
         Type minute() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Minute(m_data));
+            return to_type(arrow::compute::Minute(m_data.value()));
         }
 
         Type month() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Month(m_data));
+            return to_type(arrow::compute::Month(m_data.value()));
         }
 
         Type nanosecond() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Nanosecond(m_data));
+            return to_type(arrow::compute::Nanosecond(m_data.value()));
         }
 
         Type quarter() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Quarter(m_data));
+            return to_type(arrow::compute::Quarter(m_data.value()));
         }
 
         Type second() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Second(m_data));
+            return to_type(arrow::compute::Second(m_data.value()));
         }
 
         Type subsecond() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Subsecond(m_data));
+            return to_type(arrow::compute::Subsecond(m_data.value()));
         }
 
         Type us_week() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::USWeek(m_data));
+            return to_type(arrow::compute::USWeek(m_data.value()));
         }
 
         Type us_year() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::USYear(m_data));
+            return to_type(arrow::compute::USYear(m_data.value()));
         }
 
         Type week(arrow::compute::WeekOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Week(m_data, options));
+            return to_type(arrow::compute::Week(m_data.value(), options));
         }
 
         Type year() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::Year(m_data));
+            return to_type(arrow::compute::Year(m_data.value()));
         }
 
         YearMonthDayType year_month_day() const;
 
         // difference
         std::shared_ptr<arrow::DayTimeIntervalArray> day_time_interval_between(Type const & other) const {
-            return PtrCast<arrow::DayTimeIntervalArray>(AssertContiguousArrayResultIsOk(arrow::compute::DayTimeBetween(m_data, other)));
+            return PtrCast<arrow::DayTimeIntervalArray>(AssertContiguousArrayResultIsOk(arrow::compute::DayTimeBetween(m_data.value(), other.value())));
         }
 
-        Type days_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::DaysBetween(m_data, other));
-        }
-
-        Type hours_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::HoursBetween(m_data, other));
-        }
-
-        Type microseconds_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::MicrosecondsBetween(m_data, other));
-        }
-
-        Type milliseconds_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::MillisecondsBetween(m_data, other));
-        }
-
-        Type minutes_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::MinutesBetween(m_data, other));
-        }
 
         std::shared_ptr<std::conditional_t<is_array, arrow::MonthDayNanoIntervalArray, arrow::MonthDayNanoIntervalScalar>> month_day_nano_interval_between(Type const & other) const {
-            return PtrCast<std::conditional_t<is_array, arrow::MonthDayNanoIntervalArray, arrow::MonthDayNanoIntervalScalar>>(AssertResultIsOk(arrow::compute::MonthDayNanoBetween(m_data, other)));
+            using ResultType = std::conditional_t<is_array, arrow::MonthDayNanoIntervalArray, arrow::MonthDayNanoIntervalScalar>;
+            return PtrCast<ResultType>(AssertResultIsOk(arrow::compute::MonthDayNanoBetween(m_data.value(), other.value())));
         }
 
         std::shared_ptr<std::conditional_t<is_array, arrow::MonthIntervalArray, arrow::MonthIntervalScalar>> month_interval_between(Type const & other) const {
-            return PtrCast<std::conditional_t<is_array, arrow::MonthIntervalArray, arrow::MonthIntervalScalar>>(AssertResultIsOk(arrow::compute::MonthsBetween(m_data, other)));
-        }
-
-        Type nanoseconds_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::NanosecondsBetween(m_data, other));
-        }
-
-        Type quarters_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::QuartersBetween(m_data, other));
-        }
-
-        Type seconds_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::SecondsBetween(m_data, other));
-        }
-
-        Type weeks_between(Type const & other, arrow::compute::DayOfWeekOptions const & options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::CallFunction("weeks_between", {m_data, other}, &options));
+            using ResultType = std::conditional_t<is_array, arrow::MonthIntervalArray, arrow::MonthIntervalScalar>;
+            return PtrCast<ResultType>(AssertResultIsOk(arrow::compute::MonthsBetween(m_data.value(), other.value())));
         }
 
         Type years_between(Type const & other) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::CallFunction("years_between", {m_data, other}));
+            return to_type(arrow::compute::YearsBetween(m_data.value(), other.value()));
+        }
+
+        Type quarters_between(Type const & other) const {
+            return to_type(arrow::compute::QuartersBetween(m_data.value(), other.value()));
+        }
+
+        Type months_between(Type const & other) const {
+            return to_type(arrow::compute::MonthsBetween(m_data.value(), other.value()));
+        }
+
+        Type weeks_between(Type const & other, arrow::compute::DayOfWeekOptions const & options) const {
+            return to_type(arrow::compute::WeeksBetween(m_data.value(), other.value(), &options));
+        }
+
+        Type days_between(Type const & other) const {
+            return to_type(arrow::compute::DaysBetween(m_data.value(), other.value()));
+        }
+
+        Type hours_between(Type const & other) const {
+            return to_type(arrow::compute::HoursBetween(m_data.value(), other.value()));
+        }
+
+        Type minutes_between(Type const & other) const {
+            return to_type(arrow::compute::MinutesBetween(m_data.value(), other.value()));
+        }
+
+        Type seconds_between(Type const & other) const {
+            return to_type(arrow::compute::SecondsBetween(m_data.value(), other.value()));
+        }
+
+        Type milliseconds_between(Type const & other) const {
+            return to_type(arrow::compute::MillisecondsBetween(m_data.value(), other.value()));
+        }
+
+        Type microseconds_between(Type const & other) const {
+            return to_type(arrow::compute::MicrosecondsBetween(m_data.value(), other.value()));
+        }
+
+        Type nanoseconds_between(Type const & other) const {
+            return to_type(arrow::compute::NanosecondsBetween(m_data.value(), other.value()));
         }
 
         // timezone handling
         Type assume_timezone(arrow::compute::AssumeTimezoneOptions const& options) const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::CallFunction("assume_timezone", {m_data}, &options));
+            return to_type(arrow_utils::call_compute("assume_timezone", {m_data.value()}, &options));
+        }
+
+        std::string tz() const {
+            return arrow_utils::get_tz(m_data.type());
         }
 
         [[nodiscard]] Type local_timestamp() const {
-            return AssertContiguousArrayResultIsOk(arrow::compute::LocalTimestamp(m_data));
+            return to_type(arrow_utils::call_compute("local_timestamp", {m_data.value()}));
         }
+
+        Type to_type(arrow::Result<arrow::Datum> const& other) const {
+            AssertResultIsOk(other);
+            if constexpr (is_array) {
+                return Type(other->make_array());
+            } else {
+                return Type(other->scalar());
+            }
+        }
+
+        /**
+         * @brief Localize naive timestamps to the specified timezone.
+         *
+         * This function takes timestamps without timezone information (naive timestamps)
+         * and adds timezone information to them. It can handle ambiguous times (when
+         * clocks are set back during DST transitions) and nonexistent times (when
+         * clocks are set forward during DST transitions).
+         *
+         * @param timezone The timezone to localize to
+         * @param ambiguous How to handle ambiguous times during DST transitions
+         * @param nonexistent How to handle nonexistent times during DST transitions
+         * @return Localized timestamp array/scalar with timezone information
+         * @throws std::invalid_argument If the timestamp already has a timezone
+         */
+        Type tz_localize(const std::string& timezone,
+                         AmbiguousTimeHandling ambiguous = AmbiguousTimeHandling::RAISE,
+                         NonexistentTimeHandling nonexistent = NonexistentTimeHandling::RAISE) const;
+
+        /**
+         * @brief Convert timestamps from one timezone to another.
+         *
+         * This function takes timestamps that already have timezone information and
+         * converts them to a different timezone. The actual timestamp value (UTC time)
+         * remains the same, only the timezone representation changes.
+         *
+         * @param timezone The timezone to convert to
+         * @return Timestamp array/scalar with the new timezone
+         * @throws std::invalid_argument If the timestamp doesn't have a timezone
+         */
+        Type tz_convert(const std::string& timezone) const;
 
     private:
         Type m_data;

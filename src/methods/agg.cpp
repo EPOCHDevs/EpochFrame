@@ -48,7 +48,7 @@ namespace epochframe {
             auto concat_table = AssertTableResultIsOk(arrow::ConcatenateTables(tables, arrow::ConcatenateTablesOptions{true, arrow::Field::MergeOptions::Permissive()}));
             auto index = factory::array::make_contiguous_array(concat_table->GetColumnByName("index"));
             auto value = concat_table->GetColumnByName("value");
-            AssertWithTraceFromStream(index != nullptr && value != nullptr, "Index or value column not found");
+            AssertWithTraceFromStream(index != nullptr && value != nullptr, "IIndex or value column not found");
             return SeriesOrScalar{Series(m_data.first->Make(index), value)};
         }
         if (agg == "min" || agg == "max") {

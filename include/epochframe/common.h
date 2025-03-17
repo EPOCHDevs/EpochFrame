@@ -12,14 +12,14 @@
 namespace epochframe {
     struct ConcatOptions {
         std::vector<FrameOrSeries> frames;
-        JoinType joinType{JoinType::Inner};
+        JoinType joinType{JoinType::Outer};
         AxisType axis{AxisType::Row};
         bool ignore_index{false};
         bool sort{false};
     };
     DataFrame concat(ConcatOptions const &options);
 
-    struct MergeOptions {   
+    struct MergeOptions {
         FrameOrSeries left;
         FrameOrSeries right;
         JoinType joinType{JoinType::Inner};

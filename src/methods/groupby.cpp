@@ -139,7 +139,7 @@ namespace epochframe {
 
     std::pair<arrow::ChunkedArrayPtr, arrow::TablePtr> GroupOperations::filter_key(std::string const& key, arrow::TablePtr const& current_table) const{
         auto index = current_table->GetColumnByName(key);
-        AssertWithTraceFromStream(index, "Index column not found: " << key);
+        AssertWithTraceFromStream(index, "IIndex column not found: " << key);
 
         int fieldIndex = current_table->schema()->GetFieldIndex(key);
         AssertWithTraceFromStream(fieldIndex != -1, "Column index not found: " << key);
@@ -255,7 +255,7 @@ namespace epochframe {
             return newIndex;
         }
 
-        const auto indexArray = newIndex->array();
+        const auto indexArray = newIndex->array().value();
         arrow::ArrayPtr mergedArray;
         auto keys = m_grouper->keys();
 
@@ -276,7 +276,7 @@ namespace epochframe {
         }
         else {
             auto repeatKeyArray = AssertResultIsOk(arrow::MakeArrayFromScalar(*groupKey, indexArray->length()));
-            mergedArray = AssertResultIsOk(arrow::StructArray::Make({repeatKeyArray, newIndex->array()}, {
+            mergedArray = AssertResultIsOk(arrow::StructArray::Make({repeatKeyArray, newIndex->array().value()}, {
             *keys.at(0).name(), newIndex->name()
             }));
         }

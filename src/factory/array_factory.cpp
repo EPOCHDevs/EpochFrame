@@ -89,4 +89,13 @@ namespace epochframe::factory::array {
         auto struct_type = std::make_shared<arrow::StructType>(fields);
         return arrow::StructArray::Make(columns, fields);
     }
+
+    arrow::ArrayPtr make_timestamp_array(const std::vector<arrow::TimestampScalar> &set_array, arrow::TimeUnit::type unit, std::string const &timezone) {
+        arrow::TimestampBuilder builder(arrow::timestamp(unit, timezone), arrow::default_memory_pool());
+        AssertStatusIsOk(builder.Reserve(set_array.size()));
+        for (arrow::TimestampScalar const &scalar: set_array) {
+            builder.UnsafeAppend(scalar.value);
+        }
+        return AssertResultIsOk(builder.Finish());
+    }
 }

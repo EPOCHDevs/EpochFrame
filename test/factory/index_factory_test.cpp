@@ -22,7 +22,7 @@ TEST_CASE("RangeIndex: from_range(start, stop, step)", "[RangeIndex]")
         REQUIRE_FALSE(idx->empty());
 
         // Check underlying arrow array content
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         REQUIRE(arr);
         auto uint64arr = std::static_pointer_cast<arrow::UInt64Array>(arr);
         REQUIRE(uint64arr->length() == 5);
@@ -43,7 +43,7 @@ TEST_CASE("RangeIndex: from_range(start, stop, step)", "[RangeIndex]")
         // => [5,4,3,2], size=4
         REQUIRE(idx->size() == 4);
 
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         auto uint64arr = std::static_pointer_cast<arrow::UInt64Array>(arr);
         REQUIRE(uint64arr->length() == 4);
         REQUIRE(uint64arr->Value(0) == 5ULL);
@@ -69,7 +69,7 @@ TEST_CASE("RangeIndex: from_range(stop, step)", "[RangeIndex]")
         // => [0,1,2,3,4]
         REQUIRE(idx->size() == 5);
 
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         auto uint64arr = std::static_pointer_cast<arrow::UInt64Array>(arr);
         REQUIRE(uint64arr->length() == 5);
         REQUIRE(uint64arr->Value(0) == 0ULL);
@@ -81,7 +81,7 @@ TEST_CASE("RangeIndex: from_range(stop, step)", "[RangeIndex]")
         // => [0,2,4,6,8], size=5
         REQUIRE(idx->size() == 5);
 
-        auto arr = idx->array();
+        auto arr = idx->array().value();
         auto uint64arr = std::static_pointer_cast<arrow::UInt64Array>(arr);
         REQUIRE(uint64arr->length() == 5);
         REQUIRE(uint64arr->Value(4) == 8ULL);

@@ -7,12 +7,12 @@
 
 
 namespace epochframe {
-    DateTimeIndex::DateTimeIndex(std::shared_ptr<arrow::TimestampArray> array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name) : ArrowIndex<true>(
-            factory::array::make_array(std::move(array)), name, monotonic_direction) {}
+    DateTimeIndex::DateTimeIndex(std::shared_ptr<arrow::TimestampArray> array,  std::string const& name) : ArrowIndex<true>(
+            factory::array::make_array(std::move(array)), name, MonotonicDirection::Increasing) {}
 
-    DateTimeIndex::DateTimeIndex(std::shared_ptr<arrow::Array> array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name) : ArrowIndex<true>(std::move(array), name, monotonic_direction) {}
+    DateTimeIndex::DateTimeIndex(std::shared_ptr<arrow::Array> array, std::string const& name) : ArrowIndex<true>(std::move(array), name, MonotonicDirection::Increasing) {}
 
     IndexPtr DateTimeIndex::Make(std::shared_ptr<arrow::Array> array) const {
-        return std::make_shared<DateTimeIndex>(std::move(array), m_monotonic_direction, name());
+        return std::make_shared<DateTimeIndex>(std::move(array), name());
     }
 } // namespace epochframe

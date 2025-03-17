@@ -7,11 +7,12 @@
 #include <string>
 #include <vector>
 #include "arrow/compute/api_aggregate.h"
+#include "arrow/compute/api_scalar.h"
 
 
 // Forward declarations and type aliases
 namespace epochframe {
-    using IndexPtr = std::shared_ptr<class Index>;
+    using IndexPtr = std::shared_ptr<class IIndex>;
 
     template<class ChildType, class ArrowType>
     class NDFrame {
@@ -162,12 +163,12 @@ namespace epochframe {
 
         ChildType trunc() const;
 
-        ChildType round(int ndigits = 0, RoundMode round_mode = RoundMode::HALF_TO_EVEN) const;
+        ChildType round(int ndigits = 0, arrow::compute::RoundMode round_mode = arrow::compute::RoundMode::HALF_TO_EVEN) const;
 
         ChildType round_to_multiple(double multiple = 1,
-                                  RoundMode round_mode = RoundMode::HALF_TO_EVEN) const;
+                                  arrow::compute::RoundMode round_mode = arrow::compute::RoundMode::HALF_TO_EVEN) const;
 
-        ChildType round_binary(RoundMode round_mode = RoundMode::HALF_TO_EVEN) const;
+        ChildType round_binary(arrow::compute::RoundMode round_mode = arrow::compute::RoundMode::HALF_TO_EVEN) const;
 
         //--------------------------------------------------------------------------
         // 6) Trigonometric ops
@@ -323,9 +324,9 @@ namespace epochframe {
         // 13) Selection & Transform
         //--------------------------------------------------------------------------
         ChildType drop_null(DropMethod how = DropMethod::Any,
-                          AxisType axis = AxisType::Row,
-                          std::vector<std::string> const &subset = {},
-                          bool ignore_index = false) const;
+                        AxisType axis = AxisType::Row,
+                        std::vector<std::string> const &subset = {},
+                        bool ignore_index = false) const;
 
         ChildType bfill(AxisType axis = AxisType::Row) const;
 
@@ -334,6 +335,18 @@ namespace epochframe {
         ChildType sort_index(bool place_na_last=true, bool ascending=true) const;
 
         ChildType sort_values(std::vector<std::string> const& by, bool place_na_last=true, bool ascending=true) const;
+
+        /**
+         * @brief Apply a function to each element in the NDFrame
+         * 
+         * This applies a function to each scalar value in the NDFrame and returns
+         * a new NDFrame with the results.
+         * 
+         * @param func A function that takes a Scalar and returns a Scalar
+         * @param ignore_nulls Optional. If true, nulls are not passed to the function
+         * @return A new NDFrame with the results
+         */
+        ChildType map(const std::function<Scalar(const Scalar&)>& func, bool ignore_nulls = false) const;
 
         //--------------------------------------------------------------------------
         // 14) Aggregation

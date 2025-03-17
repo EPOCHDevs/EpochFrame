@@ -156,7 +156,7 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
                 {"colA", "colB", "sval"})
         },
 
-        // Index handling tests
+        // IIndex handling tests
         {
             "Ignore index row-wise",
             ConcatOptions{ {df1, df2}, JoinType::Inner, AxisType::Row, true, false },
