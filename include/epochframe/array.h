@@ -32,7 +32,7 @@ public:
     /**
      * @brief Default constructor
      */
-    Array();
+    Array(arrow::DataTypePtr const& type=arrow::null());
     
     /**
      * @brief Constructor from arrow::ArrayPtr
@@ -41,6 +41,13 @@ public:
      * @throws std::invalid_argument if array is null
      */
     explicit Array(const arrow::ArrayPtr& array);
+
+    /**
+     * @brief Constructor from arrow::ChunkedArray
+     * 
+     * @param array The arrow::ChunkedArray to wrap
+     */
+    explicit Array(const arrow::ChunkedArrayPtr& array);
     
     /**
      * @brief Constructor from arrow::Array
@@ -450,9 +457,10 @@ public:
      * @brief Take elements from the array by indices
      * 
      * @param indices The indices to take
+     * @param bounds_check Whether to check bounds
      * @return The resulting Array
      */
-    Array take(const Array& indices) const;
+    Array take(const Array& indices, bool bounds_check = true) const;
     
     /**
      * @brief Filter the array by a boolean mask

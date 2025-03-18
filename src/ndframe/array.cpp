@@ -21,13 +21,24 @@ namespace epochframe {
 // Constructors
 // ------------------------------------------------------------------------
 
-Array::Array() : m_array(AssertResultIsOk(arrow::MakeEmptyArray(arrow::null()))) {}
+Array::Array(arrow::DataTypePtr const& type) : m_array(AssertResultIsOk(arrow::MakeEmptyArray(type))) {
+    if (!type) {
+        throw std::invalid_argument("Arrow array pointer cannot be null");
+    }
+}
 
 Array::Array(const arrow::ArrayPtr& array) {
     if (!array) {
         throw std::invalid_argument("Arrow array pointer cannot be null");
     }
     m_array = array;
+}
+
+Array::Array(const arrow::ChunkedArrayPtr& array) {
+    if (!array) {
+        throw std::invalid_argument("Arrow array pointer cannot be null");
+    }
+    m_array = factory::array::make_contiguous_array(array);
 }
 
 Array::Array(const arrow::Array& array) {
@@ -274,8 +285,9 @@ Array Array::slice(int64_t offset, int64_t length) const {
     return Array(m_array->Slice(offset, length));
 }
 
-Array Array::take(const Array& indices) const {
+Array Array::take(const Array& indices, bool bounds_check) const {
     arrow::compute::TakeOptions options;
+    options.boundscheck = bounds_check;
     std::vector<arrow::Datum> inputs = {m_array, indices.value()};
     return Array(arrow_utils::call_compute(inputs, "take", &options).make_array());
 }

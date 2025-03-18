@@ -41,6 +41,17 @@ namespace epochframe {
                               arrow::Table::Make(arrow::schema(fields), columns));
     }
 
+    DataFrame make_dataframe(IndexPtr const &index, std::vector<arrow::ChunkedArrayPtr> const &data, std::vector<std::string> const &columnNames) {
+        AssertWithTraceFromStream(data.size() == columnNames.size(), "Data and column names must have the same size");
+        arrow::FieldVector fields;
+
+        for (auto const &name: columnNames) {
+            fields.push_back(field(name, data[0]->type()));
+        }
+        return DataFrame(index, arrow::Table::Make(arrow::schema(fields), data));
+    }
+
+
     DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<Scalar>> const &data,
                              arrow::FieldVector const &fields) {
         arrow::ChunkedArrayVector columns;

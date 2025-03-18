@@ -38,7 +38,7 @@ TEST_CASE("Array - Constructors", "[array][constructors]")
         REQUIRE(arr.null_count() == 0);
 
         // Test null pointer handling
-        REQUIRE_THROWS_AS(Array(nullptr), std::invalid_argument);
+        REQUIRE_THROWS_AS(Array(arrow::ArrayPtr{nullptr}), std::invalid_argument);
     }
 
     SECTION("Constructor from arrow::Array")

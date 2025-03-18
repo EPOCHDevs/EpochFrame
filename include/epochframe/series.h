@@ -6,6 +6,7 @@
 #include <factory/array_factory.h>
 #include <methods/temporal.h>
 #include "ndframe/ndframe.h"
+#include "methods/groupby.h"
 
 
 namespace epochframe {
@@ -112,6 +113,9 @@ namespace epochframe {
         [[nodiscard]] TemporalOperation<true> dt() const {
             return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
+
+        GroupByAgg<Series> resample_by_agg(const TimeGrouperOptions &options) const;
+        GroupByApply resample_by_apply(const TimeGrouperOptions &options, bool groupKeys=true) const;
 
         using NDFrame::from_base;
 

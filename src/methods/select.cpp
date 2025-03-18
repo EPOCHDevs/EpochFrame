@@ -21,7 +21,7 @@ namespace epochframe {
     TableComponent
     Selections::take(arrow::ArrayPtr const &indices,
             arrow::compute::TakeOptions const &option) const {
-        return itake(m_data.first->loc(Array(indices)).value(), option);
+        return itake(m_data.first->loc(Array(indices))->array().value(), option);
     }
 
     TableComponent

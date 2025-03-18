@@ -14,5 +14,7 @@ namespace epochframe {
         explicit DateTimeIndex(std::shared_ptr<arrow::Array> array, std::string const& name="");
 
         IndexPtr Make(std::shared_ptr<arrow::Array> array) const final;
+
+        std::string tz() const;
     };
 } // namespace epochframe

@@ -10,6 +10,7 @@
 
 namespace epochframe {
 
+    using namespace std::chrono;
     struct Time {
         chrono_hour hour{0};
         chrono_minute minute{0};
@@ -44,6 +45,10 @@ namespace epochframe {
         arrow::TimestampScalar timestamp() const;
         Time time() const noexcept {
             return Time{hour, minute, second, microsecond, tz};
+        }
+
+        DateTime normalize() const {
+            return DateTime{date, 0h, 0min, 0s, 0us, tz};
         }
         
         bool operator==(const DateTime &other) const = default;

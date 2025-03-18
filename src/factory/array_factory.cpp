@@ -17,6 +17,16 @@ namespace epochframe::factory::array {
         return AssertContiguousArrayResultIsOk(builder->Finish());
     }
 
+    arrow::ChunkedArrayPtr make_random_array(int64_t length, int64_t seed) {
+        arrow::DoubleBuilder builder;
+        AssertStatusIsOk(builder.Reserve(length));
+        std::mt19937 gen(seed);
+        for (int64_t i = 0; i < length; ++i) {
+            builder.UnsafeAppend(gen());
+        }
+        return AssertArrayResultIsOk(builder.Finish());
+    }
+
     arrow::ChunkedArrayPtr make_chunked_array(const arrow::ChunkedArrayVector &arrowPtrList) {
         arrow::ArrayVector arrays;
         for (const auto &array: arrowPtrList) {

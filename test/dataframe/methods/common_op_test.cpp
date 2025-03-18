@@ -9,6 +9,7 @@
 #include <limits>   // for std::numeric_limits (inf, NaN)
 #include <cmath>    // for isnan checks
 #include "epochframe/dataframe.h"
+#include "epochframe/series.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 

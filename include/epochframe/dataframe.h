@@ -29,6 +29,8 @@ namespace epochframe {
 
         DataFrame rename(std::unordered_map<std::string, std::string> const& by);
 
+        DataFrame set_index(std::string const&) const;
+
         //--------------------------------------------------------------------------
         // 2) Basic arithmetic: +, -, *, / with NDFrame and Scalar
         //--------------------------------------------------------------------------
@@ -134,15 +136,18 @@ namespace epochframe {
 
         DataFrame from_base(TableComponent const &tableComponent) const override;
 
-        GroupByAgg group_by_agg(std::vector<std::string> const &by) const;
-        GroupByAgg group_by_agg(arrow::ChunkedArrayVector const &by) const;
+        GroupByAgg<DataFrame> group_by_agg(std::vector<std::string> const &by) const;
+        GroupByAgg<DataFrame> group_by_agg(arrow::ChunkedArrayVector const &by) const;
         GroupByApply group_by_apply(std::vector<std::string>  const &by, bool groupKeys=true) const;
         GroupByApply group_by_apply(arrow::ChunkedArrayVector const &by, bool groupKeys=true) const;
 
-        GroupByAgg group_by_agg(std::string const &by) const {
+        GroupByAgg<DataFrame> resample_by_agg(const TimeGrouperOptions &options) const;
+        GroupByApply resample_by_apply(const TimeGrouperOptions &options, bool groupKeys=true) const;
+
+        GroupByAgg<DataFrame> group_by_agg(std::string const &by) const {
             return group_by_agg(std::vector<std::string>{by});
         }
-        GroupByAgg group_by_agg(arrow::ChunkedArrayPtr const &by) const {
+        GroupByAgg<DataFrame> group_by_agg(arrow::ChunkedArrayPtr const &by) const {
             return group_by_agg(arrow::ChunkedArrayVector{by});
         }
         GroupByApply group_by_apply(std::string  const &by, bool groupKeys=true) const {

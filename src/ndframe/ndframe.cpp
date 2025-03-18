@@ -781,11 +781,11 @@ namespace epochframe {
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::map(const std::function<Scalar(const Scalar&)>& func, 
-                                                bool ignore_nulls) const {        
+    ChildType NDFrame<ChildType, ArrowType>::map(const std::function<Scalar(const Scalar&)>& func,
+                                                bool ignore_nulls) const {
         return from_base(TableOrArray(arrow_utils::map(
-                m_table, 
-                func, 
+                m_table,
+                func,
                 ignore_nulls)));
     }
 

@@ -11,6 +11,8 @@
 #include <arrow/acero/options.h>
 #include <common/arrow_agg.h>
 #include <common/asserts.h>
+#include "factory/index_factory.h"
+#include "index/datetime_index.h"
 
 #include "epochframe/dataframe.h"
 #include <range/v3/view/enumerate.hpp>
@@ -18,7 +20,6 @@
 #include <common/methods_helper.h>
 #include <epochframe/common.h>
 #include <factory/array_factory.h>
-#include <factory/index_factory.h>
 #include <index/arrow_index.h>
 #include <vector_functions/arrow_vector_functions.h>
 
@@ -26,11 +27,23 @@ namespace epochframe {
     namespace cp = arrow::compute;
     namespace ac = arrow::acero;
 
+    std::string get_placeholder_name(uint64_t index) { return fmt::format("__groupby_key_{}__", index); }
+
+    bool is_placeholder(std::string const& name) {
+        std::regex regex("__groupby_key_(\\d+)__");
+        std::smatch match;
+        return std::regex_search(name, match, regex);
+    }
+
     //-------------------------------------------------------------------------
     // Grouper implementation
     //-------------------------------------------------------------------------
-    Grouper::Grouper(arrow::TablePtr table) : m_table(std::move(table)) {
+    Grouper::Grouper(arrow::TablePtr table, std::optional<TimeGrouperOptions> options) : m_table(std::move(table)) {
         AssertWithTraceFromFormat(m_table, "table cannot be null.");
+
+        if (options) {
+            m_time_grouper = std::make_optional<TimeGrouper>(*options);
+        }
     }
 
 
@@ -41,17 +54,23 @@ namespace epochframe {
     void Grouper::makeGroups(arrow::ChunkedArrayVector const& keys) {
         arrow::ArrayPtr key;
         if (keys.size() ==  1) {
-            key = factory::array::make_contiguous_array(keys.at(0));
+            auto array = m_time_grouper ? m_time_grouper->apply(keys.at(0)) : keys.at(0);
+            key = factory::array::make_contiguous_array(array);
         }
         else {
             arrow::ArrayVector keysAsArray(keys.size());
             std::ranges::transform(keys, keysAsArray.begin(), [&](arrow::ChunkedArrayPtr const& keyChunkedArray) {
-                return factory::array::make_contiguous_array(keyChunkedArray);
+                auto array = m_time_grouper ? m_time_grouper->apply(keyChunkedArray) : keyChunkedArray;
+                return factory::array::make_contiguous_array(array);
             });
             arrow::FieldVector fields(keys.size());
             std::ranges::transform(m_keys, fields.begin(), [&](arrow::FieldRef const& keyRef) {
                 auto field = m_table->schema()->GetFieldByName(*keyRef.name());
                 AssertWithTraceFromFormat(field, "field cannot be null.");
+
+                if (is_placeholder(*keyRef.name())) {
+                    field = arrow::field("", field->type());
+                }
                 return field;
             });
             key = AssertResultIsOk(factory::array::array_to_struct_single_chunk(keysAsArray, fields));
@@ -83,15 +102,15 @@ namespace epochframe {
     //-------------------------------------------------------------------------
     // KeyGrouper implementation
     //-------------------------------------------------------------------------
-    KeyGrouper::KeyGrouper(arrow::TablePtr table, std::vector<std::string> const &by)
-        : Grouper(std::move(table)) {
+    KeyGrouper::KeyGrouper(arrow::TablePtr table, std::vector<std::string> const &by, std::optional<TimeGrouperOptions> options)
+        : Grouper(std::move(table), options) {
         for (auto const& key : by) {
             auto field = m_table->schema()->GetFieldByName(key);
             AssertWithTraceFromStream(field != nullptr, "Column not found: " + key);
             m_keys.emplace_back(key);
         }
 
-        std::unordered_set by_set{by.begin(), by.end()};
+        std::unordered_set<std::string> by_set{by.begin(), by.end()};
         for (auto const& key : m_table->schema()->field_names()) {
             if (!by_set.contains(key)) {
                 m_fields.emplace_back(key);
@@ -112,15 +131,16 @@ namespace epochframe {
     //-------------------------------------------------------------------------
     // ArrayGrouper implementation
     //-------------------------------------------------------------------------
-    ArrayGrouper::ArrayGrouper(arrow::TablePtr table, arrow::ChunkedArrayVector const& by)
-        : Grouper(std::move(table)), m_arr(by) {
+    ArrayGrouper::ArrayGrouper(arrow::TablePtr table, arrow::ChunkedArrayVector const& by, std::optional<TimeGrouperOptions> options)
+        : Grouper(std::move(table), options), m_arr(by) {
         for (auto const& key : m_table->schema()->field_names()) {
             m_fields.emplace_back(key);
         }
 
         for (auto const& [i, key] : ranges::views::enumerate(by)) {
-            AssertWithTraceFromStream(key->length() == m_table->num_rows(), "Key size does not match table rows");
-            auto field = fmt::format("__groupby_key_{}__", i);
+            AssertWithTraceFromStream(key->length() == m_table->num_rows(),
+             "Key size does not match table rows. key: " << key->length() << " table: " << m_table->num_rows());
+            auto field = get_placeholder_name(i);
             m_keys.emplace_back(field);
             m_table = AssertResultIsOk(m_table->AddColumn(m_table->num_columns(), arrow::field(field, key->type()), key));
         }
@@ -160,7 +180,11 @@ namespace epochframe {
         for (auto const& key : keys) {
             auto filter_pair= filter_key(*key.name(), new_table);
             indexArrays.emplace_back(factory::array::make_contiguous_array(filter_pair.first));
-            indexFields.emplace_back(arrow::field(*key.name(), filter_pair.first->type()));
+            std::string field_name = *key.name();
+            if (is_placeholder(field_name)) {
+                field_name = "";
+            }
+            indexFields.emplace_back(arrow::field(field_name, filter_pair.first->type()));
             new_table = filter_pair.second;
         }
 
@@ -268,7 +292,7 @@ namespace epochframe {
                 auto scalar = AssertResultIsOk(structScalar->field(key));
                 auto structArray = AssertResultIsOk(arrow::MakeArrayFromScalar(*scalar, indexArray->length()));
                 structArrays.push_back(structArray);
-                fieldNames.push_back(*key.name());
+                fieldNames.push_back(is_placeholder(*key.name()) ? "" : *key.name());
             }
             structArrays.push_back(indexArray);
             fieldNames.emplace_back(newIndex->name());
@@ -276,8 +300,12 @@ namespace epochframe {
         }
         else {
             auto repeatKeyArray = AssertResultIsOk(arrow::MakeArrayFromScalar(*groupKey, indexArray->length()));
+            std::string field_name = *keys.at(0).name();
+            if (is_placeholder(field_name)) {
+                field_name = "";
+            }
             mergedArray = AssertResultIsOk(arrow::StructArray::Make({repeatKeyArray, newIndex->array().value()}, {
-            *keys.at(0).name(), newIndex->name()
+                field_name, newIndex->name()
             }));
         }
         return factory::index::make_index(mergedArray, std::nullopt, "");
@@ -334,19 +362,39 @@ namespace epochframe {
     //-------------------------------------------------------------------------
     // GroupByAgg implementation
     //-------------------------------------------------------------------------
-    GroupByAgg::GroupByAgg(std::shared_ptr<Grouper> grouper, std::shared_ptr<AggOperations> operations)
+    template<typename OutputType>
+    GroupByAgg<OutputType>::GroupByAgg(std::shared_ptr<Grouper> grouper, std::shared_ptr<AggOperations> operations)
         : m_grouper(std::move(grouper)), m_operations(std::move(operations)) {
     }
 
-    DataFrame GroupByAgg::agg(std::string const& agg_name,
+    template<typename OutputType>
+    OutputType GroupByAgg<OutputType>::agg(std::string const& agg_name,
                          const std::shared_ptr<arrow::compute::FunctionOptions>& option) const {
-        return m_operations->agg(agg_name, option);
+        DataFrame dataFrame = m_operations->agg(agg_name, option);
+        if constexpr (std::is_same_v<OutputType, DataFrame>) {
+            return dataFrame;
+        }
+        else {
+            return dataFrame.to_series();
+        }
     }
 
-    std::unordered_map<std::string, DataFrame> GroupByAgg::agg(
+    template<typename OutputType>
+    std::unordered_map<std::string, OutputType> GroupByAgg<OutputType>::agg(
         std::vector<std::string> const& agg_names,
         const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& options) const {
-        return m_operations->agg(agg_names, options);
+        std::unordered_map<std::string, DataFrame> dataFrame = m_operations->agg(agg_names, options);
+
+        if constexpr (std::is_same_v<OutputType, DataFrame>) {
+            return dataFrame;
+        }
+        else {
+            std::unordered_map<std::string, OutputType> result;
+            for (auto const& [key, value] : dataFrame) {
+                result[key] = value.to_series();
+        }
+        return result;
+    }
     }
 
     //-------------------------------------------------------------------------
@@ -372,32 +420,63 @@ namespace epochframe {
         return m_operations->apply(fn);
     }
 
+
+    template class GroupByAgg<DataFrame>;
+    template class GroupByAgg<Series>;
+
     //-------------------------------------------------------------------------
     // Factory functions implementation
     //-------------------------------------------------------------------------
     namespace factory::group_by {
-        GroupByAgg make_agg_by_key(arrow::TablePtr table, std::vector<std::string> const &by) {
+        template<typename OutputType>
+        GroupByAgg<OutputType> make_agg_by_key(arrow::TablePtr table, std::vector<std::string> const &by, std::optional<TimeGrouperOptions> options) {
             auto grouper = std::make_shared<KeyGrouper>(std::move(table), by);
             auto operations = std::make_shared<AggOperations>(grouper);
-            return GroupByAgg(grouper, operations);
+            return GroupByAgg<OutputType>(grouper, operations);
         }
 
-        GroupByAgg make_agg_by_array(arrow::TablePtr table, arrow::ChunkedArrayVector const &by) {
+        template<typename OutputType>
+        GroupByAgg<OutputType> make_agg_by_array(arrow::TablePtr table, arrow::ChunkedArrayVector const &by, std::optional<TimeGrouperOptions> options) {
             auto grouper = std::make_shared<ArrayGrouper>(std::move(table), by);
             auto operations = std::make_shared<AggOperations>(grouper);
-            return GroupByAgg(grouper, operations);
+            return GroupByAgg<OutputType>(grouper, operations);
         }
 
-        GroupByApply make_apply_by_key(DataFrame const& table, std::vector<std::string> const &by, bool groupKeys) {
+        template<typename OutputType>
+        GroupByAgg<OutputType> make_agg_by_index(DataFrame const& table, const TimeGrouperOptions& options) {
+            TimeGrouper time_grouper(options);
+            auto datetime_index = std::dynamic_pointer_cast<DateTimeIndex>(table.index());
+            AssertWithTraceFromStream(datetime_index, "Index is not a DateTimeIndex");
+            auto resampled = time_grouper.apply(*datetime_index);
+            return make_agg_by_array<OutputType>(table.table(), {resampled}, options);
+        }
+
+        GroupByApply make_apply_by_key(DataFrame const& table, std::vector<std::string> const &by, bool groupKeys, std::optional<TimeGrouperOptions> options) {
             auto grouper = std::make_shared<KeyGrouper>(table.table(), by);
             const auto operations = std::make_shared<ApplyOperations>(table, grouper, groupKeys);
             return GroupByApply(grouper, operations);
         }
 
-        GroupByApply make_apply_by_array(DataFrame const&  table, arrow::ChunkedArrayVector const &by, bool groupKeys) {
+        GroupByApply make_apply_by_array(DataFrame const&  table, arrow::ChunkedArrayVector const &by, bool groupKeys, std::optional<TimeGrouperOptions> options) {
             auto grouper = std::make_shared<ArrayGrouper>(table.table(), by);
             const auto operations = std::make_shared<ApplyOperations>(table, grouper, groupKeys);
             return GroupByApply(grouper, operations);
         }
+
+        GroupByApply make_apply_by_index(DataFrame const& table, bool groupKeys, const TimeGrouperOptions& options) {
+            TimeGrouper time_grouper(options);
+            auto datetime_index = std::dynamic_pointer_cast<DateTimeIndex>(table.index());
+            AssertWithTraceFromStream(datetime_index, "Index is not a DateTimeIndex");
+            auto resampled = time_grouper.apply(*datetime_index);
+            return make_apply_by_array(table, {resampled}, groupKeys, std::nullopt);
+        }
+
+        template GroupByAgg<DataFrame> make_agg_by_key(arrow::TablePtr table, std::vector<std::string> const &by, std::optional<TimeGrouperOptions> options);
+        template GroupByAgg<DataFrame> make_agg_by_array(arrow::TablePtr table, arrow::ChunkedArrayVector const &by, std::optional<TimeGrouperOptions> options);
+        template GroupByAgg<DataFrame> make_agg_by_index(DataFrame const& table, const TimeGrouperOptions& options);
+
+        template GroupByAgg<Series> make_agg_by_key(arrow::TablePtr table, std::vector<std::string> const &by, std::optional<TimeGrouperOptions> options);
+        template GroupByAgg<Series> make_agg_by_array(arrow::TablePtr table, arrow::ChunkedArrayVector const &by, std::optional<TimeGrouperOptions> options);
+        template GroupByAgg<Series> make_agg_by_index(DataFrame const& table, const TimeGrouperOptions& options);
     }
 }

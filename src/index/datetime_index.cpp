@@ -15,4 +15,8 @@ namespace epochframe {
     IndexPtr DateTimeIndex::Make(std::shared_ptr<arrow::Array> array) const {
         return std::make_shared<DateTimeIndex>(std::move(array), name());
     }
+
+    std::string DateTimeIndex::tz() const {
+        return arrow_utils::get_tz(dtype());
+    }
 } // namespace epochframe
