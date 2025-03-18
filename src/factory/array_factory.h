@@ -18,6 +18,8 @@ namespace epochframe::factory::array {
         return AssertArrayResultIsOk(arrow::ChunkedArray::Make({arrowPtr}));
     }
 
+    arrow::ChunkedArrayPtr make_random_array(int64_t length, int64_t seed=0);
+
     template<class T>
     arrow::ChunkedArrayPtr make_array(const auto &begin_, const auto &end_) {
 

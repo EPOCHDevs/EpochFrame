@@ -105,6 +105,9 @@ namespace epochframe::factory::index {
             case arrow::Type::STRUCT: {
                 return std::make_shared<StructIndex>(index_array, name);
             }
+            case arrow::Type::TIMESTAMP: {
+                return std::make_shared<DateTimeIndex>(index_array, name);
+            }
             default:
                 break;
         }

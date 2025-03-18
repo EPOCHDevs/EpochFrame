@@ -61,6 +61,10 @@ public:
         return (days_ * (24*3600) + seconds_) * 1000000 + microseconds_;
     }
 
+    int64_t to_nanoseconds() const {
+        return to_microseconds() * 1000;
+    }
+
     TimeDelta operator+(const TimeDelta& other) const;
     TimeDelta& operator+=(const TimeDelta& other);
     TimeDelta operator-(const TimeDelta& other) const;

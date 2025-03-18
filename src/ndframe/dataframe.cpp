@@ -66,6 +66,14 @@ namespace epochframe {
         };
     }
 
+DataFrame DataFrame::set_index(std::string const & new_index) const {
+        auto indexPos = m_table->schema()->GetFieldIndex(new_index);
+        AssertWithTraceFromStream(indexPos != -1, new_index << " is not a valid column");
+        auto index = m_table->column(indexPos);
+        auto new_table = AssertResultIsOk(m_table->RemoveColumn(indexPos));
+        return DataFrame{m_index->Make(factory::array::make_contiguous_array(index)), new_table};
+    }
+
     size_t DataFrame::num_rows() const {
         return m_table->num_rows();
     }
@@ -280,12 +288,12 @@ namespace epochframe {
         return DataFrame(tableComponent.first, tableComponent.second.table());
     }
 
-    GroupByAgg DataFrame::group_by_agg(std::vector<std::string> const &by) const {
-        return factory::group_by::make_agg_by_key(m_table, by);
+    GroupByAgg<DataFrame> DataFrame::group_by_agg(std::vector<std::string> const &by) const {
+        return factory::group_by::make_agg_by_key<DataFrame>(m_table, by);
     }
 
-    GroupByAgg DataFrame::group_by_agg(arrow::ChunkedArrayVector const &by) const {
-        return factory::group_by::make_agg_by_array(m_table, by);
+    GroupByAgg<DataFrame> DataFrame::group_by_agg(arrow::ChunkedArrayVector const &by) const {
+        return factory::group_by::make_agg_by_array<DataFrame>(m_table, by);
     }
 
     GroupByApply DataFrame::group_by_apply(std::vector<std::string> const &by, bool groupKeys) const {
@@ -313,4 +321,13 @@ namespace epochframe {
             return concat(ConcatOptions{.frames = columns, .axis = AxisType::Column, .ignore_index = true}).reindex(m_index);
         }
     }
+
+    GroupByAgg<DataFrame> DataFrame::resample_by_agg(const TimeGrouperOptions &options) const {
+        return factory::group_by::make_agg_by_index<DataFrame>(*this, options);
+    }
+
+    GroupByApply DataFrame::resample_by_apply(const TimeGrouperOptions &options, bool groupKeys) const {
+        return factory::group_by::make_apply_by_index(*this, groupKeys, options);
+    }
+
 } // namespace epochframe

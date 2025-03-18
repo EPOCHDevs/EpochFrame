@@ -166,4 +166,12 @@ namespace epochframe {
     Series Series::from_base(TableComponent const &tableComponent) const {
         return Series(tableComponent.first, tableComponent.second.chunked_array(), m_name);
     }
+
+    GroupByAgg<Series> Series::resample_by_agg(const TimeGrouperOptions &options) const {
+        return factory::group_by::make_agg_by_index<Series>(to_frame(), options);
+    }
+
+    GroupByApply Series::resample_by_apply(const TimeGrouperOptions &options, bool groupKeys) const {
+        return factory::group_by::make_apply_by_index(to_frame(), groupKeys, options);
+    }
 }

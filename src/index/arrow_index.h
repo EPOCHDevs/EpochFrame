@@ -119,14 +119,18 @@ namespace epochframe {
         //--------------------------------------------------------------------------
         // Searching / Slicing
 
-        Array iloc(UnResolvedIntegerSliceBound const&) const final;
+        IndexPtr iloc(UnResolvedIntegerSliceBound const&) const final;
+
+        Scalar at(IndexType loc) const final{
+            return Scalar(AssertResultIsOk(m_array->GetScalar(loc)));
+        }
 
         IndexType get_loc(Scalar const &label) const final;
 
         ResolvedIntegerSliceBound
         slice_locs(Scalar const &start, Scalar const &end = {}) const final;
 
-        Array loc(Array const & labels) const final;
+        IndexPtr loc(Array const & labels) const final;
 
         [[nodiscard]] IndexType searchsorted(Scalar const &value,
                                              SearchSortedSide side) const final;

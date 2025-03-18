@@ -159,8 +159,8 @@ namespace epochframe {
     }
 
     template<bool IsMonotonic>
-    Array ArrowIndex<IsMonotonic>::iloc(const UnResolvedIntegerSliceBound &indexes) const {
-        return m_array[indexes];
+    IndexPtr ArrowIndex<IsMonotonic>::iloc(const UnResolvedIntegerSliceBound &indexes) const {
+        return Make(m_array[indexes].value());
     }
 
 /** get_loc(label) */
@@ -179,7 +179,7 @@ namespace epochframe {
 
 /** slice_locs(start, end) */
     template<bool IsMonotonic>
-    Array ArrowIndex<IsMonotonic>::loc(Array const & labels) const {
+    IndexPtr ArrowIndex<IsMonotonic>::loc(Array const & labels) const {
         std::vector<uint64_t> indices(labels.length());
         for (size_t i = 0; i < indices.size(); i++) {
             auto label = labels[i];
@@ -189,7 +189,7 @@ namespace epochframe {
                 throw std::runtime_error(fmt::format("Label not found: {}", label.repr()));
             }
         }
-        return Array(factory::array::make_contiguous_array(indices));
+        return Make(factory::array::make_contiguous_array(indices));
     }
 
     template<bool IsMonotonic>

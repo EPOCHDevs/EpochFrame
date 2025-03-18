@@ -338,10 +338,10 @@ namespace epochframe {
 
         /**
          * @brief Apply a function to each element in the NDFrame
-         * 
+         *
          * This applies a function to each scalar value in the NDFrame and returns
          * a new NDFrame with the results.
-         * 
+         *
          * @param func A function that takes a Scalar and returns a Scalar
          * @param ignore_nulls Optional. If true, nulls are not passed to the function
          * @return A new NDFrame with the results

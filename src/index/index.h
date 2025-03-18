@@ -110,7 +110,8 @@ namespace epochframe {
 
         // ------------------------------------------------------------------------
         // Searching / Slicing
-        virtual Array iloc(UnResolvedIntegerSliceBound const&) const = 0;
+        virtual IndexPtr iloc(UnResolvedIntegerSliceBound const&) const = 0;
+        virtual Scalar at(IndexType loc) const = 0;
 
         /// Return the integer location of 'label' in the index (like Pandas .get_loc())
         /// Could throw if not found
@@ -122,7 +123,7 @@ namespace epochframe {
         slice_locs(Scalar const &start,
                    Scalar const &end = {}) const = 0;
 
-        virtual Array loc(Array const & labels_or_filter) const = 0;
+        virtual IndexPtr loc(Array const & labels_or_filter) const = 0;
 
         /// Like Pandas .searchsorted - find insertion position to maintain order
         /// 'side' can be 'left' or 'right'
