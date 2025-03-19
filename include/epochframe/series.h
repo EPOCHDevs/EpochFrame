@@ -47,6 +47,10 @@ namespace epochframe {
             return m_table;
         }
 
+        Array contiguous_array() const {
+            return Array(factory::array::make_contiguous_array(m_table));
+        }
+
         friend std::ostream &operator<<(std::ostream &os, Series const &series);
 
         //--------------------------------------------------------------------------

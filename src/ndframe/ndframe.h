@@ -380,6 +380,15 @@ namespace epochframe {
 
         virtual ChildType from_base(TableComponent const &tableComponent) const = 0;
 
+        //--------------------------------------------------------------------------
+        // 15) Window operations
+        //--------------------------------------------------------------------------
+        ChildType diff(int64_t periods=1) const;
+
+        ChildType shift(int64_t periods) const;
+
+        ChildType pct_change(int64_t periods) const;
+        
     protected:
         IndexPtr m_index;
         ArrowPtrType m_table;
@@ -389,7 +398,7 @@ namespace epochframe {
         std::shared_ptr<class CommonOperations> m_commonOp;
         std::shared_ptr<class Selections> m_select;
         std::shared_ptr<class Aggregator> m_agg;
-
+        std::shared_ptr<class WindowOperation> m_windowOp;
         virtual ChildType from_base(IndexPtr const &index, ArrowPtrType const &table) const = 0;
     };
 

@@ -584,6 +584,7 @@ public:
      */
     Array map(std::function<Scalar(const Scalar&)> func, bool ignore_nulls = false) const;
 
+    Array diff(int64_t periods=1) const;
 private:
     arrow::ArrayPtr m_array;
 };

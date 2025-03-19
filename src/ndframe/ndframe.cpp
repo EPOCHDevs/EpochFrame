@@ -25,7 +25,7 @@
 #include "common/series_or_scalar.h"
 #include "epochframe/frame_or_series.h"
 #include "common/arrow_compute_utils.h"
-
+#include "methods/window_op.h"
 
 namespace epochframe {
 
@@ -54,6 +54,7 @@ namespace epochframe {
         this->m_commonOp = std::make_shared<CommonOperations>(*m_tableComponent);
         this->m_select = std::make_shared<Selections>(*m_tableComponent);
         this->m_agg = std::make_shared<Aggregator>(*m_tableComponent);
+        this->m_windowOp = std::make_shared<WindowOperation>(*m_tableComponent);
     }
 
     template<class ChildType, class ArrowType>
@@ -930,4 +931,11 @@ namespace epochframe {
             }
     }
 
+    //--------------------------------------------------------------------------
+    // 15) Window operations
+    //--------------------------------------------------------------------------
+    template<class ChildType, class ArrowType>
+    ChildType NDFrame<ChildType, ArrowType>::diff(int64_t periods) const {
+        return from_base(m_windowOp->diff(periods));
+    }
 } // namespace epochframe
