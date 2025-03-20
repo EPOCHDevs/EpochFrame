@@ -44,6 +44,11 @@ namespace epochframe::factory::array {
         return AssertContiguousArrayResultIsOk(datum);
     }
 
+    arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector, std::shared_ptr<arrow::DataType> const &type) {
+        auto result = make_array(scalarVector, type);
+        return AssertArrayResultIsOk(arrow::ChunkedArray::Make(std::vector<arrow::ArrayPtr>{result}));
+    }
+
     arrow::ChunkedArrayPtr make_chunked_array(const arrow::Datum &datum) {
         if (datum.is_array()) {
             return make_array(datum.make_array());

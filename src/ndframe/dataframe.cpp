@@ -330,4 +330,19 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         return factory::group_by::make_apply_by_index(*this, groupKeys, options);
     }
 
+    AggRollingWindowOperations<true> DataFrame::rolling_agg(window::RollingWindowOptions const& options) const {
+        return {std::make_unique<window::RollingWindow>(options), *this};
+    }
+
+    ApplyDataFrameRollingWindowOperations DataFrame::rolling_apply(window::RollingWindowOptions const& options) const {
+        return {std::make_unique<window::RollingWindow>(options), *this};
+    }
+
+    AggRollingWindowOperations<true> DataFrame::expanding_agg(window::ExpandingWindowOptions const& options) const {
+        return {std::make_unique<window::ExpandingWindow>(options), *this};
+    }
+
+    ApplyDataFrameRollingWindowOperations DataFrame::expanding_apply(window::ExpandingWindowOptions const& options) const {
+        return {std::make_unique<window::ExpandingWindow>(options), *this};
+    }
 } // namespace epochframe

@@ -262,25 +262,11 @@ namespace epochframe::arrow_utils {
         });
     }
 
-    inline TableOrArray call_compute_is_in(const TableOrArray &table, const arrow::ArrayPtr &values) {
-        arrow::compute::SetLookupOptions options{values, arrow::compute::SetLookupOptions::NullMatchingBehavior::MATCH};
-        if (table.is_table()) {
-            return TableOrArray{apply_function_to_table(table.table(), [&](const arrow::Datum &arr, std::string const&) {
-                return call_unary_compute_array(arr, "is_in", &options);
-            })};
-        }
-        return TableOrArray{call_unary_compute_contiguous_array(table.datum(), "is_in", &options)};
-    }
+    TableOrArray call_unary_compute_table_or_array(const TableOrArray &table, std::string const &function_name, arrow::compute::FunctionOptions const &options);
 
-    inline TableOrArray call_compute_index_in(const TableOrArray &table, const arrow::ArrayPtr &values) {
-        arrow::compute::SetLookupOptions options{values, arrow::compute::SetLookupOptions::NullMatchingBehavior::MATCH};
-        if (table.is_table()) {
-            return TableOrArray{apply_function_to_table(table.table(), [&](const arrow::Datum &arr, std::string const&) {
-                return call_unary_compute_array(arr, "index_in", &options);
-            })};
-        }
-        return TableOrArray{call_unary_compute_contiguous_array(table.datum(), "index_in", &options)};
-    }
+    TableOrArray call_compute_is_in(const TableOrArray &table, const arrow::ArrayPtr &values);
+
+    TableOrArray call_compute_index_in(const TableOrArray &table, const arrow::ArrayPtr &values);
 
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end);
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end, size_t step);

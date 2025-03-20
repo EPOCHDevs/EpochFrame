@@ -267,12 +267,5 @@ namespace epochframe {
         [[nodiscard]] TableOrArray cumulative_mean(arrow::compute::CumulativeOptions const &options) const {
             return apply("cumulative_mean", &options);
         }
-
-        //------------------------------------------------------------------------------
-        // 8) Pairwise
-        //------------------------------------------------------------------------------
-        [[nodiscard]] TableOrArray  pairwise_diff(arrow::compute::PairwiseOptions const &options) const {
-            return apply("pairwise_diff", &options);
-        }
     };
 }

@@ -192,6 +192,10 @@ namespace epochframe {
             return Make(m_array.map(func).value());
         }
 
+        Array diff(int64_t periods=1) const final {
+            return m_array.diff(periods);
+        }
+
         arrow::TablePtr to_table(const std::optional<std::string> &name) const final;
 
         // Temporal Operation

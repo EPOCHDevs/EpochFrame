@@ -479,4 +479,9 @@ Array Array::map(std::function<Scalar(const Scalar&)> func, bool ignore_nulls) c
     return Array(arrow_utils::map(m_array, func, ignore_nulls));
 }
 
+Array Array::diff(int64_t periods) const {
+    arrow::compute::PairwiseOptions options{periods};
+    return Array(arrow_utils::call_unary_compute_contiguous_array(m_array, "pairwise_diff", &options));
+}
+
 } // namespace epochframe 

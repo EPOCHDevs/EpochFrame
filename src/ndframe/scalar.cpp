@@ -351,6 +351,11 @@ namespace epochframe {
         return static_cast<EpochDayOfWeek>(to_datetime().weekday());
     }
 
+    Array Scalar::to_array(int64_t length) const {
+        auto arr = AssertContiguousArrayResultIsOk(arrow::MakeArrayFromScalar(*m_scalar, length));
+        return Array(arr);
+    }
+
     // --- Explicit Template Instantiations ---
     template arrow::ScalarPtr MakeScalar<>(uint64_t const &value);
 

@@ -172,6 +172,7 @@ namespace epochframe {
         virtual IndexPtr map(std::function<Scalar(Scalar const &)> const &func) const = 0;
 
         virtual arrow::TablePtr to_table(std::optional<std::string> const& name) const = 0;
+        virtual Array diff(int64_t periods=1) const = 0;
 
         virtual IndexPtr Make(std::shared_ptr<arrow::Array> array) const = 0;
 

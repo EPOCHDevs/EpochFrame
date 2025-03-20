@@ -553,6 +553,11 @@ namespace epochframe {
     }
 
     template<class ChildType, class ArrowType>
+    ChildType NDFrame<ChildType, ArrowType>::set_index(IndexPtr const &index) const {
+        return from_base(index, m_table);
+    }
+
+    template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const {
         return from_base(m_select->where(cond, other));
     }
@@ -796,6 +801,11 @@ namespace epochframe {
     template<class ChildType, class ArrowType>
     NDFrame<ChildType, ArrowType>::AggType NDFrame<ChildType, ArrowType>::agg(AxisType axis, std::string const& agg, bool skip_null) const {
         return m_agg->agg(axis, agg, skip_null).as<AggType>();
+    }
+
+    template<class ChildType, class ArrowType>
+    NDFrame<ChildType, ArrowType>::AggType NDFrame<ChildType, ArrowType>::agg(AxisType axis, std::string const& agg, bool skip_null, const arrow::compute::FunctionOptions& options) const {
+        return m_agg->agg(axis, agg, skip_null, options).as<AggType>();
     }
 
     template<class ChildType, class ArrowType>

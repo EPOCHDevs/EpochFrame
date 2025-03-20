@@ -236,6 +236,8 @@ namespace epochframe {
         ChildType reindex(IndexPtr const &index,
                         const Scalar &fillValue = Scalar{}) const;
 
+        ChildType set_index(IndexPtr const &index) const;
+
         ChildType loc(const SliceType &label_slice) const;
 
         ChildType loc(const IndexPtr &newIndex) const;
@@ -352,6 +354,8 @@ namespace epochframe {
         // 14) Aggregation
         //--------------------------------------------------------------------------
         AggType agg(AxisType axis, std::string const& agg, bool skip_null = true) const;
+        AggType agg(AxisType axis, std::string const& agg, bool skip_null, const arrow::compute::FunctionOptions& options) const;
+
         AggType all(AxisType axis=AxisType::Row, bool skip_null=true) const;
         AggType any(AxisType axis=AxisType::Row, bool skip_null=true) const;
         AggType approximate_median(AxisType axis=AxisType::Row, bool skip_null=true) const;
@@ -389,7 +393,7 @@ namespace epochframe {
         std::shared_ptr<class CommonOperations> m_commonOp;
         std::shared_ptr<class Selections> m_select;
         std::shared_ptr<class Aggregator> m_agg;
-
+        std::shared_ptr<class WindowOperation> m_windowOp;
         virtual ChildType from_base(IndexPtr const &index, ArrowPtrType const &table) const = 0;
     };
 

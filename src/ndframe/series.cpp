@@ -174,4 +174,21 @@ namespace epochframe {
     GroupByApply Series::resample_by_apply(const TimeGrouperOptions &options, bool groupKeys) const {
         return factory::group_by::make_apply_by_index(to_frame(), groupKeys, options);
     }
+
+    AggRollingWindowOperations<false> Series::rolling_agg(window::RollingWindowOptions const& options) const {
+        return {std::make_unique<window::RollingWindow>(options), *this};
+    }   
+
+    ApplySeriesRollingWindowOperations Series::rolling_apply(window::RollingWindowOptions const& options) const {
+        return {std::make_unique<window::RollingWindow>(options), *this};
+    }
+    
+    AggRollingWindowOperations<false> Series::expanding_agg(window::ExpandingWindowOptions const& options) const {
+        return {std::make_unique<window::ExpandingWindow>(options), *this};
+    }
+
+    ApplySeriesRollingWindowOperations Series::expanding_apply(window::ExpandingWindowOptions const& options) const {
+        return {std::make_unique<window::ExpandingWindow>(options), *this};
+    }
+    
 }

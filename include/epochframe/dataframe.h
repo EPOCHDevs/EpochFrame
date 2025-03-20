@@ -1,7 +1,7 @@
 #pragma once
 #include "ndframe/ndframe.h"
 #include "methods/groupby.h"
-
+#include "methods/window.h"
 
 // Forward declarations and type aliases
 namespace epochframe {
@@ -29,6 +29,7 @@ namespace epochframe {
 
         DataFrame rename(std::unordered_map<std::string, std::string> const& by);
 
+        using NDFrame<DataFrame, arrow::Table>::set_index;
         DataFrame set_index(std::string const&) const;
 
         //--------------------------------------------------------------------------
@@ -165,6 +166,13 @@ namespace epochframe {
          * @return A new DataFrame with the results
          */
         DataFrame apply(const std::function<Series(const Series&)>& func, AxisType axis = AxisType::Row) const;
+
+        AggRollingWindowOperations<true> rolling_agg(window::RollingWindowOptions const& options) const;
+        ApplyDataFrameRollingWindowOperations rolling_apply(window::RollingWindowOptions const& options) const;
+
+        AggRollingWindowOperations<true> expanding_agg(window::ExpandingWindowOptions const& options) const;
+        ApplyDataFrameRollingWindowOperations expanding_apply(window::ExpandingWindowOptions const& options) const;
+
 
         // Inherit map method from NDFrame
         using NDFrame::map;
