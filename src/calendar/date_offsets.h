@@ -61,7 +61,7 @@ namespace epochframe
 
         std::string name() const override
         {
-            return fmt::format("{}{}", this->n(), this->code());
+            return std::format("{}{}", this->n(), this->code());
         }
 
         arrow::TimestampScalar rollforward(arrow::TimestampScalar const&) const;
@@ -446,9 +446,9 @@ namespace epochframe
 
         std::string code() const override
         {
-            return fmt::format(
+            return std::format(
                 "W{}",
-                m_weekday ? fmt::format("-{}", EpochDayOfWeekWrapper::ToString(*m_weekday)) : "");
+                m_weekday ? std::format("-{}", EpochDayOfWeekWrapper::ToString(*m_weekday)) : "");
         }
 
         std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override

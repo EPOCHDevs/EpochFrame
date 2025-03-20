@@ -3,6 +3,9 @@
 //
 
 #include "array_factory.h"
+
+#include <random>
+
 #include "epochframe/scalar.h"
 
 
@@ -10,7 +13,7 @@ namespace epochframe::factory::array {
     arrow::ArrayPtr make_array(const arrow::ScalarVector &scalarVector,
                               std::shared_ptr<arrow::DataType> const &type) {
         auto result = arrow::MakeBuilder(type);
-        AssertWithTraceFromFormat(result.ok(), "Failed to create builder");
+        AssertFromFormat(result.ok(), "Failed to create builder");
         auto builder = result.MoveValueUnsafe();
         AssertStatusIsOk(builder->AppendScalars(std::move(scalarVector)));
 
@@ -53,13 +56,13 @@ namespace epochframe::factory::array {
         if (datum.is_array()) {
             return make_array(datum.make_array());
         }
-        AssertWithTraceFromStream(datum.is_chunked_array(), "datum is not chunked array or array");
+        AssertFromStream(datum.is_chunked_array(), "datum is not chunked array or array");
         return datum.chunked_array();
     }
 
     arrow::ArrayPtr make_contiguous_array(const arrow::ChunkedArrayPtr &chunked_array) {
         auto chunks = AssertArrayResultIsOk(arrow::Concatenate(chunked_array->chunks()))->chunks();
-        AssertWithTraceFromStream(chunks.size() == 1, "datum is not contiguous array");
+        AssertFromStream(chunks.size() == 1, "datum is not contiguous array");
         return chunks[0];
     }
 
@@ -67,7 +70,7 @@ namespace epochframe::factory::array {
         if (datum.is_array()) {
             return datum.make_array();
         }
-        AssertWithTraceFromStream(datum.is_chunked_array(), "datum is not chunked array or array");
+        AssertFromStream(datum.is_chunked_array(), "datum is not chunked array or array");
         return make_contiguous_array(datum.chunked_array());
     }
 

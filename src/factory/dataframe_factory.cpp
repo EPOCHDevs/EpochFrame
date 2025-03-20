@@ -4,6 +4,8 @@
 
 #include "dataframe_factory.h"
 #include <arrow/api.h>
+#include <epoch_lab_shared/macros.h>
+
 #include "common/table_or_array.h"
 
 
@@ -21,7 +23,7 @@ namespace epochframe {
 
         arrow::ChunkedArrayVector columns;
         arrow::FieldVector fields;
-        for (auto const &[name, column]: ranges::view::zip(columnNames, data)) {
+        for (auto const &[name, column]: std::views::zip(columnNames, data)) {
             auto columnBuilder = MakeBuilder(type).MoveValueUnsafe();
             for (auto const& item: column) {
                 if (item.is_null()) {
@@ -42,7 +44,7 @@ namespace epochframe {
     }
 
     DataFrame make_dataframe(IndexPtr const &index, std::vector<arrow::ChunkedArrayPtr> const &data, std::vector<std::string> const &columnNames) {
-        AssertWithTraceFromStream(data.size() == columnNames.size(), "Data and column names must have the same size");
+        AssertFromStream(data.size() == columnNames.size(), "Data and column names must have the same size");
         arrow::FieldVector fields;
 
         for (auto const &name: columnNames) {
@@ -55,7 +57,7 @@ namespace epochframe {
     DataFrame make_dataframe(IndexPtr const &index, std::vector<std::vector<Scalar>> const &data,
                              arrow::FieldVector const &fields) {
         arrow::ChunkedArrayVector columns;
-        for (auto const &[column, field]: ranges::v3::view::zip(data, fields)) {
+        for (auto const &[column, field]: std::views::zip(data, fields)) {
             auto columnBuilder = MakeBuilder(field->type()).MoveValueUnsafe();
             for (auto const& item: column) {
                 if (item.is_null()) {

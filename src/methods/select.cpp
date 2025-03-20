@@ -15,7 +15,7 @@ namespace epochframe {
     Selections::filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const {
         return TableComponent{m_data.first->filter(Array(AssertContiguousArrayResultIsOk(_filter))),
             arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{_filter}},
-            fmt::format("{}filter", m_data.second.is_table() ? "" : "array_"), &option)};
+            std::format("{}filter", m_data.second.is_table() ? "" : "array_"), &option)};
     }
 
     TableComponent
@@ -29,15 +29,15 @@ namespace epochframe {
         arrow::compute::TakeOptions const &option) const {
         return TableComponent{m_data.first->take(Array(integer_indexes)),
         arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{integer_indexes}},
-        fmt::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
+        std::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
     }
 
     TableComponent Selections::drop_null(epochframe::DropMethod how,
                                         epochframe::AxisType axis,
                                         const std::vector<std::string> &subset,
                                         bool ignore_index) const {
-       AssertWithTraceFromStream(how == DropMethod::Any, "drop_null only support any");
-       AssertWithTraceFromStream(axis == AxisType::Row, "drop_null only support row");
+       AssertFromStream(how == DropMethod::Any, "drop_null only support any");
+       AssertFromStream(axis == AxisType::Row, "drop_null only support row");
        AssertFalseFromStream(subset.empty(), "subset can not be empty");
        AssertFalseFromStream(ignore_index, "ignore_index can not be true");
 
@@ -62,7 +62,7 @@ namespace epochframe {
    }
 
    TableOrArray Selections::fill_null(arrow::ScalarPtr const& value, AxisType axis) const {
-    AssertWithTraceFromFormat(axis == AxisType::Row, "fill_null only supports row-wise filling");
+    AssertFromFormat(axis == AxisType::Row, "fill_null only supports row-wise filling");
     if (m_data.second.is_table()) {
         return TableOrArray{arrow_utils::call_compute_fill_null_table(m_data.second.table(), value)};
     }
@@ -74,34 +74,34 @@ namespace epochframe {
     TableOrArray Selections::where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const {
                 auto variant_visitor = [this]<typename T>(const T & _variant) {
                     if constexpr (std::is_same_v<T, DataFrame>) {
-                        AssertWithTraceFromStream(m_data.first->equals(_variant.index()), "IndexMismatch: validation failed.");
+                        AssertFromStream(m_data.first->equals(_variant.index()), "IndexMismatch: validation failed.");
                         return arrow::Datum{_variant.table()};
                     }
                     else if constexpr (std::is_same_v<T, DataFrameToSeriesCallable>) {
                         auto series = _variant(DataFrame(m_data.first, m_data.second.table()));
-                        AssertWithTraceFromStream(m_data.first->equals(series.index()), "IndexMismatch: validation failed.");
+                        AssertFromStream(m_data.first->equals(series.index()), "IndexMismatch: validation failed.");
                         return arrow::Datum{series.array()};
                     }
                     else if constexpr (std::is_same_v<T, DataFrameToDataFrameCallable>) {
                         auto df = _variant(DataFrame(m_data.first, m_data.second.table()));
-                        AssertWithTraceFromStream(m_data.first->equals(df.index()), "IndexMismatch: validation failed.");
+                        AssertFromStream(m_data.first->equals(df.index()), "IndexMismatch: validation failed.");
                         return arrow::Datum{df.table()};
                     }
                     else if constexpr (std::is_same_v<T, Series>) {
-                        AssertWithTraceFromStream(m_data.first->equals(_variant.index()), "IndexMismatch: validation failed.");
+                        AssertFromStream(m_data.first->equals(_variant.index()), "IndexMismatch: validation failed.");
                         return arrow::Datum{_variant.array()};
                     }
                     else if constexpr (std::is_same_v<T, Scalar>) {
                         return arrow::Datum(_variant.value());
                     }
                     else if constexpr (std::is_same_v<T, arrow::ArrayPtr>) {
-                        AssertWithTraceFromStream(m_data.first->size() == _variant->length(), "ArrayLengthMismatch: validation failed.");
+                        AssertFromStream(m_data.first->size() == _variant->length(), "ArrayLengthMismatch: validation failed.");
                         return arrow::Datum(_variant);
                     }
                     else if constexpr (std::is_same_v<T, arrow::TablePtr>) {
-                        AssertWithTraceFromStream(m_data.second.is_table(), "TableExpected: validation failed.");
-                        AssertWithTraceFromStream(m_data.second.table()->schema()->Equals(_variant->schema()), "TableSchemaMismatch: validation failed.");
-                        AssertWithTraceFromStream(m_data.first->size() == _variant->num_rows(), "TableRowCountMismatch: validation failed.");
+                        AssertFromStream(m_data.second.is_table(), "TableExpected: validation failed.");
+                        AssertFromStream(m_data.second.table()->schema()->Equals(_variant->schema()), "TableSchemaMismatch: validation failed.");
+                        AssertFromStream(m_data.first->size() == _variant->num_rows(), "TableRowCountMismatch: validation failed.");
                         return arrow::Datum(_variant);
                     }
                     else {

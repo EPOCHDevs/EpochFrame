@@ -28,7 +28,7 @@ namespace epochframe {
     arrow::TablePtr add_column(const arrow::TablePtr &table, const std::string &name,
                                const arrow::ChunkedArrayPtr &array) {
         auto result = table->AddColumn(table->num_columns(), arrow::field(name, array->type()), array);
-        AssertWithTraceFromStream(result.ok(), "Error adding column: " + result.status().ToString());
+        AssertFromStream(result.ok(), "Error adding column: " + result.status().ToString());
         return result.MoveValueUnsafe();
     }
 
@@ -72,8 +72,8 @@ namespace epochframe {
         auto l_index = table->GetColumnByName(left_index_name);
         auto r_index = table->GetColumnByName(right_index_name);
 
-        AssertWithTraceFromStream(l_index != nullptr, "left IIndex column not found: " << left_index_name + l_suffix);
-        AssertWithTraceFromStream(r_index != nullptr, "right IIndex column not found: " << right_index_name + r_suffix);
+        AssertFromStream(l_index != nullptr, "left IIndex column not found: " << left_index_name + l_suffix);
+        AssertFromStream(r_index != nullptr, "right IIndex column not found: " << right_index_name + r_suffix);
 
         auto merged_index = arrow_utils::call_compute_array({l_index, r_index}, "coalesce");
 
@@ -111,16 +111,16 @@ namespace epochframe {
             if (field != nullptr) {
                 const auto column_with_suffix = intersection_columns.contains(column_name) ? column_name + suffix : column_name;
                 column = merged_table->GetColumnByName(column_with_suffix);;
-                AssertWithTraceFromStream(column != nullptr,
+                AssertFromStream(column != nullptr,
                                           "column not found: " << column_with_suffix << merged_table->ToString());
             } else if (broadcast_columns){
                 AssertFalseFromStream(intersection_columns.contains(column_name),
                           "field not found: " << column_name << merged_table->ToString());
                 field = merged_table->schema()->GetFieldByName(column_name);
-                AssertWithTraceFromStream(field != nullptr, "field not found: " << column_name << merged_table->ToString());
+                AssertFromStream(field != nullptr, "field not found: " << column_name << merged_table->ToString());
 
                 auto array = arrow::MakeArrayOfNull(field->type(), merged_table->num_rows());
-                AssertWithTraceFromStream(array.ok(), array.status().ToString());
+                AssertFromStream(array.ok(), array.status().ToString());
                 column = factory::array::make_array(
                         array.MoveValueUnsafe());
             }
@@ -164,7 +164,7 @@ namespace epochframe {
             "hashjoin", {std::move(left), std::move(right)}, std::move(join_opts)};
 
         auto result = ac::DeclarationToTable(hashjoin);
-        AssertWithTraceFromStream(result.ok(), result.status().ToString());
+        AssertFromStream(result.ok(), result.status().ToString());
 
         auto [index, merged] = make_index_table(result.MoveValueUnsafe(), index_name, "_l", "_r");
         bool broadcast_columns = left_component.second.is_table() && right_component.second.is_table();
@@ -177,8 +177,8 @@ namespace epochframe {
     align_by_index(const TableComponent &left_table_,
                    const IndexPtr & new_index_,
                    const Scalar &fillValue) {
-        AssertWithTraceFromStream(new_index_ != nullptr, "IIndex cannot be null");
-        AssertWithTraceFromStream(left_table_.first != nullptr, "Table IIndex cannot be null");
+        AssertFromStream(new_index_ != nullptr, "IIndex cannot be null");
+        AssertFromStream(left_table_.first != nullptr, "Table IIndex cannot be null");
 
         if (left_table_.first->equals(new_index_))
         {
@@ -191,8 +191,8 @@ namespace epochframe {
 
         auto left_type = left_table_.first->dtype();
         auto right_type = new_index_->dtype();
-        AssertWithTraceFromStream(left_type->Equals(right_type),
-                                fmt::format("IIndex type mismatch. Source index type: {}, Target index type: {}",
+        AssertFromStream(left_type->Equals(right_type),
+                                std::format("IIndex type mismatch. Source index type: {}, Target index type: {}",
                                         left_type->ToString(),
                                         right_type->ToString()));
 
@@ -226,8 +226,8 @@ namespace epochframe {
         auto right_index_pos = merged->schema()->GetFieldIndex(right_index_name);
         auto left_index_pos = merged->schema()->GetFieldIndex(left_index_name);
 
-        AssertWithTraceFromStream(left_index_pos != -1, "Failed to find left index after alignment merge.");
-        AssertWithTraceFromStream(right_index_pos != -1, "Failed to find right index after alignment merge.");
+        AssertFromStream(left_index_pos != -1, "Failed to find left index after alignment merge.");
+        AssertFromStream(right_index_pos != -1, "Failed to find right index after alignment merge.");
 
         auto sorted_table = AssertTableResultIsOk(cp::Take(merged, AssertResultIsOk(SortIndices(
         merged,
@@ -252,7 +252,7 @@ namespace epochframe {
         auto merged_index = std::accumulate(objs.begin() + 1, objs.end(), objs.at(0).index(),
                                             [&](const IndexPtr &acc, FrameOrSeries const &obj) {
                                                 auto next_index = obj.index();
-                                                AssertWithTraceFromStream(acc->dtype()->Equals(next_index->dtype()),
+                                                AssertFromStream(acc->dtype()->Equals(next_index->dtype()),
                                                                           "concat multiple frames requires same index");
                                                 auto index_equal = acc->equals(next_index);
                                                 if (index_equal) {
@@ -338,7 +338,7 @@ namespace epochframe {
             };
         }
         auto indexField = merged->schema()->GetFieldIndex(indexName);
-        AssertWithTraceFromStream(indexField != -1, "Failed to find index");
+        AssertFromStream(indexField != -1, "Failed to find index");
 
         auto index = merged->column(indexField);
         return DataFrame(factory::index::make_index(index, std::nullopt, ""),
@@ -427,7 +427,7 @@ namespace epochframe {
 
         return arrow_utils::apply_function_to_table(left, [&](arrow::Datum const &lhs, std::string const& column_name) {
             const auto &rhs = right->GetColumnByName(column_name);
-            AssertWithTraceFromStream(rhs != nullptr, "column not found: " << column_name);
+            AssertFromStream(rhs != nullptr, "column not found: " << column_name);
             return arrow::Datum(arrow_utils::call_compute_array({lhs, rhs}, op));
         });
     }
@@ -470,13 +470,13 @@ namespace epochframe {
 
     arrow::ChunkedArrayPtr get_column_by_name(arrow::Table const &table, std::string const &name) {
         auto column = table.GetColumnByName(name);
-        AssertWithTraceFromStream(column != nullptr, "ColumnNotFound: " << name);
+        AssertFromStream(column != nullptr, "ColumnNotFound: " << name);
         return column;
     }
 
     arrow::FieldPtr get_field_by_name(arrow::Schema const &schema, std::string const &name) {
         auto field = schema.GetFieldByName(name);
-        AssertWithTraceFromStream(field != nullptr, "FieldNotFound: " << name);
+        AssertFromStream(field != nullptr, "FieldNotFound: " << name);
         return field;
     }
 

@@ -22,7 +22,7 @@ namespace epochframe
               m_min_periods(options.min_periods.value_or(m_window_size)), m_center(options.center),
               m_closed(options.closed), m_step(options.step)
         {
-            AssertWithTraceFromStream(m_step == 1, "epochframe only supports step == 1");
+            AssertFromStream(m_step == 1, "epochframe only supports step == 1");
         }
 
         WindowBounds RollingWindow::get_window_bounds(uint64_t n) const
@@ -88,7 +88,7 @@ namespace epochframe
     AggRollingWindowOperations<is_dataframe>::AggRollingWindowOperations(window::WindowBoundGeneratorPtr generator, FrameType<is_dataframe> const& data)
         : m_generator(std::move(generator)), m_data(data)
     {
-        AssertWithTraceFromStream(m_generator != nullptr, "Window generator is nullptr");
+        AssertFromStream(m_generator != nullptr, "Window generator is nullptr");
     }
 
     template<bool is_dataframe>
@@ -164,7 +164,7 @@ namespace epochframe
     ApplyDataFrameRollingWindowOperations::ApplyDataFrameRollingWindowOperations(window::WindowBoundGeneratorPtr generator, DataFrame const& data)
         : m_generator(std::move(generator)), m_data(data)
     {
-        AssertWithTraceFromStream(m_generator != nullptr, "Window generator is nullptr");
+        AssertFromStream(m_generator != nullptr, "Window generator is nullptr");
     }
 
     Series ApplyDataFrameRollingWindowOperations::apply(std::function<Scalar(DataFrame const&)> const& fn) const
@@ -252,7 +252,7 @@ namespace epochframe
     ApplySeriesRollingWindowOperations::ApplySeriesRollingWindowOperations(window::WindowBoundGeneratorPtr generator, Series const& data)
         : m_generator(std::move(generator)), m_data(data)
     {
-        AssertWithTraceFromStream(m_generator != nullptr, "Window generator is nullptr");
+        AssertFromStream(m_generator != nullptr, "Window generator is nullptr");
     }
 
     Series ApplySeriesRollingWindowOperations::apply(std::function<Scalar(Series const&)> const& fn) const

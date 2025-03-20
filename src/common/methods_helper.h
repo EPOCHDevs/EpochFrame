@@ -70,8 +70,8 @@ namespace epochframe {
 
     template<typename T>
     std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> get_view(arrow::ArrayPtr const &array) {
-        AssertWithTraceFromFormat(array != nullptr, "array is null");
-    
+        AssertFromFormat(array != nullptr, "array is null");
+
         if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id()) {
             if (!can_cast_to_int64_from_timestamp<T>(array)) {
                 throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(),
@@ -83,7 +83,7 @@ namespace epochframe {
 
     template<typename T>
     std::vector<T> get_values(arrow::ArrayPtr const &array) {
-        AssertWithTraceFromFormat(array != nullptr, "array is null");
+        AssertFromFormat(array != nullptr, "array is null");
 
         constexpr bool is_datetime = std::same_as<T, DateTime>;
 
@@ -96,7 +96,7 @@ namespace epochframe {
             }
         }
         else {
-            AssertWithTraceFromFormat(array->type()->id() == arrow::Type::TIMESTAMP, "Expected DATE64 type for DateTime");
+            AssertFromFormat(array->type()->id() == arrow::Type::TIMESTAMP, "Expected DATE64 type for DateTime");
         }
 
         if (array->null_count() != 0) {
@@ -107,7 +107,7 @@ namespace epochframe {
         if constexpr (is_datetime) {
                 result.resize(array->length());
                 auto viewArray = std::dynamic_pointer_cast<arrow::TimestampArray>(array);
-                AssertWithTraceFromFormat(viewArray != nullptr, "Expected TIMESTAMP type for DateTime");
+                AssertFromFormat(viewArray != nullptr, "Expected TIMESTAMP type for DateTime");
 
                 auto dtype = array->type();
                 std::ranges::transform(*viewArray, result.begin(), [&](std::optional<int64_t> const &s) {

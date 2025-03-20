@@ -146,8 +146,8 @@ namespace epochframe {
 
     std::ostream &operator<<(std::ostream &os, Series const &df) {
         tabulate::Table table;
-        tabulate::Table::Row_t header{fmt::format("index({})", df.m_index->dtype()->ToString())};
-        header.push_back(fmt::format("{}({})", df.m_name.value_or(""), df.m_table->type()->ToString()));
+        tabulate::Table::Row_t header{std::format("index({})", df.m_index->dtype()->ToString())};
+        header.push_back(std::format("{}({})", df.m_name.value_or(""), df.m_table->type()->ToString()));
         table.add_row(header);
         for (int64_t i = 0; i < df.m_index->size(); ++i) {
             auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();

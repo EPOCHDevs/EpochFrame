@@ -8,7 +8,7 @@
 #include <ranges>
 #include "common/asserts.h"
 #include <set>
-
+#include <cmath>
 
 namespace epochframe::factory::array {
     arrow::ArrayPtr make_array(const arrow::ScalarVector &scalarVector,

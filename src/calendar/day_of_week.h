@@ -1,6 +1,5 @@
 #pragma once
 #include <epoch_lab_shared/enum_wrapper.h>
-#include <fmt/format.h>
 #include <optional>
 
 CREATE_ENUM(EpochDayOfWeek, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);
@@ -39,7 +38,7 @@ namespace epochframe
             {
                 return s;
             }
-            return fmt::format("{}({})", s, m_n.value());
+            return std::format("{}({})", s, m_n.value());
         }
 
         friend std::ostream& operator<<(std::ostream& os, Weekday const& weekday)
@@ -61,7 +60,7 @@ namespace epochframe
         EpochDayOfWeek     day_of_week;
         std::optional<int> m_n;
     };
-    
+
     // Define weekday constants for testing
     static const Weekday MO(EpochDayOfWeek::Monday);
     static const Weekday TU(EpochDayOfWeek::Tuesday);

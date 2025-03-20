@@ -82,7 +82,7 @@ bool Array::operator==(const Array& other) const {
     auto equal_result = arrow_utils::call_compute(inputs, "equal");
     arrow::ScalarPtr all_result = arrow_utils::call_unary_agg_compute(equal_result, "all");
     auto bool_result = std::dynamic_pointer_cast<arrow::BooleanScalar>(all_result);
-    AssertWithTraceFromStream(bool_result, "Boolean scalar result is not valid");
+    AssertFromStream(bool_result, "Boolean scalar result is not valid");
     return bool_result->value;
 }
 
@@ -186,7 +186,7 @@ std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> Array::to_view() cons
 
 std::shared_ptr<arrow::TimestampArray> Array::to_timestamp_view() const {
     auto result = std::dynamic_pointer_cast<arrow::TimestampArray>(m_array);
-    AssertWithTraceFromFormat(result != nullptr, "array is not a TimestampArray");
+    AssertFromFormat(result != nullptr, "array is not a TimestampArray");
     return result;
 }
 
@@ -451,7 +451,7 @@ Array Array::operator[](const Array& indices) const {
         return this->take(indices);
     } else {
         throw std::invalid_argument(
-            fmt::format("Index array must be boolean or integer type, got {}", 
+            std::format("Index array must be boolean or integer type, got {}", 
                         indices.type()->ToString()));
     }
 }
@@ -467,7 +467,7 @@ TemporalOperation<true> Array::dt() const {
 
     if (m_array->type()->id() != arrow::Type::TIMESTAMP) {
         throw std::runtime_error(
-            fmt::format("dt accessor is only valid for timestamp arrays, got {}", 
+            std::format("dt accessor is only valid for timestamp arrays, got {}", 
                         m_array->type()->ToString()));
     }
 

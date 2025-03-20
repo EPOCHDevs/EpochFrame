@@ -3,6 +3,7 @@
 //
 #include "epochframe/integer_slice.h"
 #include <stdexcept>
+#include <algorithm>
 
 
 namespace epochframe {

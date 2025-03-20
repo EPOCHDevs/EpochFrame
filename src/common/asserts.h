@@ -12,7 +12,7 @@ namespace epochframe {
     template<typename U, typename T>
     requires (!std::is_same_v<U, arrow::Array>)
     std::shared_ptr<U> PtrCast(const std::shared_ptr<T> &datum) {
-        AssertWithTraceFromFormat(datum != nullptr, "Failed to cast pointer, got null");
+        AssertFromFormat(datum != nullptr, "Failed to cast pointer, got null");
 
         std::string typeAsString{U::TypeClass::type_name()};
         std::string datumTypeAsString;
@@ -23,14 +23,14 @@ namespace epochframe {
             datumTypeAsString = datum->type()->ToString();
         }
 
-        AssertWithTraceFromFormat(
+        AssertFromFormat(
                 typeAsString == "utf8" ? datumTypeAsString == "string" : datumTypeAsString == typeAsString,
-                fmt::format("Failed to cast pointer, Expected type {}, got {}",
-                            typeAsString, datumTypeAsString));
+                "Failed to cast pointer, Expected type {}, got {}",
+                            typeAsString, datumTypeAsString);
 
         auto ptr = std::dynamic_pointer_cast<U>(std::move(datum));
-        AssertWithTraceFromFormat(ptr != nullptr, fmt::format("Failed to cast pointer to type {}. got null",
-                                                              typeAsString));
+        AssertFromFormat(ptr != nullptr, "Failed to cast pointer to type {}. got null",
+                                                              typeAsString);
         return ptr;
     }
 
@@ -87,7 +87,7 @@ namespace epochframe {
             try {
                 return result->scalar_as<ArrowScalarType>();
             } catch (const std::exception &e) {
-                throw std::runtime_error(fmt::format("Failed to cast scalar to type {}: {}",
+                throw std::runtime_error(std::format("Failed to cast scalar to type {}: {}",
                                                      std::string{ArrowScalarType::TypeClass::type_name()}, e.what()));
             }
         }

@@ -41,6 +41,7 @@ namespace epochframe {
 // Default constructor
 TimeDelta::TimeDelta() : days_(0), seconds_(0), microseconds_(0) {}
 
+
 // Constructor from components struct
 TimeDelta::TimeDelta(const Components& components) {
     // Convert all components to days, seconds, microseconds
@@ -62,8 +63,8 @@ TimeDelta::TimeDelta(const Components& components) {
     }
     d = static_cast<int32_t>(days);
 
-    AssertWithTraceFromStream(std::abs(daysecondsfrac) <= 1.0, "daysecondsfrac is too large: " << daysecondsfrac);
-    AssertWithTraceFromStream(std::abs(s) <= 24 * 3600, "secondsfrac is too large: " << s);
+    AssertFromStream(std::abs(daysecondsfrac) <= 1.0, "daysecondsfrac is too large: " << daysecondsfrac);
+    AssertFromStream(std::abs(s) <= 24 * 3600, "secondsfrac is too large: " << s);
 
     double secondsfrac{0};
     std::tie(secondsfrac, seconds) = modf(seconds);
@@ -74,16 +75,16 @@ TimeDelta::TimeDelta(const Components& components) {
     else {
         secondsfrac = daysecondsfrac;
     }
-    AssertWithTraceFromStream(std::abs(secondsfrac) < 2.0, "secondsfrac is too large: " << secondsfrac);
+    AssertFromStream(std::abs(secondsfrac) < 2.0, "secondsfrac is too large: " << secondsfrac);
 
 
     std::tie(days, seconds) = divmod(seconds, 24*3600);
     d += days;
     s += static_cast<int32_t>(seconds);
-    AssertWithTraceFromStream(std::abs(s) <= 2 * 24 * 3600, "seconds is too large: " << s);
+    AssertFromStream(std::abs(s) <= 2 * 24 * 3600, "seconds is too large: " << s);
 
     auto usdouble = secondsfrac * 1e6;
-    AssertWithTraceFromStream(std::abs(usdouble) < 2.1e6, "usdouble is too large: " << usdouble);
+    AssertFromStream(std::abs(usdouble) < 2.1e6, "usdouble is too large: " << usdouble);
 
     if (static_cast<int32_t>(microseconds) != microseconds) {
         microseconds = std::round(microseconds + usdouble);
@@ -99,17 +100,17 @@ TimeDelta::TimeDelta(const Components& components) {
         s += seconds;
         microseconds = std::round(microseconds + usdouble);
     }
-    AssertWithTraceFromStream(std::abs(s) <= 3 * 24 * 3600, "seconds is too large: " << s);
-    AssertWithTraceFromStream(std::abs(microseconds) < 3.1e6, "microseconds is too large: " << microseconds);
+    AssertFromStream(std::abs(s) <= 3 * 24 * 3600, "seconds is too large: " << s);
+    AssertFromStream(std::abs(microseconds) < 3.1e6, "microseconds is too large: " << microseconds);
 
     std::tie(seconds, us) = divmod(microseconds, 1e6);
     s += seconds;
     std::tie(days, s) = divmod(s, 24*3600);
     d += days;
 
-    AssertWithTraceFromStream(0 <= std::abs(s) && std::abs(s) <= 24 * 3600, "timedelta # of seconds is too large: " << s);
-    AssertWithTraceFromStream(0 <= std::abs(us) && std::abs(us) <= 1e6, "timedelta # of microseconds is too large: " << us);
-    AssertWithTraceFromStream(std::abs(d) <= 999999999, "timedelta # of days is too large: " << d);
+    AssertFromStream(0 <= std::abs(s) && std::abs(s) <= 24 * 3600, "timedelta # of seconds is too large: " << s);
+    AssertFromStream(0 <= std::abs(us) && std::abs(us) <= 1e6, "timedelta # of microseconds is too large: " << us);
+    AssertFromStream(std::abs(d) <= 999999999, "timedelta # of days is too large: " << d);
 
     days_ = d;
     seconds_ = s;

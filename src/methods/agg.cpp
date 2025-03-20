@@ -48,7 +48,7 @@ namespace epochframe {
             auto concat_table = AssertTableResultIsOk(arrow::ConcatenateTables(tables, arrow::ConcatenateTablesOptions{true, arrow::Field::MergeOptions::Permissive()}));
             auto index = factory::array::make_contiguous_array(concat_table->GetColumnByName("index"));
             auto value = concat_table->GetColumnByName("value");
-            AssertWithTraceFromStream(index != nullptr && value != nullptr, "IIndex or value column not found");
+            AssertFromStream(index != nullptr && value != nullptr, "IIndex or value column not found");
             return SeriesOrScalar{Series(m_data.first->Make(index), value)};
         }
         if (agg == "min" || agg == "max") {
@@ -58,9 +58,9 @@ namespace epochframe {
             for (const auto &column : columns) {
                 inputs.push_back(arrow::Datum(column));
             }
-            auto result = CallFunction(::fmt::format("{}_element_wise", agg), inputs, &element_wise_aggregate_options);
+            auto result = CallFunction(::std::format("{}_element_wise", agg), inputs, &element_wise_aggregate_options);
 
-            AssertWithTraceFromStream(result.ok(), "mode failed: " << result.status().message());
+            AssertFromStream(result.ok(), "mode failed: " << result.status().message());
             return SeriesOrScalar(m_data.first, result->chunked_array());
         }
 
@@ -108,10 +108,10 @@ namespace epochframe {
             auto table = m_data.second.table();
             return FrameOrSeries{DataFrame{arrow_utils::apply_function_to_table(table, [&](arrow::Datum const& datum, std::string const& column) {
                 auto result = Mode(datum.chunked_array(), options);
-                AssertWithTraceFromStream(result.ok(), column << ": Mode error: " << result->ToString());
+                AssertFromStream(result.ok(), column << ": Mode error: " << result->ToString());
                 const auto arr = result->array_as<arrow::StructArray>();
                 auto mode = arr->GetFieldByName("mode");
-                AssertWithTraceFromFormat(mode, "mode not found");
+                AssertFromFormat(mode, "mode not found");
                 return arrow::Datum{std::make_shared<arrow::ChunkedArray>(mode)};
             })}};
         }

@@ -152,7 +152,7 @@ namespace epochframe
                 constexpr std::array<int64_t, 12> ydayidx{31,  59,  90,  120, 151, 181,
                                                           212, 243, 273, 304, 334, 366};
                 bool found = false;
-                for (auto const& [idx, ydays] : ranges::views::enumerate(ydayidx))
+                for (auto const& [idx, ydays] : std::views::enumerate(ydayidx))
                 {
                     if (yday <= ydays)
                     {
@@ -273,7 +273,7 @@ namespace epochframe
         auto month = static_cast<int32_t>(m_month.value_or(static_cast<uint32_t>(ret.date.month)));
 
         if (m_months != 0) {
-            AssertWithTraceFromStream(1 <= std::abs(m_months) && std::abs(m_months) <= 12, "months must be between 1 and 12");
+            AssertFromStream(1 <= std::abs(m_months) && std::abs(m_months) <= 12, "months must be between 1 and 12");
             month += m_months;
             if (month > 12) {
                 year += 1;
@@ -443,7 +443,7 @@ namespace epochframe
                 return false;
             }
         }
-        
+
         return m_years == other.m_years &&
                m_months == other.m_months &&
                m_days == other.m_days &&

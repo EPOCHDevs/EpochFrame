@@ -114,7 +114,7 @@ namespace epochframe {
         auto scalar_end = Scalar(end);
         while (scalar_dt < scalar_end) {
             auto next = Scalar(offset.add(scalar_dt.timestamp()));
-            AssertWithTraceFromStream(next > scalar_dt, "offset " << offset.name() << " did not increment date");
+            AssertFromStream(next > scalar_dt, "offset " << offset.name() << " did not increment date");
             if (next > scalar_end) {
                 break;
             }
