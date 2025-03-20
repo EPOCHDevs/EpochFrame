@@ -2,7 +2,6 @@
 
 #include <arrow/array/builder_base.h>
 #include <arrow/table.h>
-#include <range/v3/view/zip.hpp>
 #include "epochframe/dataframe.h"
 #include "array_factory.h"
 #include "index/arrow_index.h"
@@ -26,7 +25,7 @@ namespace epochframe {
                            std::vector<std::string> const &columnNames) {
         arrow::ChunkedArrayVector columns;
         arrow::FieldVector fields;
-        for (auto const &[name, column]: ranges::view::zip(columnNames, data)) {
+        for (auto const &[name, column]: std::views::zip(columnNames, data)) {
             typename arrow::CTypeTraits<ColumnT>::BuilderType columnBuilder;
             for (auto const& item: column) {
                 if constexpr (std::numeric_limits<ColumnT>::has_quiet_NaN) {

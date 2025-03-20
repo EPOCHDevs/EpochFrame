@@ -4,8 +4,6 @@
 
 #pragma once
 #include <arrow/api.h>
-#include "epochframe/enums.h"
-#include "epochframe/aliases.h"
 #include "calendar/datetime.h"
 
 namespace epochframe::factory::scalar {

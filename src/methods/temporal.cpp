@@ -10,26 +10,26 @@ namespace epochframe {
     template<>
     TemporalOperation<true>::TemporalOperation(Array const &array) : m_data(array) {
         arrow::ArrayPtr ptr = array.value();
-        AssertWithTraceFromStream(ptr != nullptr, "array is nullptr");
-        AssertWithTraceFromStream(ptr->type_id() == arrow::Type::TIMESTAMP, "array is not a timestamp");
+        AssertFromStream(ptr != nullptr, "array is nullptr");
+        AssertFromStream(ptr->type_id() == arrow::Type::TIMESTAMP, "array is not a timestamp");
     }
 
     template<>
     TemporalOperation<false>::TemporalOperation(Scalar const &scalar) : m_data(scalar) {
         arrow::ScalarPtr ptr = scalar.value();
-        AssertWithTraceFromStream(ptr != nullptr, "scalar is nullptr");
-        AssertWithTraceFromStream(ptr->type->id() == arrow::Type::TIMESTAMP, "scalar is not a timestamp");
+        AssertFromStream(ptr != nullptr, "scalar is nullptr");
+        AssertFromStream(ptr->type->id() == arrow::Type::TIMESTAMP, "scalar is not a timestamp");
     }
 
     template<>
     IsoCalendarArray TemporalOperation<true>::iso_calendar() const {
         auto result = AssertResultIsOk(arrow::compute::ISOCalendar(m_data.value())).array_as<arrow::StructArray>();
         auto year = result->GetFieldByName("iso_year");
-        AssertWithTraceFromStream(year != nullptr, "year is nullptr");
+        AssertFromStream(year != nullptr, "year is nullptr");
         auto week = result->GetFieldByName("iso_week");
-        AssertWithTraceFromStream(week != nullptr, "week is nullptr");
+        AssertFromStream(week != nullptr, "week is nullptr");
         auto day_of_week = result->GetFieldByName("iso_day_of_week");
-        AssertWithTraceFromStream(day_of_week != nullptr, "day_of_week is nullptr");
+        AssertFromStream(day_of_week != nullptr, "day_of_week is nullptr");
 
         return {
             Array(year),
@@ -42,11 +42,11 @@ namespace epochframe {
     IsoCalendarScalar TemporalOperation<false>::iso_calendar() const {
         auto result = AssertResultIsOk(arrow::compute::ISOCalendar(m_data.value())).scalar_as<arrow::StructScalar>();
         auto year = AssertResultIsOk(result.field("iso_year"));
-        AssertWithTraceFromStream(year != nullptr, "year is nullptr");
+        AssertFromStream(year != nullptr, "year is nullptr");
         auto week = AssertResultIsOk(result.field("iso_week"));
-        AssertWithTraceFromStream(week != nullptr, "week is nullptr");
+        AssertFromStream(week != nullptr, "week is nullptr");
         auto day_of_week = AssertResultIsOk(result.field("iso_day_of_week"));
-        AssertWithTraceFromStream(day_of_week != nullptr, "day_of_week is nullptr");
+        AssertFromStream(day_of_week != nullptr, "day_of_week is nullptr");
 
         return {
             Scalar(year),
@@ -59,11 +59,11 @@ namespace epochframe {
     YearMonthDayArray TemporalOperation<true>::year_month_day() const {
         auto result = AssertResultIsOk(arrow::compute::YearMonthDay(m_data.value())).array_as<arrow::StructArray>();
         auto year = result->GetFieldByName("year");
-        AssertWithTraceFromStream(year != nullptr, "year is nullptr");
+        AssertFromStream(year != nullptr, "year is nullptr");
         auto month = result->GetFieldByName("month");
-        AssertWithTraceFromStream(month != nullptr, "month is nullptr");
+        AssertFromStream(month != nullptr, "month is nullptr");
         auto day = result->GetFieldByName("day");
-        AssertWithTraceFromStream(day != nullptr, "day is nullptr");
+        AssertFromStream(day != nullptr, "day is nullptr");
 
         return {
             Array(year),
@@ -76,11 +76,11 @@ namespace epochframe {
     YearMonthDayScalar TemporalOperation<false>::year_month_day() const {
         auto result = AssertResultIsOk(arrow::compute::YearMonthDay(m_data.value())).scalar_as<arrow::StructScalar>();
         auto year = AssertResultIsOk(result.field("year"));
-        AssertWithTraceFromStream(year != nullptr, "year is nullptr");
+        AssertFromStream(year != nullptr, "year is nullptr");
         auto month = AssertResultIsOk(result.field("month"));
-        AssertWithTraceFromStream(month != nullptr, "month is nullptr");
+        AssertFromStream(month != nullptr, "month is nullptr");
         auto day = AssertResultIsOk(result.field("day"));
-        AssertWithTraceFromStream(day != nullptr, "day is nullptr");
+        AssertFromStream(day != nullptr, "day is nullptr");
         return {
             Scalar(year),
             Scalar(month),
@@ -99,7 +99,7 @@ namespace epochframe {
             auto result = arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::MICRO, timezone));
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to create empty array: {}", result.status().ToString()));
+                    std::format("Failed to create empty array: {}", result.status().ToString()));
             }
             return Array(result.ValueOrDie());
         }
@@ -110,7 +110,7 @@ namespace epochframe {
 
         const bool localize = timezone.empty();
         if (!current_tz.empty() && !localize) {
-            throw std::invalid_argument(fmt::format(
+            throw std::invalid_argument(std::format(
                 "Cannot localize timestamp with timezone '{}' to '{}'. "
                 "Use tz_convert instead to convert between timezones.",
                 current_tz, timezone));
@@ -160,13 +160,13 @@ namespace epochframe {
                 localize ? arrow::compute::LocalTimestamp(timestamp_array) : arrow::compute::AssumeTimezone(timestamp_array, options);
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to localize timestamp: {}", result.status().ToString()));
+                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
             }
 
             return Array(result.ValueOrDie().make_array());
         } catch (const std::exception& e) {
             throw std::runtime_error(
-                fmt::format("Error during timezone localization: {}", e.what()));
+                std::format("Error during timezone localization: {}", e.what()));
         }
     }
 
@@ -179,7 +179,7 @@ namespace epochframe {
             auto result = arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::MICRO, timezone));
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to create empty array: {}", result.status().ToString()));
+                    std::format("Failed to create empty array: {}", result.status().ToString()));
             }
             return Array(result.ValueOrDie());
         }
@@ -215,13 +215,13 @@ namespace epochframe {
             auto result = arrow::compute::CallFunction("assume_timezone", {naive_array}, &options);
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to convert timezone: {}", result.status().ToString()));
+                    std::format("Failed to convert timezone: {}", result.status().ToString()));
             }
 
             return Array(result.ValueOrDie().make_array());
         } catch (const std::exception& e) {
             throw std::runtime_error(
-                fmt::format("Error during timezone conversion: {}", e.what()));
+                std::format("Error during timezone conversion: {}", e.what()));
         }
     }
 
@@ -249,7 +249,7 @@ namespace epochframe {
         const bool localize = timezone.empty();
         // Check if the timestamp already has a timezone
         if (!current_tz.empty() && !localize) {
-            throw std::invalid_argument(fmt::format(
+            throw std::invalid_argument(std::format(
                 "Cannot localize timestamp with timezone '{}' to '{}'. "
                 "Use tz_convert instead to convert between timezones.",
                 current_tz, timezone));
@@ -301,16 +301,16 @@ namespace epochframe {
             auto status = builder.Append(timestamp_scalar->value);
             if (!status.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to append value to builder: {}", status.ToString()));
+                    std::format("Failed to append value to builder: {}", status.ToString()));
             }
 
             status = builder.Finish(&array);
             if (!status.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to finish builder: {}", status.ToString()));
+                    std::format("Failed to finish builder: {}", status.ToString()));
             }
         } catch (const std::exception& e) {
-            throw std::runtime_error(fmt::format("Failed to create array from scalar: {}", e.what()));
+            throw std::runtime_error(std::format("Failed to create array from scalar: {}", e.what()));
         }
 
         // Apply timezone to the timestamp
@@ -319,20 +319,20 @@ namespace epochframe {
                 localize ? arrow::compute::LocalTimestamp(array) : arrow::compute::AssumeTimezone(array, options);
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to localize timestamp: {}", result.status().ToString()));
+                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
             }
 
             // Extract first element as scalar
             auto scalar_result = result.ValueOrDie().make_array()->GetScalar(0);
             if (!scalar_result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
+                    std::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
             }
 
             return Scalar(scalar_result.ValueOrDie());
         } catch (const std::exception& e) {
             throw std::runtime_error(
-                fmt::format("Error during timezone localization: {}", e.what()));
+                std::format("Error during timezone localization: {}", e.what()));
         }
     }
 
@@ -380,14 +380,14 @@ namespace epochframe {
             auto status = builder.Append(naive_scalar->value);
             if (!status.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to append value to builder: {}", status.ToString()));
+                    std::format("Failed to append value to builder: {}", status.ToString()));
             }
 
             std::shared_ptr<arrow::Array> array;
             status = builder.Finish(&array);
             if (!status.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to finish builder: {}", status.ToString()));
+                    std::format("Failed to finish builder: {}", status.ToString()));
             }
 
             // Add the new timezone
@@ -395,20 +395,20 @@ namespace epochframe {
             auto result = arrow::compute::CallFunction("assume_timezone", {array}, &options);
             if (!result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to convert timezone: {}", result.status().ToString()));
+                    std::format("Failed to convert timezone: {}", result.status().ToString()));
             }
 
             // Extract first element as scalar
             auto scalar_result = result.ValueOrDie().make_array()->GetScalar(0);
             if (!scalar_result.ok()) {
                 throw std::runtime_error(
-                    fmt::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
+                    std::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
             }
 
             return Scalar(scalar_result.ValueOrDie());
         } catch (const std::exception& e) {
             throw std::runtime_error(
-                fmt::format("Error during timezone conversion: {}", e.what()));
+                std::format("Error during timezone conversion: {}", e.what()));
         }
     }
 } // namespace epochframe

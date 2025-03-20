@@ -10,15 +10,15 @@ namespace epochframe {
 class TableOrArray {
     public:
         explicit TableOrArray(arrow::Datum const& datum) : m_impl(datum) {
-            AssertWithTraceFromStream(datum.kind() == arrow::Datum::TABLE || datum.kind() == arrow::Datum::CHUNKED_ARRAY, "Datum is not a table or chunked array");
+            AssertFromStream(datum.kind() == arrow::Datum::TABLE || datum.kind() == arrow::Datum::CHUNKED_ARRAY, "Datum is not a table or chunked array" << datum.kind());
         }
 
         explicit TableOrArray(arrow::TablePtr const& table) : m_impl(arrow::Datum{table}) {
-            AssertWithTraceFromStream(table != nullptr, "Table is nullptr");
+            AssertFromStream(table != nullptr, "Table is nullptr");
         }
 
         explicit TableOrArray(arrow::ChunkedArrayPtr const& chunked_array) : m_impl(arrow::Datum{chunked_array}) {
-            AssertWithTraceFromStream(chunked_array != nullptr, "ChunkedArray is nullptr");
+            AssertFromStream(chunked_array != nullptr, "ChunkedArray is nullptr");
         }
 
         arrow::TablePtr table() const {

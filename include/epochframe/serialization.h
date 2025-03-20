@@ -54,13 +54,6 @@ struct JSONReadOptions {
     std::optional<std::string> index_column = std::nullopt;
 };
 
-struct JSONWriteOptions {
-    bool lines = false; // True for line-delimited JSON
-    bool include_index = true;
-    std::optional<std::string> index_label = std::nullopt;
-    bool orient_records = false; // If true, output as records, otherwise as columns
-};
-
 struct BinaryReadOptions {
     std::optional<std::string> index_column = std::nullopt;
 };
@@ -80,11 +73,9 @@ void write_csv(const FrameOrSeries& data, std::string& output, const CSVWriteOpt
 void write_csv_file(const FrameOrSeries& data, const std::string& file_path, const CSVWriteOptions& options = {});
 
 // JSON operations
-// Implementation using Glaze library
+// Arrow implementation
 DataFrame read_json(const std::string& json_content, const JSONReadOptions& options = {});
 DataFrame read_json_file(const std::string& file_path, const JSONReadOptions& options = {});
-void write_json(const FrameOrSeries& data, std::string& output, const JSONWriteOptions& options = {});
-void write_json_file(const FrameOrSeries& data, const std::string& file_path, const JSONWriteOptions& options = {});
 
 // Parquet operations
 DataFrame read_parquet(const std::string& file_path, const ParquetReadOptions& options = {});
@@ -99,6 +90,9 @@ void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::ResizableBuf
 
 // Utility functions
 bool is_s3_path(const std::string& path);
+arrow::Result<std::shared_ptr<arrow::fs::FileSystem>> get_s3_filesystem();
+std::pair<std::string, std::string> parse_s3_path(const std::string& path);
+
 std::shared_ptr<arrow::io::RandomAccessFile> get_input_stream(const std::string& path);
 std::shared_ptr<arrow::io::OutputStream> get_output_stream(const std::string& path);
 

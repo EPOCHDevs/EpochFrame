@@ -49,7 +49,7 @@ namespace epochframe
 
     TimeGrouper::TimeGrouper(const TimeGrouperOptions& options) : m_options(options)
     {
-        AssertWithTraceFromStream(m_options.freq, "Frequency must be set");
+        AssertFromStream(m_options.freq, "Frequency must be set");
 
         bool origin_is_value = std::holds_alternative<DateTime>(m_options.origin);
 
@@ -159,7 +159,7 @@ namespace epochframe
             return AssertResultIsOk(arrow::ChunkedArray::Make({}));
         }
 
-        AssertWithTraceFromStream(index.size() >= bins.size(), "up_sampling is not supported.");
+        AssertFromStream(index.size() >= bins.size(), "up_sampling is not supported.");
 
         std::vector<int64_t> rep(bins.size());
 
@@ -330,7 +330,7 @@ namespace epochframe
             if (origin_is_value)
             {
                 auto origin_value = std::get<DateTime>(m_options.origin);
-                AssertWithTraceFromStream(
+                AssertFromStream(
                     origin_value.tz != index_tz,
                     "origin must have the same timezone as the index. origin: "
                         << origin_value.tz << "\tindex: " << index_tz);
@@ -338,7 +338,7 @@ namespace epochframe
             else if (std::get<EpochTimeGrouperOrigin>(origin) ==
                      EpochTimeGrouperOrigin::Epoch)
             {
-                AssertWithTraceFromStream(index_tz.empty(),
+                AssertFromStream(index_tz.empty(),
                                           "index must have a timezone if origin is Epoch");
                 origin = DateTime{
                     .date = {std::chrono::year{1970}, std::chrono::month{1}, std::chrono::day{1}},

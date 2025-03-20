@@ -8,13 +8,11 @@
 #include <epoch_lab_shared/macros.h>    // your assert/throw utilities
 #include <unordered_map>
 #include <stdexcept>
-#include <range/v3/view/zip.hpp>
 #include "common/methods_helper.h"
 #include "epochframe/scalar.h"
 #include "index/index.h"
 #include "common/arrow_compute_utils.h"
 #include <tbb/parallel_for_each.h>
-#include <range/v3/view/enumerate.hpp>
 #include <iostream>
 #include "index/arrow_index.h"
 #include "common/table_or_array.h"
@@ -22,10 +20,10 @@
 namespace epochframe {
     MethodBase::MethodBase(const TableComponent& data): m_data(data) {
         if (m_data.second.is_table()) {
-           AssertWithTraceFromStream(m_data.second.table(), "Table is nullptr");
+           AssertFromStream(m_data.second.table(), "Table is nullptr");
         }
         else if (m_data.second.is_chunked_array()) {
-            AssertWithTraceFromStream(m_data.second.chunked_array(), "ChunkedArray is nullptr");
+            AssertFromStream(m_data.second.chunked_array(), "ChunkedArray is nullptr");
         }
     }
     //----------------------------------------------------------------------
@@ -52,7 +50,7 @@ namespace epochframe {
 //----------------------------------------------------------------------
     TableOrArray
     MethodBase::apply(std::string const &op, const arrow::Datum &other, bool lhs) const {
-        AssertWithTraceFromStream(other.kind() == arrow::Datum::SCALAR || other.kind() == arrow::Datum::CHUNKED_ARRAY || other.kind() == arrow::Datum::ARRAY, "Invalid other type");
+        AssertFromStream(other.kind() == arrow::Datum::SCALAR || other.kind() == arrow::Datum::CHUNKED_ARRAY || other.kind() == arrow::Datum::ARRAY, "Invalid other type");
 
         auto [index, data] = m_data;
         auto get_lhs_or_rhs = [&] (arrow::Datum const& column) {
@@ -131,7 +129,7 @@ namespace epochframe {
 
         auto newIndex = factory::array::make_contiguous_array(table->column(field_index));
         auto newTable = table->RemoveColumn(field_index);
-        AssertWithTraceFromStream(newTable.ok(), "unzip index failed");
+        AssertFromStream(newTable.ok(), "unzip index failed");
 
         return TableComponent{m_data.first->Make(newIndex), TableOrArray{newTable.MoveValueUnsafe()}};
     }

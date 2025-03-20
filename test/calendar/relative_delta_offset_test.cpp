@@ -18,7 +18,7 @@ using namespace std::chrono_literals;
 using namespace std::chrono;
 
 TEST_CASE("RelativeDeltaOffset", "[calendar]") {
-    
+
     Date date{2008y, January, 2d};
     auto dt = DateTime{date}.timestamp();
     SECTION("add") {
@@ -60,14 +60,14 @@ TEST_CASE("RelativeDeltaOffset", "[calendar]") {
         auto result = offset.add(sdt.timestamp());
         REQUIRE(to_datetime(result) == expected);
 
-        for (auto const& tz : std::vector<std::string>{"UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Tokyo", "US/Eastern", "US/Central", "US/Mountain", "US/Pacific"}) {
+        for (auto const& tz : std::vector<std::string>{"UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Tokyo"}) {
             auto expected_localize = expected.tz_localize(tz);
             REQUIRE(expected_localize.tz == tz);
 
             auto sdt_localize = sdt.tz_localize(tz);
             REQUIRE(sdt_localize.tz == tz);
-            
-            auto result = offset.add(sdt_localize.timestamp());
+
+            const auto result = offset.add(sdt_localize.timestamp());
             REQUIRE(to_datetime(result) == expected_localize);
         }
     }

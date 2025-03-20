@@ -243,7 +243,7 @@ namespace epochframe {
             try {
                 return value<T>().value();
             } catch (std::exception const &e) {
-                throw std::runtime_error(fmt::format("Failed to convert scalar to {}: {}", typeid(T).name(), e.what()));
+                throw std::runtime_error(std::format("Failed to convert scalar to {}: {}", typeid(T).name(), e.what()));
             }
         }
     };

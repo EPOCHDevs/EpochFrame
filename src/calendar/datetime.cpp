@@ -1,4 +1,7 @@
 #include "datetime.h"
+
+#include <epoch_lab_shared/macros.h>
+
 #include "factory/scalar_factory.h"
 #include "arrow/compute/api.h"
 #include "common/asserts.h"
@@ -42,7 +45,7 @@ namespace epochframe {
 
     int _days_in_month(int year, int month) {
         // year, month -> number of days in that month in that year
-        AssertWithTraceFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
+        AssertFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
         if (month == 2 && _is_leap(year)) {
             return 29;
         }
@@ -51,15 +54,15 @@ namespace epochframe {
 
     int _days_before_month(int year, int month) {
         // year, month -> number of days in year preceding first day of month
-        AssertWithTraceFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
+        AssertFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
         return _DAYS_BEFORE_MONTH[month] + (month > 2 && static_cast<bool>(_is_leap(year)));
     }
 
     int _ymd2ord(int year, int month, int day) {
         // year, month, day -> ordinal, considering 01-Jan-0001 as day 1
-        AssertWithTraceFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
+        AssertFromStream(1 <= month && month <= 12, "month must be between 1 and 12");
         int dim = _days_in_month(year, month);
-        AssertWithTraceFromStream(1 <= day && day <= dim, "day must be between 1 and the number of days in the month");
+        AssertFromStream(1 <= day && day <= dim, "day must be between 1 and the number of days in the month");
         return _days_before_year(year) + _days_before_month(year, month) + day;
     }
 
@@ -77,12 +80,12 @@ namespace epochframe {
         std::tie(n1, n) = divmod(n, 365);
         year += n100 * 100 + n4 * 4 + n1;
         if (n1 == 4 || n100 == 4) {
-            AssertWithTraceFromStream(n == 0, "n must be 0");
+            AssertFromStream(n == 0, "n must be 0");
             return chrono_year_month_day{chrono_year{static_cast<int32_t>(year-1)}, std::chrono::December, chrono_day{31}};
         }
 
         auto leapyear = (n1 == 3) && ((n4 != 24) || (n100 == 3));
-        AssertWithTraceFromStream(leapyear == (_is_leap(year)), "leapyear must be true if _is_leap(year) is true");
+        AssertFromStream(leapyear == (_is_leap(year)), "leapyear must be true if _is_leap(year) is true");
         auto month = (n + 50) >> 5;
         auto preceding = _DAYS_BEFORE_MONTH[month] + (month > 2 && leapyear);
         if (preceding > n) {
@@ -90,7 +93,7 @@ namespace epochframe {
             preceding -= _DAYS_IN_MONTH[month] + (month == 2 && leapyear);
         }
         n -= preceding;
-        AssertWithTraceFromStream(0 <= n && n < _days_in_month(year, month), "n must be less than the number of days in the month");
+        AssertFromStream(0 <= n && n < _days_in_month(year, month), "n must be less than the number of days in the month");
         return chrono_year_month_day{chrono_year{static_cast<int32_t>(year)}, chrono_month{static_cast<uint32_t>(month)}, chrono_day{static_cast<uint32_t>(n + 1)}};
     }
 
@@ -203,7 +206,7 @@ namespace epochframe {
             return *this;
         }
 
-        AssertWithTraceFromFormat(this->tz.empty(), "tz is not empty. got " + this->tz);
+        AssertFromFormat(this->tz.empty(), "tz is not empty. got {}.", this->tz);
         auto ts = timestamp();
         arrow::ScalarPtr localized;
         if (tz_.empty()) {
@@ -220,7 +223,7 @@ namespace epochframe {
             return *this;
         }
 
-        AssertWithTraceFromStream(!this->tz.empty(), "this.tz must not be None, got: " << this->tz);
+        AssertFromStream(!this->tz.empty(), "this.tz must not be None, got: " << this->tz);
 
         auto ts = timestamp();
         auto converted = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::AssumeTimezone(ts, arrow::compute::AssumeTimezoneOptions{tz.empty() ? "UTC": tz}));

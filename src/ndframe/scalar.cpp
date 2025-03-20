@@ -52,7 +52,7 @@ namespace epochframe {
 
     Scalar::Scalar(const arrow::ScalarPtr &other)
             : m_scalar(other) {
-        AssertWithTraceFromStream(other != nullptr, "Scalar pointer cannot be null");
+        AssertFromStream(other != nullptr, "Scalar pointer cannot be null");
     }
 
     Scalar::Scalar(const DateTime &other)

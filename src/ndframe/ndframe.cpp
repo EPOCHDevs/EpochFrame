@@ -35,14 +35,14 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     NDFrame<ChildType, ArrowType>::NDFrame(IndexPtr const &index, std::shared_ptr<ArrowType> const &data) {
-        AssertWithTraceFromStream(index != nullptr, "IIndex cannot be null");
+        AssertFromStream(index != nullptr, "IIndex cannot be null");
         if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
-            AssertWithTraceFromStream(data != nullptr, "Table cannot be null");
-            AssertWithTraceFromStream(data->num_rows() == 0 || data->num_rows() == index->size(),
+            AssertFromStream(data != nullptr, "Table cannot be null");
+            AssertFromStream(data->num_rows() == 0 || data->num_rows() == index->size(),
                                   "Number of rows in RecordBatch must match index size." << data->num_rows() << " != " << index->size());
         } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
-            AssertWithTraceFromStream(data != nullptr, "Array cannot be null");
-            AssertWithTraceFromStream(data->length() == 0 || data->length() == index->size(),
+            AssertFromStream(data != nullptr, "Array cannot be null");
+            AssertFromStream(data->length() == 0 || data->length() == index->size(),
                                   "Array length must match index size." << data->length() << " != " << index->size());
         }
 
@@ -516,7 +516,7 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const Series &filter_or_labels) const {
-        AssertWithTraceFromStream(filter_or_labels.index()->equals(m_index), "IIndex mismatch");
+        AssertFromStream(filter_or_labels.index()->equals(m_index), "IIndex mismatch");
         if (filter_or_labels.array()->type()->id() == arrow::Type::BOOL) {
             return from_base(m_select->filter(filter_or_labels.array(), arrow::compute::FilterOptions{}));
         }
@@ -526,7 +526,7 @@ namespace epochframe {
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const SliceType &label_slice) const {
         auto [start, end, _] = m_index->slice_locs(label_slice.first, label_slice.second);
-        AssertWithTraceFromStream(start <= end, "Start index must be less than end index");
+        AssertFromStream(start <= end, "Start index must be less than end index");
         if (start == end) {
             return ChildType();
         }

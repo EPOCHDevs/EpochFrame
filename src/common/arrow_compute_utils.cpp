@@ -35,7 +35,7 @@ namespace epochframe::arrow_utils {
         }
         if (datum.is_array()) {
             const auto arr = datum.make_array();
-            AssertWithTraceFromFormat(arr->length() == 1, "Failed to create Scalar from agg result array");
+            AssertFromFormat(arr->length() == 1, "Failed to create Scalar from agg result array");
             return AssertResultIsOk(arr->GetScalar(0));
         }
         return MakeNullScalar(arrow::null());
@@ -56,7 +56,7 @@ namespace epochframe::arrow_utils {
                     processed_columns[i] = result.chunked_array();
                     fields[i] = field(fields[i]->name(), processed_columns[i]->type());
                 } else {
-                    throw std::runtime_error(fmt::format("Invalid arrow::Datum kind: {}", arrow::ToString(result.kind())));
+                    throw std::runtime_error(std::format("Invalid arrow::Datum kind: {}", arrow::ToString(result.kind())));
                 }
             }
         });
@@ -88,7 +88,7 @@ namespace epochframe::arrow_utils {
         if (!array) {
             return nullptr;
         }
-        AssertWithTraceFromStream(func, "Function is not callable");
+        AssertFromStream(func, "Function is not callable");
 
         std::vector<arrow::ScalarPtr> scalars;
         scalars.reserve(array->length());
@@ -116,7 +116,7 @@ namespace epochframe::arrow_utils {
         }
 
         auto builder_result = arrow::MakeBuilder(data_type);
-        AssertWithTraceFromFormat(builder_result.ok(), "Failed to create builder for array type");
+        AssertFromFormat(builder_result.ok(), "Failed to create builder for array type");
         auto builder = builder_result.MoveValueUnsafe();
 
         auto x = builder->AppendScalars(scalars);
@@ -196,9 +196,9 @@ namespace epochframe::arrow_utils {
     }
 
     std::chrono::nanoseconds duration(const arrow::TimestampScalar &scalar1, const arrow::TimestampScalar &scalar2) {
-        AssertWithTraceFromFormat(scalar1.type->Equals(scalar2.type), "duration between incompatible timestamp.");
+        AssertFromFormat(scalar1.type->Equals(scalar2.type), "duration between incompatible timestamp.");
         auto type = std::dynamic_pointer_cast<arrow::TimestampType>(scalar1.type);
-        AssertWithTraceFromFormat(type && type->unit() == arrow::TimeUnit::NANO, "duration only supports nanoseconds.");
+        AssertFromFormat(type && type->unit() == arrow::TimeUnit::NANO, "duration only supports nanoseconds.");
 
         auto diff = scalar1.value - scalar2.value;
         auto n = std::chrono::nanoseconds(diff);
@@ -206,7 +206,7 @@ namespace epochframe::arrow_utils {
     }
 
     std::string get_tz(const arrow::DataTypePtr &type) {
-        AssertWithTraceFromStream(type, "Type is not valid");
+        AssertFromStream(type, "Type is not valid");
 
         auto dt = std::dynamic_pointer_cast<arrow::TimestampType>(type);
         if (!dt) {

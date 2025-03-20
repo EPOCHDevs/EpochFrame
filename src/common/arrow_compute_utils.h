@@ -23,7 +23,7 @@ namespace epochframe::arrow_utils {
         auto result = CallFunction(function_name, inputs, options);
         if (!result.ok()) {
             throw std::runtime_error(
-                    fmt::format("CallFunction({}) failed: {}", function_name, result.status().ToString())
+                    std::format("CallFunction({}) failed: {}", function_name, result.status().ToString())
             );
         }
         return *result;
@@ -48,7 +48,7 @@ namespace epochframe::arrow_utils {
             return result.table();
         } catch (const std::exception &e) {
             throw std::runtime_error(
-                    fmt::format("Failed to call unary compute function {}: {}\n{}", function_name, e.what(), result.ToString()));
+                    std::format("Failed to call unary compute function {}: {}\n{}", function_name, e.what(), result.ToString()));
         }
     }
 
@@ -129,7 +129,7 @@ namespace epochframe::arrow_utils {
             return result.scalar_as<ArrowScalarType>();
         } catch (const std::exception &e) {
             throw std::runtime_error(
-                    fmt::format("Failed to cast compute result to {}: {}",
+                    std::format("Failed to cast compute result to {}: {}",
                                 std::string{ArrowScalarType::TypeClass::type_name()},
                                 e.what()));
         }
@@ -180,7 +180,7 @@ namespace epochframe::arrow_utils {
         auto casted = arrow::compute::Cast(array, type);
         if (!casted.ok()) {
             throw std::runtime_error(
-                    fmt::format("Failed to cast array to {}: {}", type->ToString(), casted.status().ToString())
+                    std::format("Failed to cast array to {}: {}", type->ToString(), casted.status().ToString())
             );
         }
         return AssertArrayResultIsOk(casted);
@@ -188,7 +188,7 @@ namespace epochframe::arrow_utils {
 
     template<typename ArrowType>
     std::shared_ptr<ArrowType> slice_array(const std::shared_ptr<ArrowType> &array, size_t start, size_t end) {
-        AssertWithTraceFromStream(array != nullptr, "slice_array: array is null");
+        AssertFromStream(array != nullptr, "slice_array: array is null");
         int64_t length{};
         if constexpr (std::same_as<ArrowType, arrow::Table>) {
             length = array->num_rows();
@@ -214,7 +214,7 @@ namespace epochframe::arrow_utils {
               std::is_same_v<ArrowType, arrow::Table> || std::is_same_v<ArrowType, arrow::RecordBatch>)
     std::shared_ptr<ArrowType>
     slice_array(const std::shared_ptr<ArrowType> &array, size_t start, size_t end, size_t step) {
-        AssertWithTraceFromStream(array != nullptr, "slice_array: array is null");
+        AssertFromStream(array != nullptr, "slice_array: array is null");
         arrow::UInt64Builder index_builder;
         AssertStatusIsOk(index_builder.Reserve((end - start + 1) / step));
 

@@ -53,12 +53,12 @@ namespace epochframe {
         TableOrArray fill_null(arrow::ScalarPtr const& value, AxisType axis = AxisType::Row) const;
 
         TableOrArray fill_null_backward(AxisType axis = AxisType::Row) const {
-            AssertWithTraceFromFormat(axis == AxisType::Row, "fill_null_backward only supports row-wise filling");
+            AssertFromFormat(axis == AxisType::Row, "fill_null_backward only supports row-wise filling");
             return arrow_utils::call_unary_compute_table_or_array(m_data.second, "fill_null_backward");
         }
 
         TableOrArray fill_null_forward(AxisType axis = AxisType::Row) const {
-            AssertWithTraceFromFormat(axis == AxisType::Row, "fill_null_forward only supports row-wise filling");
+            AssertFromFormat(axis == AxisType::Row, "fill_null_forward only supports row-wise filling");
             return arrow_utils::call_unary_compute_table_or_array(m_data.second, "fill_null_forward");
         }
 

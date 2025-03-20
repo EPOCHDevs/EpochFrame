@@ -26,12 +26,12 @@ namespace epochframe {
 
     DataFrame::DataFrame(arrow::TablePtr const &data) : NDFrame(data) {
         auto columnNames = m_table->schema()->field_names();
-        AssertWithTraceFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
     }
 
     DataFrame::DataFrame(IndexPtr const &index, arrow::TablePtr const &data) : NDFrame<DataFrame, arrow::Table>(index, data) {
         auto columnNames = m_table->schema()->field_names();
-        AssertWithTraceFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
     }
 
     // ------------------------------------------------------------------------
@@ -68,7 +68,7 @@ namespace epochframe {
 
 DataFrame DataFrame::set_index(std::string const & new_index) const {
         auto indexPos = m_table->schema()->GetFieldIndex(new_index);
-        AssertWithTraceFromStream(indexPos != -1, new_index << " is not a valid column");
+        AssertFromStream(indexPos != -1, new_index << " is not a valid column");
         auto index = m_table->column(indexPos);
         auto new_table = AssertResultIsOk(m_table->RemoveColumn(indexPos));
         return DataFrame{m_index->Make(factory::array::make_contiguous_array(index)), new_table};
@@ -87,7 +87,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     }
 
     Series DataFrame::to_series() const {
-        AssertWithTraceFromStream(m_table->num_columns() == 1, "to_Series must be called on a single column table.");
+        AssertFromStream(m_table->num_columns() == 1, "to_Series must be called on a single column table.");
         const auto column = m_table->column(0);
         return Series(m_index, column, m_table->field(0)->name());
     }
@@ -221,11 +221,11 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
 
     DataFrame DataFrame::operator[](const arrow::ArrayPtr& array) const {
         auto string_array = std::dynamic_pointer_cast<arrow::StringArray>(array);
-        AssertWithTraceFromStream(string_array, "NDFrame::operator[]: Array is not a string array");
+        AssertFromStream(string_array, "NDFrame::operator[]: Array is not a string array");
         StringVector column_names;
         column_names.reserve(string_array->length());
         for (auto const& name : *string_array) {
-            AssertWithTraceFromStream(name, "NDFrame::operator[]: Array contains null values");
+            AssertFromStream(name, "NDFrame::operator[]: Array contains null values");
             column_names.emplace_back(*name);
         }
         return operator[](column_names);
@@ -254,9 +254,9 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     std::ostream &operator<<(std::ostream &os, DataFrame const &df) {
         try {
             tabulate::Table table;
-            tabulate::Table::Row_t header{fmt::format("index({})", df.m_index->dtype()->ToString())};
+            tabulate::Table::Row_t header{std::format("index({})", df.m_index->dtype()->ToString())};
             for (auto const &col : df.m_table->ColumnNames()) {
-                header.emplace_back(fmt::format("{}({})", col, get_column_by_name(*df.m_table, col)->type()->ToString()));
+                header.emplace_back(std::format("{}({})", col, get_column_by_name(*df.m_table, col)->type()->ToString()));
             }
 
             table.add_row(header);

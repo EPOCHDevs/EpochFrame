@@ -4,9 +4,8 @@
 #include "common/arrow_compute_utils.h"  // your arrow_utils::... wrappers
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <fmt/format.h>
-#include <stdexcept> // for runtime_error
-#include <epoch_lab_shared/macros.h> // For AssertWithTraceFromFormat or any custom asserts
+#include <epoch_lab_shared/macros.h> // For AssertFromFormat or any custom asserts
+#include <epoch_lab_shared/ranges_to.h> // For AssertFromFormat or any custom asserts
 #include "common/asserts.h"
 #include "common/arrow_agg.h"
 #include "factory/array_factory.h"
@@ -181,7 +180,7 @@ namespace epochframe {
         }
 
         std::vector<Scalar> index_list() const {
-            return m_indexer | std::views::keys | ranges::to_vector;
+            return m_indexer | std::views::keys | epochlab::ranges::to_vector_v;
         }
 
         constexpr bool is_monotonic() const {

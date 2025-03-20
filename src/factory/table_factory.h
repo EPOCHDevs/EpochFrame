@@ -32,7 +32,7 @@ TableOrArray make_table_or_array(arrow::TablePtr const& table, const std::string
 
 template<typename T>
 int64_t get_size(std::shared_ptr<T> const& arr) {
-    AssertWithTraceFromFormat(arr, "get_size failed due to arr == nullptr.");
+    AssertFromFormat(arr, "get_size failed due to arr == nullptr.");
     if constexpr (std::is_same_v<T, arrow::Table>) {
         return arr->num_rows();
     } else if constexpr (std::is_same_v<T, arrow::ChunkedArray>) {

@@ -15,19 +15,19 @@
 #include "index/datetime_index.h"
 
 #include "epochframe/dataframe.h"
-#include <range/v3/view/enumerate.hpp>
 #include <utility>
 #include <common/methods_helper.h>
 #include <epochframe/common.h>
 #include <factory/array_factory.h>
 #include <index/arrow_index.h>
 #include <vector_functions/arrow_vector_functions.h>
+#include <regex>
 
 namespace epochframe {
     namespace cp = arrow::compute;
     namespace ac = arrow::acero;
 
-    std::string get_placeholder_name(uint64_t index) { return fmt::format("__groupby_key_{}__", index); }
+    std::string get_placeholder_name(uint64_t index) { return std::format("__groupby_key_{}__", index); }
 
     bool is_placeholder(std::string const& name) {
         std::regex regex("__groupby_key_(\\d+)__");
@@ -39,7 +39,7 @@ namespace epochframe {
     // Grouper implementation
     //-------------------------------------------------------------------------
     Grouper::Grouper(arrow::TablePtr table, std::optional<TimeGrouperOptions> options) : m_table(std::move(table)) {
-        AssertWithTraceFromFormat(m_table, "table cannot be null.");
+        AssertFromFormat(m_table, "table cannot be null.");
 
         if (options) {
             m_time_grouper = std::make_optional<TimeGrouper>(*options);
@@ -66,7 +66,7 @@ namespace epochframe {
             arrow::FieldVector fields(keys.size());
             std::ranges::transform(m_keys, fields.begin(), [&](arrow::FieldRef const& keyRef) {
                 auto field = m_table->schema()->GetFieldByName(*keyRef.name());
-                AssertWithTraceFromFormat(field, "field cannot be null.");
+                AssertFromFormat(field, "field cannot be null.");
 
                 if (is_placeholder(*keyRef.name())) {
                     field = arrow::field("", field->type());
@@ -106,7 +106,7 @@ namespace epochframe {
         : Grouper(std::move(table), options) {
         for (auto const& key : by) {
             auto field = m_table->schema()->GetFieldByName(key);
-            AssertWithTraceFromStream(field != nullptr, "Column not found: " + key);
+            AssertFromStream(field != nullptr, "Column not found: " + key);
             m_keys.emplace_back(key);
         }
 
@@ -122,7 +122,7 @@ namespace epochframe {
         arrow::ChunkedArrayVector result(m_keys.size());
         std::ranges::transform(m_keys, std::ranges::begin(result), [&](auto const &key) {
             auto arr = m_table->GetColumnByName(*key.name());
-            AssertWithTraceFromStream(arr, "failed to find column: " << *key.name());
+            AssertFromStream(arr, "failed to find column: " << *key.name());
             return arr;
         });
         return Grouper::makeGroups(result);
@@ -137,8 +137,8 @@ namespace epochframe {
             m_fields.emplace_back(key);
         }
 
-        for (auto const& [i, key] : ranges::views::enumerate(by)) {
-            AssertWithTraceFromStream(key->length() == m_table->num_rows(),
+        for (auto const& [i, key] : std::views::enumerate(by)) {
+            AssertFromStream(key->length() == m_table->num_rows(),
              "Key size does not match table rows. key: " << key->length() << " table: " << m_table->num_rows());
             auto field = get_placeholder_name(i);
             m_keys.emplace_back(field);
@@ -159,10 +159,10 @@ namespace epochframe {
 
     std::pair<arrow::ChunkedArrayPtr, arrow::TablePtr> GroupOperations::filter_key(std::string const& key, arrow::TablePtr const& current_table) const{
         auto index = current_table->GetColumnByName(key);
-        AssertWithTraceFromStream(index, "IIndex column not found: " << key);
+        AssertFromStream(index, "IIndex column not found: " << key);
 
         int fieldIndex = current_table->schema()->GetFieldIndex(key);
-        AssertWithTraceFromStream(fieldIndex != -1, "Column index not found: " << key);
+        AssertFromStream(fieldIndex != -1, "Column index not found: " << key);
         return  {index, AssertResultIsOk(current_table->RemoveColumn(fieldIndex))};
     }
 
@@ -199,7 +199,7 @@ namespace epochframe {
             std::vector<std::string> fields;
             std::unordered_map<std::string, std::string> rename_field;
             for (auto const& field : m_grouper->fields()) {
-                auto current_field = fmt::format("{}_{}", *field.name(), agg_name);
+                auto current_field = std::format("{}_{}", *field.name(), agg_name);
                 fields.emplace_back(current_field);
                 rename_field[current_field] = *field.name();
             }
@@ -224,7 +224,7 @@ namespace epochframe {
             }
         );
         auto result = ac::DeclarationToTable(decl);
-        AssertWithTraceFromStream(result.ok(), "Failed to execute declaration: " << result.status().message());
+        AssertFromStream(result.ok(), "Failed to execute declaration: " << result.status().message());
 
         return result.MoveValueUnsafe();
     }
@@ -234,7 +234,7 @@ namespace epochframe {
         const std::shared_ptr<arrow::compute::FunctionOptions>& option) const {
         std::vector<cp::Aggregate> aggregates;
         for (auto const& field : m_grouper->fields()) {
-            aggregates.emplace_back(fmt::format("hash_{}", agg_name), option, field, *field.name());
+            aggregates.emplace_back(std::format("hash_{}", agg_name), option, field, *field.name());
         }
 
         return apply_agg(aggregates);
@@ -243,12 +243,12 @@ namespace epochframe {
     arrow::TablePtr AggOperations::apply_agg(
         std::vector<std::string> const& agg_names,
         const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& options) const {
-        AssertWithTraceFromFormat(options.empty() || agg_names.size() == options.size(), "Agg names and options size must match or be empty");
+        AssertFromFormat(options.empty() || agg_names.size() == options.size(), "Agg names and options size must match or be empty");
         std::vector<cp::Aggregate> aggregates;
         aggregates.reserve(agg_names.size() * m_grouper->fields().size());
-        for (auto const& [i, agg_name] : ranges::views::enumerate(agg_names)) {
+        for (auto const& [i, agg_name] : std::views::enumerate(agg_names)) {
             for (auto const& field : m_grouper->fields()) {
-                aggregates.emplace_back(fmt::format("hash_{}", agg_name), i < options.size() ? options[i] : nullptr, field, fmt::format("{}_{}", *field.name(), agg_name));
+                aggregates.emplace_back(std::format("hash_{}", agg_name), i < options.size() ? options[i] : nullptr, field, std::format("{}_{}", *field.name(), agg_name));
             }
         }
 
@@ -285,7 +285,7 @@ namespace epochframe {
 
         if (is_nested(groupKey->type->id())) {
             auto structScalar = std::dynamic_pointer_cast<arrow::StructScalar>(groupKey);
-            AssertWithTraceFromStream(structScalar, "struct scalar is null");
+            AssertFromStream(structScalar, "struct scalar is null");
             std::vector<arrow::ArrayPtr> structArrays;
             std::vector<std::string> fieldNames;
             for (auto const& key: keys) {
@@ -446,7 +446,7 @@ namespace epochframe {
         GroupByAgg<OutputType> make_agg_by_index(DataFrame const& table, const TimeGrouperOptions& options) {
             TimeGrouper time_grouper(options);
             auto datetime_index = std::dynamic_pointer_cast<DateTimeIndex>(table.index());
-            AssertWithTraceFromStream(datetime_index, "Index is not a DateTimeIndex");
+            AssertFromStream(datetime_index, "Index is not a DateTimeIndex");
             auto resampled = time_grouper.apply(*datetime_index);
             return make_agg_by_array<OutputType>(table.table(), {resampled}, options);
         }
@@ -466,7 +466,7 @@ namespace epochframe {
         GroupByApply make_apply_by_index(DataFrame const& table, bool groupKeys, const TimeGrouperOptions& options) {
             TimeGrouper time_grouper(options);
             auto datetime_index = std::dynamic_pointer_cast<DateTimeIndex>(table.index());
-            AssertWithTraceFromStream(datetime_index, "Index is not a DateTimeIndex");
+            AssertFromStream(datetime_index, "Index is not a DateTimeIndex");
             auto resampled = time_grouper.apply(*datetime_index);
             return make_apply_by_array(table, {resampled}, groupKeys, std::nullopt);
         }

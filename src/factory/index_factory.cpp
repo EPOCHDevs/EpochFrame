@@ -154,7 +154,7 @@ namespace epochframe::factory::index {
                 inferred_tz = startType->timezone();
             }
             else {
-                throw std::runtime_error(fmt::format("start and end must have same type. {} != {}", startType->timezone(), endType->timezone()));
+                throw std::runtime_error(std::format("start and end must have same type. {} != {}", startType->timezone(), endType->timezone()));
             }
         }
         else if (startType) {
@@ -165,7 +165,7 @@ namespace epochframe::factory::index {
         }
 
         if (!tz.empty() && !inferred_tz.empty()) {
-            AssertWithTraceFromStream(tz == inferred_tz, "Inferred time zone not equal to passed time zone. tz=" << tz << ", inferred_tz=" << inferred_tz);
+            AssertFromStream(tz == inferred_tz, "Inferred time zone not equal to passed time zone. tz=" << tz << ", inferred_tz=" << inferred_tz);
         }
         else if (!inferred_tz.empty()) {
             return  inferred_tz;
@@ -181,8 +181,8 @@ namespace epochframe::factory::index {
     }
 
     IndexPtr date_range(DateRangeOptions const& options) {
-        AssertWithTraceFromFormat(options.offset, "date_range requires a freq");
-        AssertWithTraceFromFormat(options.periods || options.end.has_value(), "date_range requires send or start && period");
+        AssertFromFormat(options.offset, "date_range requires a freq");
+        AssertFromFormat(options.periods || options.end.has_value(), "date_range requires send or start && period");
 
         auto tz = infer_tz_from_endpoints(options.start, options.end, options.tz);
         arrow::TimestampScalar start = options.start;

@@ -19,7 +19,7 @@ namespace epochframe {
         if (m_array.length() == 0) {
             return;
         }
-        AssertWithTraceFromStream(m_array.null_count() == 0, "ArrowIndex constructed with null values");
+        AssertFromStream(m_array.null_count() == 0, "ArrowIndex constructed with null values");
 
         if constexpr (IsMonotonic) {
             const auto &[counts, values] = epochframe::value_counts(m_array.value());
@@ -76,7 +76,7 @@ namespace epochframe {
     template<bool IsMonotonic>
     ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ChunkedArrayPtr const &array, std::string name, std::optional<MonotonicDirection> monotonic_direction)
             : ArrowIndex([&]() {
-        AssertWithTraceFromFormat(
+        AssertFromFormat(
                 array != nullptr,
                 "ArrowIndex constructed with a null array pointer!"
         );
@@ -124,7 +124,7 @@ namespace epochframe {
         }
         if (loc < 0 || loc >= length) {
             throw std::runtime_error(
-                    fmt::format("delete_() out-of-bounds loc={}", loc)
+                    std::format("delete_() out-of-bounds loc={}", loc)
             );
         }
         // slice 0..loc, slice loc+1..end => arrow::Concatenate
@@ -144,7 +144,7 @@ namespace epochframe {
         }
         if (loc < 0 || loc > length) {
             throw std::runtime_error(
-                    fmt::format("insert() out-of-bounds loc={}", loc)
+                    std::format("insert() out-of-bounds loc={}", loc)
             );
         }
         // Build a 1-element array from 'val'
@@ -173,7 +173,7 @@ namespace epochframe {
             return m_indexer.at(label);
         }
         catch (std::out_of_range const &) {
-            throw std::runtime_error(fmt::format("get_loc: label {} not found", label.repr()));
+            throw std::runtime_error(std::format("get_loc: label {} not found", label.repr()));
         }
     }
 
@@ -186,7 +186,7 @@ namespace epochframe {
             try {
                 indices[i] = m_indexer.at(label);
             }catch (std::out_of_range const &) {
-                throw std::runtime_error(fmt::format("Label not found: {}", label.repr()));
+                throw std::runtime_error(std::format("Label not found: {}", label.repr()));
             }
         }
         return Make(factory::array::make_contiguous_array(indices));
