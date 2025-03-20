@@ -268,8 +268,6 @@ namespace epochframe::arrow_utils {
 
     TableOrArray call_compute_index_in(const TableOrArray &table, const arrow::ArrayPtr &values);
 
-    TableOrArray call_compute_diff(const TableOrArray &table, int64_t periods);
-
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end);
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end, size_t step);
 

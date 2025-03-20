@@ -245,9 +245,4 @@ namespace epochframe::arrow_utils {
         arrow::compute::SetLookupOptions options{values, arrow::compute::SetLookupOptions::NullMatchingBehavior::MATCH};
         return call_unary_compute_table_or_array(table, "index_in", options);
     }
-
-    TableOrArray call_compute_diff(const TableOrArray &table, int64_t periods) {
-        arrow::compute::PairwiseOptions options{periods};
-        return call_unary_compute_table_or_array(table, "pairwise_diff", options);
-    }
 }

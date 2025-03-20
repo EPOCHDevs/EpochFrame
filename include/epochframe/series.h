@@ -7,7 +7,7 @@
 #include <methods/temporal.h>
 #include "ndframe/ndframe.h"
 #include "methods/groupby.h"
-
+#include "methods/window.h"
 
 namespace epochframe {
     class Series : public NDFrame<Series, arrow::ChunkedArray> {
@@ -120,6 +120,12 @@ namespace epochframe {
 
         GroupByAgg<Series> resample_by_agg(const TimeGrouperOptions &options) const;
         GroupByApply resample_by_apply(const TimeGrouperOptions &options, bool groupKeys=true) const;
+                
+        AggRollingWindowOperations<false> rolling_agg(window::RollingWindowOptions const& options) const;
+        ApplySeriesRollingWindowOperations rolling_apply(window::RollingWindowOptions const& options) const;
+
+        AggRollingWindowOperations<false> expanding_agg(window::ExpandingWindowOptions const& options) const;
+        ApplySeriesRollingWindowOperations expanding_apply(window::ExpandingWindowOptions const& options) const;
 
         using NDFrame::from_base;
 

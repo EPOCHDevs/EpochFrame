@@ -61,7 +61,7 @@ namespace epochframe::factory::array {
         return make_array<CType>(values.begin(), values.end());
     }
 
-    arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector);
+    arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector, std::shared_ptr<arrow::DataType> const &type);
 
     arrow::ArrayPtr make_array(const arrow::ChunkedArrayVector &arrowPtrList,
                               std::shared_ptr<arrow::DataType> const &type);

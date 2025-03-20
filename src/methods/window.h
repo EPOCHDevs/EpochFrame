@@ -2,9 +2,13 @@
 #include "calendar/time_delta.h"
 #include "epochframe/aliases.h"
 #include <arrow/api.h>
+#include <arrow/compute/api.h>
 #include <epoch_lab_shared/enum_wrapper.h>
 #include <optional>
 #include <vector>
+#include "epochframe/scalar.h"
+
+
 CREATE_ENUM(EpochFrameEWMWindowType, Alpha, HalfLife, Span, CenterOfMass);
 CREATE_ENUM(EpochFrameRollingWindowClosedType, Left, Right, Both, Neither);
 
@@ -15,14 +19,15 @@ namespace epochframe
     {
         struct WindowBound
         {
-            IndexType start;
-            IndexType end;
+            int64_t start{};
+            int64_t end{};
         };
         using WindowBounds = std::vector<WindowBound>;
         struct IWindowBoundGenerator
         {
             virtual ~IWindowBoundGenerator()                                  = default;
             virtual WindowBounds get_window_bounds(uint64_t num_values) const = 0;
+            virtual int64_t min_periods() const = 0;
         };
         using WindowBoundGeneratorPtr = std::unique_ptr<IWindowBoundGenerator>;
 
@@ -39,7 +44,10 @@ namespace epochframe
         {
           public:
             RollingWindow(const RollingWindowOptions& options);
-            WindowBounds get_window_bounds(uint64_t num_values) const override;
+            WindowBounds get_window_bounds(uint64_t num_values) const final;
+            int64_t min_periods() const final {
+                return m_min_periods;
+            }
 
           private:
             int64_t                           m_window_size;
@@ -58,33 +66,88 @@ namespace epochframe
         {
           public:
             ExpandingWindow(const ExpandingWindowOptions& options);
-            WindowBounds get_window_bounds(uint64_t num_values) const override;
+            WindowBounds get_window_bounds(uint64_t num_values) const final;
+
+            int64_t min_periods() const final {
+                return m_options.min_periods;
+            }
 
           private:
             ExpandingWindowOptions m_options;
         };
     } // namespace window
 
+
+    template<bool is_dataframe>
+    using FrameType = std::conditional_t<is_dataframe, DataFrame, Series>;
+
+        #define __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(name) \
+        OutputType name(bool skip_nulls=true) const { \
+            const arrow::compute::ScalarAggregateOptions option(skip_nulls, m_generator->min_periods()); \
+            return agg(#name, skip_nulls, option); \
+        }
+
+    template<bool is_dataframe>
     class AggRollingWindowOperations
     {
       public:
+        using OutputType = FrameType<is_dataframe>;
         AggRollingWindowOperations(window::WindowBoundGeneratorPtr generator,
-                                   DataFrame const&                data);
+                                   OutputType const&                data);
 
-        [[nodiscard]] DataFrame agg(std::string const& agg_name, bool skip_null = true) const;
+        // Aggs
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(all)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(any)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(approximate_median)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(first)
 
-        [[nodiscard]] std::unordered_map<std::string, DataFrame>
-        agg(std::vector<std::string> const& agg_names, bool skip_null = true) const;
+        OutputType index(Scalar const& value) const {
+            arrow::compute::IndexOptions options(value.value());
+            return agg("index", false, options);
+        }
+
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(last)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(max)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(min)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(mean)
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(product)
+
+        OutputType quantile(double q, arrow::compute::QuantileOptions::Interpolation interpolation = arrow::compute::QuantileOptions::Interpolation::LINEAR, bool skip_nulls = true) const {
+            arrow::compute::QuantileOptions options(q, interpolation, skip_nulls, m_generator->min_periods());
+            return agg("quantile", skip_nulls, options);
+        }
+
+        OutputType stddev(int ddof = 1, bool skip_nulls = true) const {
+            arrow::compute::VarianceOptions options(ddof, skip_nulls, m_generator->min_periods());
+            return agg("stddev", skip_nulls, options);
+        }
+
+        __MAKE_WINDOW_SCALAR_AGG_FUNCTION__(sum)
+
+        OutputType tdigest(double q, uint32_t delta = 100, bool skip_nulls = true) const {
+            arrow::compute::TDigestOptions options(q, delta, 500, skip_nulls, m_generator->min_periods());
+            return agg("tdigest", skip_nulls, options);
+        }
+
+        OutputType variance(int ddof = 1, bool skip_nulls = true) const {
+            arrow::compute::VarianceOptions options(ddof, skip_nulls, m_generator->min_periods());
+            return agg("variance", skip_nulls, options);
+        }
 
       private:
         window::WindowBoundGeneratorPtr m_generator;
-        DataFrame const&                m_data;
+        OutputType const&                m_data;
+
+        [[nodiscard]] FrameType<is_dataframe> agg(std::string const& agg_name, bool skip_null, const arrow::compute::FunctionOptions& options) const;
+
+        [[nodiscard]] std::unordered_map<std::string, FrameType<is_dataframe>>
+          agg(std::vector<std::string> const& agg_names, bool skip_null, const arrow::compute::FunctionOptions& options) const;
     };
 
-    class ApplyRollingWindowOperations
+    class ApplyDataFrameRollingWindowOperations
     {
       public:
-        ApplyRollingWindowOperations(window::WindowBoundGeneratorPtr generator,
+        ApplyDataFrameRollingWindowOperations(window::WindowBoundGeneratorPtr generator,
                                      DataFrame const&                data);
 
         Series    apply(std::function<Scalar(DataFrame const&)> const& fn) const;
@@ -97,47 +160,19 @@ namespace epochframe
         DataFrame const&                m_data;
     };
 
-    struct EWMWindowOptions
-    {
-        std::shared_ptr<class DateTimeIndex> times{nullptr};
-        std::optional<double>                com{std::nullopt};
-        std::optional<double>                span{std::nullopt};
-        std::optional<TimeDelta>             halflife{std::nullopt};
-        std::optional<double>                alpha{std::nullopt};
-        int64_t                              min_periods{0};
-        bool                                 adjust{true};
-        bool                                 ignore_na{false};
-    };
-
-    class EWMWindowOperations
+    class ApplySeriesRollingWindowOperations
     {
       public:
-        EWMWindowOperations(const EWMWindowOptions& options, DataFrame const& data);
+        ApplySeriesRollingWindowOperations(window::WindowBoundGeneratorPtr generator,
+                                     Series const&                data);
 
-        DataFrame mean() const;
-        DataFrame sum() const;
-        DataFrame var(bool bias = false) const;
-        DataFrame std(bool bias = false) const;
-        DataFrame corr() const;
-        DataFrame cov() const;
+        Series    apply(std::function<Scalar(Series const&)> const& fn) const;
 
       private:
-        EWMWindowOptions                    m_options;
-        DataFrame const&                    m_data;
-        std::shared_ptr<arrow::DoubleArray> m_deltas{nullptr};
-        double                              m_com{1.0};
-
-        void   calculate_deltas();
-        double get_center_of_mass(std::optional<double> com, std::optional<double> const& span,
-                                  std::optional<TimeDelta> const& halflife,
-                                  std::optional<double> const&    alpha) const;
-
-        DataFrame apply(std::function<Scalar(arrow::DoubleArray const&)> const& fn) const;
-
-        [[nodiscard]] DataFrame agg_ewm(std::string const& agg_name, bool skip_null = true) const;
-
-        [[nodiscard]] DataFrame agg_ewm_cov(std::string const& agg_name,
-                                            bool               bias = false) const;
+        window::WindowBoundGeneratorPtr m_generator;
+        Series const&                m_data;
     };
 
+    extern template class AggRollingWindowOperations<true>;
+    extern template class AggRollingWindowOperations<false>;
 } // namespace epochframe

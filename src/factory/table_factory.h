@@ -10,7 +10,7 @@ namespace epochframe::factory::table {
 // Creates an empty arrow Table with the given schema (0 rows).
 arrow::TablePtr make_empty_table(const arrow::SchemaPtr& schema);
 
-arrow::ChunkedArrayPtr make_empty_chunked_array(const arrow::DataTypePtr& type=nullptr);
+arrow::ChunkedArrayPtr make_empty_chunked_array(const arrow::DataTypePtr& type=arrow::null());
 
 arrow::TablePtr make_null_table(const arrow::SchemaPtr& schema, int64_t num_rows);
 

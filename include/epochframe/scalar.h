@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <string>
 #include <arrow/scalar.h>
+#include <flatbuffers/array.h>
+
 #include "calendar/day_of_week.h"
 
 namespace epochframe {
@@ -209,10 +211,41 @@ namespace epochframe {
 
         [[nodiscard]] EpochDayOfWeek weekday() const;
 
+        class Array to_array(int64_t lenght) const;
+
+        double as_double() const {
+            return get_or_throw_value<double>();
+        }
+
+        float as_float() const {
+            return get_or_throw_value<float>();
+        }
+
+        int64_t as_int64() const {
+            return get_or_throw_value<int64_t>();
+        }
+
+        int32_t as_int32() const {
+            return get_or_throw_value<int32_t>();
+        }
+
+        bool as_bool() const {
+            return get_or_throw_value<bool>();
+        }
+
     private:
         arrow::ScalarPtr m_scalar;
 
         Scalar(arrow::Result<arrow::Datum> const &scalar);
+
+        template<typename T>
+        T get_or_throw_value() const {
+            try {
+                return value<T>().value();
+            } catch (std::exception const &e) {
+                throw std::runtime_error(fmt::format("Failed to convert scalar to {}: {}", typeid(T).name(), e.what()));
+            }
+        }
     };
 
     struct ScalarHash {
