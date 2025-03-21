@@ -584,7 +584,28 @@ public:
      */
     Array map(std::function<Scalar(const Scalar&)> func, bool ignore_nulls = false) const;
 
-    Array diff(int64_t periods=1) const;
+    Array diff(int64_t periods=1, bool pad=false) const;
+
+    Array shift(int64_t periods) const;
+
+    Array pct_change(int64_t periods=1) const;
+
+    Scalar cov(const Array& other, int64_t min_periods=1, int64_t ddof=1) const;
+
+    Scalar corr(const Array& other, int64_t min_periods=1, int64_t ddof=1) const;
+
+    Array abs() const;
+
+    Array pow(const Scalar& other) const;
+
+    Array logb(const Scalar& base=Scalar(std::exp(1))) const;
+
+    Array exp() const;
+
+    Array sqrt() const;
+
+    Array where(const Array& mask, const Scalar& replacement) const;
+    
 private:
     arrow::ArrayPtr m_array;
 };

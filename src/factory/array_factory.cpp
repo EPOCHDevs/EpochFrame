@@ -116,4 +116,16 @@ namespace epochframe::factory::array {
         }
         return AssertResultIsOk(builder.Finish());
     }
+
+    arrow::ChunkedArrayPtr join_chunked_arrays(arrow::ArrayPtr const& x, const arrow::ChunkedArrayPtr &chunked_array, bool join_right) {
+        arrow::ArrayVector arrays;
+        if (join_right) {
+            arrays.push_back(x);
+            arrays.insert(arrays.end(), chunked_array->chunks().begin(), chunked_array->chunks().end());
+        } else {
+            arrays = chunked_array->chunks();
+            arrays.push_back(x);
+        }
+        return AssertArrayResultIsOk(arrow::ChunkedArray::Make(std::move(arrays)));
+    }
 }

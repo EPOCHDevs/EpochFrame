@@ -1,5 +1,5 @@
 #pragma once
-#include "calendar/time_delta.h"
+#include "date_time/time_delta.h"
 #include "epochframe/aliases.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
@@ -166,8 +166,12 @@ namespace epochframe
         ApplySeriesRollingWindowOperations(window::WindowBoundGeneratorPtr generator,
                                      Series const&                data);
 
-        Series    apply(std::function<Scalar(Series const&)> const& fn) const;
+        Series apply(std::function<Scalar(Series const&)> const& fn) const;
 
+
+        Series cov(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;
+
+        Series corr(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;
       private:
         window::WindowBoundGeneratorPtr m_generator;
         Series const&                m_data;
@@ -175,4 +179,47 @@ namespace epochframe
 
     extern template class AggRollingWindowOperations<true>;
     extern template class AggRollingWindowOperations<false>;
+
+    struct EWMWindowOptions
+    {
+        std::optional<double>                com{std::nullopt};
+        std::optional<double>                span{std::nullopt};
+        std::optional<double>                alpha{std::nullopt};
+        int64_t                              min_periods{0};
+        bool                                 adjust{true};
+        bool                                 ignore_na{false};
+    };
+
+    template<bool is_dataframe>
+    class EWMWindowOperations
+    {
+      public:
+        using OutputType = FrameType<is_dataframe>;
+        EWMWindowOperations(const EWMWindowOptions& options, OutputType const& data);
+
+        OutputType mean() const;
+        OutputType sum() const;
+        OutputType var(bool bias = false) const;
+        OutputType std(bool bias = false) const;
+        OutputType cov(OutputType const& other, bool bias = false) const;
+        OutputType corr(OutputType const& other) const;
+
+      private:
+        EWMWindowOptions                    m_options;
+        OutputType const&                    m_data;
+        int64_t                             m_min_periods{0};
+        double                              m_com{1.0};
+        std::shared_ptr<arrow::DoubleArray> m_deltas{nullptr};
+
+        double get_center_of_mass(std::optional<double> com, std::optional<double> const& span,
+                                  std::optional<TimeDelta> const& halflife,
+                                  std::optional<double> const&    alpha) const;
+
+        OutputType apply_column_wise(std::function<arrow::ArrayPtr(arrow::DoubleArray const&)> const& fn) const;
+
+        [[nodiscard]] OutputType agg_ewm(bool normalize) const;
+    };
+
+    extern template class EWMWindowOperations<true>;
+    extern template class EWMWindowOperations<false>;
 } // namespace epochframe

@@ -1,7 +1,7 @@
 //
 // Created by adesola on 3/14/24.
 //
-#include "calendar/day_of_week.h"
+#include "date_time/day_of_week.h"
 #include <catch2/catch_test_macros.hpp>
 #include "factory/scalar_factory.h"
 #include "common/asserts.h"

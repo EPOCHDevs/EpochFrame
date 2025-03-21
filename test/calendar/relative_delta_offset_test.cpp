@@ -1,8 +1,8 @@
 //
 // Created by adesola on 3/14/24.
 //
-#include "calendar/date_offsets.h"
-#include "calendar/relative_delta.h"
+#include "date_time/date_offsets.h"
+#include "date_time/relative_delta.h"
 #include <catch2/catch_test_macros.hpp>
 #include "factory/date_offset_factory.h"
 #include "factory/scalar_factory.h"
@@ -17,7 +17,7 @@ namespace efo = epochframe::factory::offset;
 using namespace std::chrono_literals;
 using namespace std::chrono;
 
-TEST_CASE("RelativeDeltaOffset", "[calendar]") {
+TEST_CASE("RelativeDeltaOffset", "[date_time]") {
 
     Date date{2008y, January, 2d};
     auto dt = DateTime{date}.timestamp();

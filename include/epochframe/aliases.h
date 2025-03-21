@@ -68,6 +68,8 @@ namespace epochframe {
 
     class TableOrArray;
 
+    class Array;
+
     template<bool is_array>
     class TemporalOperation;
 

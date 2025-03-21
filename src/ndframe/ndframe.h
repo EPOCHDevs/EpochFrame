@@ -8,7 +8,7 @@
 #include <vector>
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/api_scalar.h"
-
+#include "methods/window.h"
 
 // Forward declarations and type aliases
 namespace epochframe {
@@ -19,6 +19,7 @@ namespace epochframe {
     public:
         using ArrowPtrType = std::shared_ptr<ArrowType>;
         using AggType = std::conditional_t<std::is_same_v<ArrowType, arrow::Table>, class Series, class Scalar>;
+        static constexpr bool is_table = std::is_same_v<ArrowType, arrow::Table>;
         // ------------------------------------------------------------------------
         // Constructors / Destructor / Assignment
         // ------------------------------------------------------------------------
@@ -383,6 +384,11 @@ namespace epochframe {
         ChildType from_base(TableOrArray const &tableOrArray) const;
 
         virtual ChildType from_base(TableComponent const &tableComponent) const = 0;
+
+        EWMWindowOperations<is_table> ewm_agg(const class EWMWindowOptions& options) const {
+            return EWMWindowOperations<is_table>(options, dynamic_cast<const ChildType&>(*this));
+        }
+        
 
     protected:
         IndexPtr m_index;
