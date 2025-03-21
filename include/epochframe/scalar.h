@@ -10,7 +10,6 @@
 #include <string>
 #include <arrow/scalar.h>
 #include <flatbuffers/array.h>
-
 #include "calendar/day_of_week.h"
 
 namespace epochframe {
@@ -203,6 +202,8 @@ namespace epochframe {
         }
 
         [[nodiscard]] TemporalOperation<false> dt() const;
+
+        [[nodiscard]] StringOperation<false> str() const;
 
         [[nodiscard]] arrow::TimestampScalar timestamp(std::string const &format="%Y-%m-%d %H:%M:%S") const;
 

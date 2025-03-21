@@ -71,6 +71,9 @@ namespace epochframe {
     template<bool is_array>
     class TemporalOperation;
 
+    template<bool is_array>
+    class StringOperation;
+
 // Common pointer types used throughout
     using IndexPtr = std::shared_ptr<IIndex>;
     using IndexType = uint64_t;

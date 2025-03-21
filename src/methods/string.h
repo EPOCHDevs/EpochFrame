@@ -3,112 +3,155 @@
 //
 
 #pragma once
-#include "method_base.h"
-#include "common/table_or_array.h"
+#include "epochframe/array.h"
 
-
+#define CALL_STRING_OPERATION(name) Type name() const { return call_function(#name); }
+#define CALL_TRIM_OPERATION(name) Type name(const arrow::compute::TrimOptions& options) const { return call_function(#name, &options); }
+#define CALL_PAD_OPERATION(name) Type name(const arrow::compute::PadOptions& options) const { return call_function(#name, &options); }
+#define CALL_SPLIT_OPERATION(name) Type name(const arrow::compute::SplitOptions& options) const { return call_function(#name, &options); }
+#define CALL_REPLACE_OPERATION(name) Type name(const arrow::compute::ReplaceSliceOptions& options) const { return call_function(#name, &options); }
+#define CALL_REPLACE_SUBSTRING_OPERATION(name) Type name(const arrow::compute::ReplaceSubstringOptions& options) const { return call_function(#name, &options); }
 namespace epochframe {
-    class StringOperations : public MethodBase {
+    template<bool is_array>
+    class StringOperation {
 
     public:
-        StringOperations(const TableComponent& data) : MethodBase(data) {}
+        using Type = std::conditional_t<is_array, Array, Scalar>;
+
+        explicit StringOperation(const Type& data);
 
         // String Predicates
-        arrow::TablePtr ascii_is_alnum() const;
-        arrow::TablePtr ascii_is_alpha() const;
-        arrow::TablePtr ascii_is_decimal() const;
-        arrow::TablePtr ascii_is_lower() const;
-        arrow::TablePtr ascii_is_printable() const;
-        arrow::TablePtr ascii_is_space() const;
-        arrow::TablePtr ascii_is_upper() const;
-        arrow::TablePtr utf8_is_alnum() const;
-        arrow::TablePtr utf8_is_alpha() const;
-        arrow::TablePtr utf8_is_decimal() const;
-        arrow::TablePtr utf8_is_digit() const;
-        arrow::TablePtr utf8_is_lower() const;
-        arrow::TablePtr utf8_is_numeric() const;
-        arrow::TablePtr utf8_is_printable() const;
-        arrow::TablePtr utf8_is_space() const;
-        arrow::TablePtr utf8_is_upper() const;
+        CALL_STRING_OPERATION(ascii_is_alnum)
+        CALL_STRING_OPERATION(ascii_is_alpha)
+        CALL_STRING_OPERATION(ascii_is_decimal)
+        CALL_STRING_OPERATION(ascii_is_lower)
+        CALL_STRING_OPERATION(ascii_is_printable)
+        CALL_STRING_OPERATION(ascii_is_space)
+        CALL_STRING_OPERATION(ascii_is_upper)
+        CALL_STRING_OPERATION(utf8_is_alnum)
+        CALL_STRING_OPERATION(utf8_is_alpha)
+        CALL_STRING_OPERATION(utf8_is_decimal)
+        CALL_STRING_OPERATION(utf8_is_digit)
+        CALL_STRING_OPERATION(utf8_is_lower)
+        CALL_STRING_OPERATION(utf8_is_numeric)
+        CALL_STRING_OPERATION(utf8_is_printable)
+        CALL_STRING_OPERATION(utf8_is_space)
+        CALL_STRING_OPERATION(utf8_is_upper)
 
-        arrow::TablePtr ascii_is_title() const;
-        arrow::TablePtr utf8_is_title() const;
+        CALL_STRING_OPERATION(ascii_is_title)
+        CALL_STRING_OPERATION(utf8_is_title)
 
-        arrow::TablePtr string_is_ascii() const;
+        CALL_STRING_OPERATION(string_is_ascii)
 
         // String Transforms
-        arrow::TablePtr ascii_capitalize() const;
-        arrow::TablePtr ascii_lower() const;
-        arrow::TablePtr ascii_reverse() const;
-        arrow::TablePtr ascii_swapcase() const;
-        arrow::TablePtr ascii_title() const;
-        arrow::TablePtr ascii_upper() const;
-        arrow::TablePtr binary_length() const;
-        arrow::TablePtr binary_repeat() const;
-        arrow::TablePtr binary_replace_slice(const arrow::compute::ReplaceSliceOptions& ) const;
-        arrow::TablePtr binary_reverse() const;
-        arrow::TablePtr replace_substring(const arrow::compute::ReplaceSliceOptions& ) const;
-        arrow::TablePtr replace_substring_regex(const arrow::compute::ReplaceSliceOptions& ) const;
-        arrow::TablePtr utf8_capitalize() const;
-        arrow::TablePtr utf8_length() const;
-        arrow::TablePtr utf8_lower() const;
-        arrow::TablePtr utf8_replace_slice(const arrow::compute::ReplaceSliceOptions& ) const;
-        arrow::TablePtr utf8_reverse() const;
-        arrow::TablePtr utf8_swapcase() const;
-        arrow::TablePtr utf8_title() const;
-        arrow::TablePtr utf8_upper() const;
+        CALL_STRING_OPERATION(ascii_capitalize)
+        CALL_STRING_OPERATION(ascii_lower)
+        CALL_STRING_OPERATION(ascii_reverse)
+        CALL_STRING_OPERATION(ascii_swapcase)
+        CALL_STRING_OPERATION(ascii_title)
+        CALL_STRING_OPERATION(ascii_upper)
+        CALL_STRING_OPERATION(binary_length)
+        CALL_STRING_OPERATION(binary_repeat)
+        CALL_REPLACE_OPERATION(binary_replace_slice)
+        CALL_STRING_OPERATION(binary_reverse)
+        CALL_REPLACE_SUBSTRING_OPERATION(replace_substring)
+        CALL_REPLACE_OPERATION(replace_substring_regex)
+        CALL_STRING_OPERATION(utf8_capitalize)
+        CALL_STRING_OPERATION(utf8_length)
+        CALL_STRING_OPERATION(utf8_lower)
+        CALL_REPLACE_OPERATION(utf8_replace_slice)
+        CALL_STRING_OPERATION(utf8_reverse)
+        CALL_STRING_OPERATION(utf8_swapcase)
+        CALL_STRING_OPERATION(utf8_title)
+        CALL_STRING_OPERATION(utf8_upper)
 
         // String Padding
-        arrow::TablePtr ascii_center(const arrow::compute::PadOptions& ) const;
-        arrow::TablePtr ascii_lpad(const arrow::compute::PadOptions& ) const;
-        arrow::TablePtr ascii_rpad(const arrow::compute::PadOptions& ) const;
-        arrow::TablePtr utf8_center(const arrow::compute::PadOptions& ) const;
-        arrow::TablePtr utf8_lpad(const arrow::compute::PadOptions& ) const;
-        arrow::TablePtr utf8_rpad(const arrow::compute::PadOptions& ) const;
+        CALL_PAD_OPERATION(ascii_center)
+        CALL_PAD_OPERATION(ascii_lpad)
+        CALL_PAD_OPERATION(ascii_rpad)
+        CALL_PAD_OPERATION(utf8_center)
+        CALL_PAD_OPERATION(utf8_lpad)
+        CALL_PAD_OPERATION(utf8_rpad)
 
         // String Padding
-        arrow::TablePtr ascii_ltrim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr ascii_ltrim_whitespace() const;
-        arrow::TablePtr ascii_rtrim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr ascii_rtrim_whitespace() const;
-        arrow::TablePtr ascii_trim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr ascii_trim_whitespace() const;
-        arrow::TablePtr utf8_ltrim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr utf8_ltrim_whitespace() const;
-        arrow::TablePtr utf8_rtrim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr utf8_rtrim_whitespace() const;
-        arrow::TablePtr utf8_trim(const arrow::compute::TrimOptions& ) const;
-        arrow::TablePtr utf8_trim_whitespace() const;
+        CALL_TRIM_OPERATION(ascii_ltrim)
+        CALL_STRING_OPERATION(ascii_ltrim_whitespace)
+        CALL_TRIM_OPERATION(ascii_rtrim)
+        CALL_STRING_OPERATION(ascii_rtrim_whitespace)
+        CALL_TRIM_OPERATION(ascii_trim)
+        CALL_STRING_OPERATION(ascii_trim_whitespace)
+        CALL_TRIM_OPERATION(utf8_ltrim)
+        CALL_STRING_OPERATION(utf8_ltrim_whitespace)
+        CALL_TRIM_OPERATION(utf8_rtrim)
+        CALL_STRING_OPERATION(utf8_rtrim_whitespace)
+        CALL_TRIM_OPERATION(utf8_trim)
+        CALL_STRING_OPERATION(utf8_trim_whitespace)
 
         // String Splitting
-        arrow::TablePtr ascii_split_whitespace(const arrow::compute::SplitOptions& ) const;
-        arrow::TablePtr split_pattern(const arrow::compute::SplitPatternOptions& ) const;
-        arrow::TablePtr split_pattern_regex(const arrow::compute::SplitPatternOptions& ) const;
-        arrow::TablePtr utf8_split_whitespace(const arrow::compute::SplitOptions& ) const;
+        Type ascii_split_whitespace(const arrow::compute::SplitOptions& options) const {
+            return call_function("ascii_split_whitespace", &options);
+        }
+        Type split_pattern(const arrow::compute::SplitPatternOptions& options) const {
+            return call_function("split_pattern", &options);
+        }
+        Type split_pattern_regex(const arrow::compute::SplitPatternOptions& options) const {
+            return call_function("split_pattern_regex", &options);
+        }
+        Type utf8_split_whitespace(const arrow::compute::SplitOptions& options) const {
+            return call_function("utf8_split_whitespace", &options);
+        }
 
         // String Component extraction
-        arrow::TablePtr extract_regex(TableComponent const&, const arrow::compute::ExtractRegexOptions& ) const;
-
-        // String joining
-        arrow::TablePtr binary_join(IndexPtr const&, arrow::TablePtr const&) const;
-        arrow::TablePtr binary_join_element_wise(TableComponents const&, const arrow::compute::JoinOptions& ) const;
+        Type extract_regex(const arrow::compute::ExtractRegexOptions& options) const{
+            return call_function("extract_regex", &options);
+        }
 
         // String slicing
-        arrow::TablePtr binary_slice(const arrow::compute::SliceOptions&) const;
-        arrow::TablePtr utf8_slice_codeunits(const arrow::compute::SliceOptions&) const;
+        Type binary_slice(const arrow::compute::SliceOptions& options) const {
+            return call_function("binary_slice", &options);
+        }
+        Type utf8_slice_codeunits(const arrow::compute::SliceOptions& options) const {
+            return call_function("utf8_slice_codeunits", &options);
+        }
 
         // String containment
-        arrow::TablePtr count_substring(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr count_substring_regex(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr ends_with(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr find_substring(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr find_substring_regex(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr match_like(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr match_substring(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr match_substring_regex(arrow::compute::MatchSubstringOptions const&) const;
-        arrow::TablePtr starts_with(arrow::compute::MatchSubstringOptions const&) const;
+        Type count_substring(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("count_substring", &options);
+        }
+        Type count_substring_regex(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("count_substring_regex", &options);
+        }
+        Type ends_with(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("ends_with", &options);
+        }
+        Type find_substring(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("find_substring", &options);
+        }
+        Type match_like(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("match_like", &options);
+        }
+        Type match_substring(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("match_substring", &options);
+        }
+        Type match_substring_regex(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("match_substring_regex", &options);
+        }
+        Type starts_with(arrow::compute::MatchSubstringOptions const& options) const {
+            return call_function("starts_with", &options);
+        }
+        Type index_in(arrow::compute::SetLookupOptions const& options) const {
+            return call_function("index_in", &options);
+        }
+        Type is_in(arrow::compute::SetLookupOptions const& options) const {
+            return call_function("is_in", &options);
+        }
 
-        arrow::TablePtr index_in(arrow::compute::SetLookupOptions const&) const;
-        arrow::TablePtr is_in(arrow::compute::SetLookupOptions const&) const;
+        private:
+        Type m_data;
+
+        Type call_function(const std::string& name, const arrow::compute::FunctionOptions* options=nullptr) const;
     };
+
+    extern template class StringOperation<true>;
+    extern template class StringOperation<false>;
 }

@@ -364,4 +364,8 @@ namespace epochframe::arrow_utils {
     inline std::string get_tz(const arrow::TimestampScalar &scalar) {
         return get_tz(scalar.type);
     }
+
+    // TODO: MISSING
+    // binary_join
+    // binary_join_element_wise
 } // namespace epochframe::arrow_utils

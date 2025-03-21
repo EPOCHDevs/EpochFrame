@@ -6,7 +6,6 @@ include(${EPOCH_LAB}/shared_header.cmake)
 project(EpochFrame LANGUAGES C CXX)
 
 include(${EPOCH_CMAKE}/include_test.cmake)
-find_package(glaze CONFIG REQUIRED)
 find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(Arrow CONFIG REQUIRED)

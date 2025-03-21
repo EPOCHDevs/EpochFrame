@@ -326,6 +326,10 @@ namespace epochframe {
         return TemporalOperation<false>(*this);
     }
 
+    StringOperation<false> Scalar::str() const {
+        return StringOperation<false>(*this);
+    }
+
     arrow::TimestampScalar Scalar::timestamp(std::string const &format) const {
         if (arrow::is_string(m_scalar->type->id())) {
             auto scalar = std::make_shared<arrow::StringScalar>("2024-01-01");

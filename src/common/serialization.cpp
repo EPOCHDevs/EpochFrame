@@ -3,8 +3,6 @@
 #include "common/asserts.h"
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
-#include <glaze/glaze.hpp>
-#include "epochframe/json_glaze.h"
 #include <mutex>
 #include <atomic>
 #include <filesystem>
