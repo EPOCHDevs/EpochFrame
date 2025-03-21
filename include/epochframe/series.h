@@ -5,6 +5,7 @@
 #pragma once
 #include <factory/array_factory.h>
 #include <methods/temporal.h>
+#include <methods/string.h>
 #include "ndframe/ndframe.h"
 #include "methods/groupby.h"
 #include "methods/window.h"
@@ -117,6 +118,15 @@ namespace epochframe {
         [[nodiscard]] TemporalOperation<true> dt() const {
             return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
+        
+        /**
+         * Return a StringOperation object that can be used to call string methods on this Series.
+         * @return StringOperation
+         */
+        [[nodiscard]] StringOperation<true> str() const {
+            return StringOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
+        }
+        
 
         GroupByAgg<Series> resample_by_agg(const TimeGrouperOptions &options) const;
         GroupByApply resample_by_apply(const TimeGrouperOptions &options, bool groupKeys=true) const;
