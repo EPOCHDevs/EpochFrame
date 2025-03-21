@@ -10,7 +10,7 @@
 #include <tbb/parallel_for.h>
 #include "factory/dataframe_factory.h"
 #include "factory/table_factory.h"
-
+#include "common/user_defined_compute_functions.h"
 
 namespace epochframe
 {
@@ -260,4 +260,142 @@ namespace epochframe
         return apply_scalar_to_series(fn, m_data, m_generator);
     }
 
+    Series ApplySeriesRollingWindowOperations::cov(Series const &other, int64_t min_periods, int64_t ddof) const {
+        return apply([&](Series const& s) { return s.cov(other, min_periods, ddof); });
+    }
+
+    Series ApplySeriesRollingWindowOperations::corr(Series const &other, int64_t min_periods, int64_t ddof) const {
+        return apply([&](Series const& s) { return s.corr(other, min_periods, ddof); });
+    }
+
+    template<bool is_dataframe>
+    double EWMWindowOperations<is_dataframe>::get_center_of_mass(std::optional<double> comass, std::optional<double> const& span, std::optional<TimeDelta> const& halflife,
+    std::optional<double> const& alpha) const
+    {
+        std::vector<bool> valid_counts{comass.has_value(), span.has_value(), halflife.has_value(), alpha.has_value()};
+        auto valid_count = std::ranges::count(valid_counts.begin(), valid_counts.end(), true);
+        AssertFromFormatImpl(std::invalid_argument, valid_count <= 1, "Only one of com, span, halflife, or alpha can be specified");
+
+        if (comass) {
+            AssertFromFormatImpl(std::invalid_argument, comass >= 0, "comass must satisfy: comass >= 0");
+        }
+        else if (span) {
+            AssertFromFormatImpl(std::invalid_argument, span >= 1, "span must satisfy: span >= 1");
+            comass = (span.value() - 1.0) / 2.0;
+        }
+        else if (halflife) {
+            throw std::runtime_error("Halflife is not supported yet");
+        }
+        else if (alpha) {
+            AssertFromFormatImpl(std::invalid_argument, alpha >= 0 && alpha <= 1, "alpha must satisfy: 0 <= alpha <= 1");
+            comass = (1.0 - alpha.value()) / alpha.value();
+        }
+        else {
+            AssertFromFormatImpl(std::invalid_argument, false, "Must pass one of comass, span, halflife, or alpha");
+        }
+        return comass.value();
+    }
+
+
+    template<bool is_dataframe>
+    EWMWindowOperations<is_dataframe>::EWMWindowOperations(const EWMWindowOptions& options, FrameType<is_dataframe> const& data)
+        : m_options(options), m_data(data), m_min_periods(std::max(options.min_periods, 1L))
+    {
+        m_com = get_center_of_mass(m_options.com, m_options.span, std::nullopt, m_options.alpha);
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::apply_column_wise(std::function<arrow::ArrayPtr(arrow::DoubleArray const&)> const& fn) const
+    {
+        if constexpr (is_dataframe) {
+            std::vector<arrow::ChunkedArrayPtr> results(m_data.num_cols());
+            arrow::FieldVector fields;
+
+            auto column_names = m_data.column_names();
+            tbb::parallel_for(tbb::blocked_range<size_t>(0, m_data.num_cols()), [&](tbb::blocked_range<size_t> const& range) {
+                for (size_t i = range.begin(); i < range.end(); ++i) {
+                    auto column_name = column_names[i];
+                    auto values = m_data[column_name].contiguous_array().cast(arrow::float64()).template to_view<double>();
+                    auto result = std::make_shared<arrow::ChunkedArray>(fn(*values));
+                    results[i] = result;
+                    fields.push_back(field(column_name, result->type()));
+                }
+            });
+
+            return DataFrame(m_data.index(), arrow::Table::Make(arrow::schema(fields), results));
+        }
+        else {
+            auto values = m_data.contiguous_array().cast(arrow::float64()).template to_view<double>();
+            auto result = std::make_shared<arrow::ChunkedArray>(fn(*values));
+            return Series(m_data.index(), result);
+        }
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::agg_ewm(bool normalize) const
+    {
+        return apply_column_wise([&](arrow::DoubleArray const& values) {
+            return ewm(values, m_min_periods, m_com, m_options.adjust, m_options.ignore_na, m_deltas, normalize);
+        });
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::mean() const
+    {
+        return agg_ewm(true);
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::sum() const
+    {
+        return agg_ewm(false);
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::var(bool bias) const
+    {
+        return apply_column_wise([&](arrow::DoubleArray const& values) {
+            return ewmcov(values, m_min_periods, values, m_com, m_options.adjust, m_options.ignore_na, bias);
+        });
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::cov(OutputType const& other, bool bias) const
+    {
+        return apply_column_wise([&](arrow::DoubleArray const& values) -> arrow::ArrayPtr {
+            if constexpr (is_dataframe) {
+                throw std::runtime_error("pairwise covariance is not supported for DataFrames");
+            }
+            else {
+                auto arr = other.contiguous_array().cast(arrow::float64()).template to_view<double>();
+                return ewmcov(values, m_min_periods, *arr, m_com, m_options.adjust, m_options.ignore_na, bias);
+            }
+        });
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::corr(OutputType const& other) const
+    {
+        return apply_column_wise([&](arrow::DoubleArray const& values) -> arrow::ArrayPtr {
+            if constexpr (is_dataframe) {
+                throw std::runtime_error("pairwise correlation is not supported for DataFrames");
+            }
+            else {
+                auto arr = other.contiguous_array().cast(arrow::float64()).template to_view<double>();
+                auto cov = Array(ewmcov(values, m_min_periods, *arr, m_com, m_options.adjust, m_options.ignore_na, true));
+                auto x_var = Array(ewmcov(values, m_min_periods, values, m_com, m_options.adjust, m_options.ignore_na, true));
+                auto y_var = Array(ewmcov(*arr, m_min_periods, *arr, m_com, m_options.adjust, m_options.ignore_na, true));
+                return (cov / zsqrt(x_var * y_var)).value();
+            }
+        });
+    }
+
+    template<bool is_dataframe>
+    FrameType<is_dataframe> EWMWindowOperations<is_dataframe>::std(bool bias) const
+    {
+        return zsqrt(var(bias));
+    }
+
+    template class EWMWindowOperations<true>;
+    template class EWMWindowOperations<false>;
 } // namespace epochframe

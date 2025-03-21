@@ -63,6 +63,10 @@ namespace epochframe::factory::array {
 
     arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector, std::shared_ptr<arrow::DataType> const &type);
 
+    inline arrow::ArrayPtr make_null_array(size_t length, std::shared_ptr<arrow::DataType> const &type) {
+        return AssertContiguousArrayResultIsOk(arrow::MakeArrayOfNull(type, length));
+    }
+
     arrow::ArrayPtr make_array(const arrow::ChunkedArrayVector &arrowPtrList,
                               std::shared_ptr<arrow::DataType> const &type);
 
@@ -85,4 +89,5 @@ namespace epochframe::factory::array {
     array_to_struct_single_chunk(const std::vector<std::shared_ptr<arrow::Array>>& columns,
                                     const std::vector<std::shared_ptr<arrow::Field>>& fields);
 
+    arrow::ChunkedArrayPtr join_chunked_arrays(arrow::ArrayPtr const&  x, const arrow::ChunkedArrayPtr &arrays, bool join_right=true);
 }

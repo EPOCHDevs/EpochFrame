@@ -190,5 +190,24 @@ namespace epochframe {
     ApplySeriesRollingWindowOperations Series::expanding_apply(window::ExpandingWindowOptions const& options) const {
         return {std::make_unique<window::ExpandingWindow>(options), *this};
     }
-    
+
+    Series Series::diff(int64_t periods) const {
+        return from_base(arrow_utils::diff(TableOrArray{m_table}, periods, true));
+    }
+
+    Series Series::shift(int64_t periods) const {
+        return from_base(arrow_utils::shift(TableOrArray{m_table}, periods));
+    }
+
+    Series Series::pct_change(int64_t periods) const {
+        return from_base(arrow_utils::pct_change(TableOrArray{m_table}, periods));
+    }
+
+    Scalar Series::cov(Series const &other, int64_t min_periods, int64_t ddof) const {
+        return Scalar(arrow_utils::cov(m_table, other.m_table, min_periods, ddof));
+    }
+
+    Scalar Series::corr(Series const &other, int64_t min_periods, int64_t ddof) const {
+        return Scalar(arrow_utils::corr(m_table, other.m_table, min_periods, ddof));
+    }
 }

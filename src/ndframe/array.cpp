@@ -479,9 +479,48 @@ Array Array::map(std::function<Scalar(const Scalar&)> func, bool ignore_nulls) c
     return Array(arrow_utils::map(m_array, func, ignore_nulls));
 }
 
-Array Array::diff(int64_t periods) const {
-    arrow::compute::PairwiseOptions options{periods};
-    return Array(arrow_utils::call_unary_compute_contiguous_array(m_array, "pairwise_diff", &options));
+Array Array::diff(int64_t periods, bool pad) const {
+    return Array(arrow_utils::diff(TableOrArray(std::make_shared<arrow::ChunkedArray>(m_array)), periods, pad).chunked_array());
+}
+
+Array Array::shift(int64_t periods) const {
+    return Array(arrow_utils::shift(TableOrArray(std::make_shared<arrow::ChunkedArray>(m_array)), periods).chunked_array());
+}
+
+Array Array::pct_change(int64_t periods) const {
+    return Array(arrow_utils::pct_change(TableOrArray(std::make_shared<arrow::ChunkedArray>(m_array)), periods).chunked_array());
+}
+
+Scalar Array::cov(const Array& other, int64_t min_periods, int64_t ddof) const {
+    return Scalar(arrow_utils::cov(std::make_shared<arrow::ChunkedArray>(m_array), std::make_shared<arrow::ChunkedArray>(other.value()), min_periods, ddof));
+}
+
+Scalar Array::corr(const Array& other, int64_t min_periods, int64_t ddof) const {
+    return Scalar(arrow_utils::corr(std::make_shared<arrow::ChunkedArray>(m_array), std::make_shared<arrow::ChunkedArray>(other.value()), min_periods, ddof));
+}
+
+Array Array::abs() const {
+    return call_function("abs");
+}
+
+Array Array::pow(const Scalar& other) const {
+    return call_function(other, "power");
+}
+
+Array Array::logb(const Scalar& base) const {
+    return call_function(base, "logb");
+}
+
+Array Array::exp() const {
+    return call_function("exp");
+}
+
+Array Array::sqrt() const {
+    return call_function("sqrt");
+}
+
+Array Array::where(const Array& mask, const Scalar& replacement) const {
+    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(m_array, mask.value(), replacement.value())));
 }
 
 } // namespace epochframe 

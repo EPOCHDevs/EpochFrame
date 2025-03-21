@@ -26,7 +26,6 @@
 #include "epochframe/frame_or_series.h"
 #include "common/arrow_compute_utils.h"
 
-
 namespace epochframe {
 
 //////////////////////////////////////////////////////////////////////////

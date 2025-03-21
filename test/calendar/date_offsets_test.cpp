@@ -1,7 +1,7 @@
 //
 // Created by adesola on 2/15/25.
 //
-#include "calendar/date_offsets.h"
+#include "date_time/date_offsets.h"
 #include <catch2/catch_test_macros.hpp>
 #include "factory/date_offset_factory.h"
 #include "factory/index_factory.h"
@@ -10,8 +10,8 @@
 #include "common/asserts.h"
 #include <iostream>
 #include "epochframe/array.h"
-#include "calendar/relative_delta_options.h"
-#include "calendar/day_of_week.h"
+#include "date_time/relative_delta_options.h"
+#include "date_time/day_of_week.h"
 
 using namespace epochframe::factory::index;
 using namespace epochframe::factory::scalar;
@@ -874,7 +874,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
     SECTION("Basic Week Functionality") {
         SECTION("Add one week") {
             auto week_handler = efo::weeks(1);
-            // Don't test the exact code string, just ensure it has calendar unit set
+            // Don't test the exact code string, just ensure it has date_time unit set
             REQUIRE(week_handler->calendar_unit() == arrow::compute::CalendarUnit::WEEK);
             REQUIRE(to_datetime(week_handler->add("2023-01-01"_date)) == DateTime{{2023y, January, 8d}});
         }

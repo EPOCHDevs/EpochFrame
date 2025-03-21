@@ -2,115 +2,125 @@
 // Created by adesola on 2/13/25.
 //
 #include <catch2/catch_test_macros.hpp>
-#include <arrow/array/builder_primitive.h>
+#include <arrow/api.h>
+#include <cmath> // For std::abs
+#include "index/arrow_index.h"
+#include "factory/series_factory.h"
 #include "factory/index_factory.h"
 
-
 using namespace epochframe;
-TEST_CASE("Arithmetic Function")
-{
-    arrow::DoubleBuilder builder;
-    arrow::ChunkedArrayPtr array;
 
-    REQUIRE(builder.AppendValues(std::vector<double>{1, 2, 3, 4, 5}).ok());
+TEST_CASE("Series basic tests", "[series]")
+{
+    // Create a simple array
+    std::vector<double> data{1.0, 2.0, 3.0, 4.0, 5.0};    
+    // Create an index
+    auto idx = factory::index::from_range(5);
+    
+    Series s = make_series(idx, data);
+    
+    // Basic assertions
+    REQUIRE(s.size() == 5);
+    REQUIRE(s.iloc(0).as_double() == 1.0);
+    REQUIRE(s.iloc(1).as_double() == 2.0);
+    REQUIRE(s.iloc(2).as_double() == 3.0);
+    REQUIRE(s.iloc(3).as_double() == 4.0);
+    REQUIRE(s.iloc(4).as_double() == 5.0);
+} 
+
+TEST_CASE("Series - diff operation", "[series][diff]")
+{
+  // Create series with known values
+  std::vector<double> data{5.0, 10.0, 12.0, 18.0, 25.0};
+  auto idx = factory::index::from_range(5);
+  Series s = make_series(idx, data);
+  
+  SECTION("Default period=1") {
+    Series result = s.diff();
+    // First value is NaN (null) for period=1
+    REQUIRE(result.iloc(0).is_null());
+    // Expected diffs: [NaN, 5.0, 2.0, 6.0, 7.0]
+    REQUIRE(result.iloc(1).as_double() == 5.0);
+    REQUIRE(result.iloc(2).as_double() == 2.0);
+    REQUIRE(result.iloc(3).as_double() == 6.0);
+    REQUIRE(result.iloc(4).as_double() == 7.0);
+  }
+  
+  SECTION("Custom period=2") {
+    Series result = s.diff(2);
+    // First two values are NaN (null) for period=2
+    REQUIRE(result.iloc(0).is_null());
+    REQUIRE(result.iloc(1).is_null());
+    // Expected diffs: [NaN, NaN, 7.0, 8.0, 13.0]
+    REQUIRE(result.iloc(2).as_double() == 7.0);
+    REQUIRE(result.iloc(3).as_double() == 8.0);
+    REQUIRE(result.iloc(4).as_double() == 13.0);
+  }
 }
 
-//------------------------------------------------------------------------------
-// 13) value_counts
-//------------------------------------------------------------------------------
-
-TEST_CASE("Series - value_counts", "[arrow_index][value_counts]")
+TEST_CASE("Series - pct_change operation", "[series][pct_change]")
 {
-//    using ArrowType = TestType;
-//    using CType = typename TestType::value_type;
-//
-//// data with duplicates
-//    std::vector<CType> data{1, 2, 2, 1, 3, 2};
-//    auto arr = epochframe::factory::array::MakeArray<CType>(data);
-//    auto idx = std::make_shared<epochframe::ArrowIndex>(arr);
-//
-//    auto [valuesIndex, countsArr] = idx->value_counts();
-//    auto counts = std::dynamic_pointer_cast<arrow::UInt64Array>(countsArr->chunk(0));
-//// Distinct => {1,2,3} => size=3
-//    REQUIRE(valuesIndex->size() == 3);
-//    REQUIRE(counts->length() == 3);
-//
-//// Sum of counts == 6
-//    int64_t total_count = 0;
-//    for (int64_t i = 0; i < counts->length(); ++i) {
-//        total_count += counts->Value(i);
-//    }
-//    REQUIRE(total_count == static_cast<int64_t>(data.size()));
+  // Create series with known values
+  std::vector<double> data{10.0, 15.0, 20.0, 25.0, 30.0};
+  auto idx = factory::index::from_range(5);
+  Series s = make_series(idx, data);
+  
+  SECTION("Default period=1") {
+    Series result = s.pct_change();
+    // First value is NaN (null) for period=1
+    REQUIRE(result.iloc(0).is_null());
+    // Expected pct_changes: [NaN, 0.5, 0.333..., 0.25, 0.2]
+    REQUIRE(std::abs(result.iloc(1).as_double() - 0.5) < 1e-10);
+    REQUIRE(std::abs(result.iloc(2).as_double() - 0.333333) < 1e-5);
+    REQUIRE(std::abs(result.iloc(3).as_double() - 0.25) < 1e-10);
+    REQUIRE(std::abs(result.iloc(4).as_double() - 0.2) < 1e-10);
+  }
+  
+  SECTION("Custom period=2") {
+    Series result = s.pct_change(2);
+    // First two values are NaN (null) for period=2
+    REQUIRE(result.iloc(0).is_null());
+    REQUIRE(result.iloc(1).is_null());
+    // Expected pct_changes: [NaN, NaN, 1.0, 0.666..., 0.5]
+    REQUIRE(std::abs(result.iloc(2).as_double() - 1.0) < 1e-10);
+    REQUIRE(std::abs(result.iloc(3).as_double() - 0.666667) < 1e-5);
+    REQUIRE(std::abs(result.iloc(4).as_double() - 0.5) < 1e-10);
+  }
 }
 
-//------------------------------------------------------------------------------
-// 3) Uniqueness, duplicates
-//------------------------------------------------------------------------------
-
-TEST_CASE("ArrowIndex - Uniqueness and duplicates", "[arrow_index][duplicates]")
+TEST_CASE("Series - shift operation", "[series][shift]")
 {
-// data with duplicates
-    std::vector<CType> data{1, 2, 2, 3, 1, 5};
-    auto arr = epochframe::factory::array::MakeArray<CType>(data);
-    auto idx = std::make_shared<epochframe::ArrowIndex>(arr);
-
-    REQUIRE_FALSE(idx->is_unique());
-    REQUIRE(idx->has_duplicates());
-
-    SECTION("unique") {
-        auto unique_idx = idx->unique();
-        REQUIRE(unique_idx->size() == 4);  // {1,2,3,5}
+  // Create series with known values
+  std::vector<double> data{1.0, 2.0, 3.0, 4.0, 5.0};
+  auto idx = factory::index::from_range(5);
+  Series s = make_series(idx, data);
+  
+  SECTION("Positive shift") {
+    Series result = s.shift(2);
+    // First two values are NaN (null) when shifted by 2
+    REQUIRE(result.iloc(0).is_null());
+    REQUIRE(result.iloc(1).is_null());
+    // Expected: [NaN, NaN, 1.0, 2.0, 3.0]
+    REQUIRE(result.iloc(2).as_double() == 1.0);
+    REQUIRE(result.iloc(3).as_double() == 2.0);
+    REQUIRE(result.iloc(4).as_double() == 3.0);
+  }
+  
+  SECTION("Negative shift") {
+    Series result = s.shift(-2);
+    // Expected: [3.0, 4.0, 5.0, NaN, NaN]
+    REQUIRE(result.iloc(0).as_double() == 3.0);
+    REQUIRE(result.iloc(1).as_double() == 4.0);
+    REQUIRE(result.iloc(2).as_double() == 5.0);
+    REQUIRE(result.iloc(3).is_null());
+    REQUIRE(result.iloc(4).is_null());
+  }
+  
+  SECTION("Zero shift") {
+    Series result = s.shift(0);
+    // Should be identical to original
+    for (int i = 0; i < 5; i++) {
+      REQUIRE(result.iloc(i).as_double() == s.iloc(i).as_double());
     }
-
-    SECTION("duplicated(keep=First)") {
-        auto duped = idx->duplicated(DropDuplicatesKeepPolicy::First);
-// data = {1,2,2,3,1,5}
-// duplicates positions => 2 and 4
-        REQUIRE(duped->Value(2) == true);
-        REQUIRE(duped->Value(4) == true);
-        REQUIRE(duped->Value(0) == false);
-        REQUIRE(duped->Value(1) == false);
-        REQUIRE(duped->Value(3) == false);
-        REQUIRE(duped->Value(5) == false);
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// 7) drop_duplicates
-//------------------------------------------------------------------------------
-
-TEST_CASE("ArrowIndex - drop_duplicates", "[arrow_index][duplicates]")
-{
-    std::vector<CType> data{1, 2, 2, 3, 1, 5};
-    auto arr = epochframe::factory::array::MakeArray<CType>(data);
-    auto idx = std::make_shared<epochframe::ArrowIndex>(arr);
-
-    SECTION("keep=First") {
-        auto dedup_first = idx->drop_duplicates(DropDuplicatesKeepPolicy::First);
-        REQUIRE(dedup_first->size() == 4); // {1,2,3,5}
-    }SECTION("keep=Last") {
-        auto dedup_last = idx->drop_duplicates(DropDuplicatesKeepPolicy::Last);
-// Possibly {2,1,3,5} depending on the order logic.
-// At least check we have 4 unique
-        REQUIRE(dedup_last->size() == 4);
-    }
-}
-
-TEST_CASE("putmask") {
-// mask => positions [1,3]
-// put 999 in those spots
-    auto mask = epochframe::factory::array::MakeContiguousArray<bool>(
-            {false, true, false, true, false});
-    auto replacement = epochframe::factory::array::MakeContiguousArray<CType>(
-            {999, 999, 999, 999, 999});
-    auto replaced = idx->putmask(mask,
-                                 replacement);
-
-    REQUIRE(replaced->size() == idx->size());
-
-    auto replacedArr = std::static_pointer_cast<ArrowType>(replaced->array().value());
-    REQUIRE(replacedArr->Value(1) == static_cast<CType>(999));
-    REQUIRE(replacedArr->Value(3) == static_cast<CType>(999));
-}
-
+  }
+} 

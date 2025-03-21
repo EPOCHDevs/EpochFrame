@@ -10,7 +10,7 @@
 #include <string>
 #include <arrow/scalar.h>
 #include <flatbuffers/array.h>
-#include "calendar/day_of_week.h"
+#include "date_time/day_of_week.h"
 
 namespace epochframe {
 

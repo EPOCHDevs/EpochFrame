@@ -137,6 +137,16 @@ namespace epochframe {
         AggRollingWindowOperations<false> expanding_agg(window::ExpandingWindowOptions const& options) const;
         ApplySeriesRollingWindowOperations expanding_apply(window::ExpandingWindowOptions const& options) const;
 
+        Series diff(int64_t periods=1) const;
+
+        Series shift(int64_t periods=1) const;
+
+        Series pct_change(int64_t periods=1) const;
+
+        Scalar cov(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;
+
+        Scalar corr(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;  
+
         using NDFrame::from_base;
 
     private:

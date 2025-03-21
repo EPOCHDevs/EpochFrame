@@ -208,6 +208,19 @@ namespace epochframe::arrow_utils {
         return arr;
     }
 
+    TableOrArray diff(const TableOrArray &array, int64_t periods = 1, bool pad = false);
+    TableOrArray shift(const TableOrArray &array, int64_t periods);
+    TableOrArray pct_change(const TableOrArray &array, int64_t periods);
+
+    arrow::ScalarPtr cov(const arrow::ChunkedArrayPtr &array, 
+                        const arrow::ChunkedArrayPtr &other,
+                        std::optional<int64_t> min_periods = std::nullopt,
+                        int64_t ddof = 1);
+
+    arrow::ScalarPtr corr(const arrow::ChunkedArrayPtr &array, 
+                        const arrow::ChunkedArrayPtr &other,
+                        std::optional<int64_t> min_periods = std::nullopt,
+                        int64_t ddof = 1);
 
     template<typename ArrowType>
     requires (std::is_same_v<ArrowType, arrow::Array> || std::is_same_v<ArrowType, arrow::ChunkedArray> ||
