@@ -3,7 +3,7 @@
 #include "epochframe/aliases.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <epoch_lab_shared/enum_wrapper.h>
+#include <epoch_core/enum_wrapper.h>
 #include <optional>
 #include <vector>
 #include "epochframe/scalar.h"

@@ -1,7 +1,7 @@
 #include "table_factory.h"
 #include <stdexcept>
 #include "factory/array_factory.h"
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include "common/table_or_array.h"
 
 

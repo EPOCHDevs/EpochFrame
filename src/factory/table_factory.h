@@ -1,7 +1,7 @@
 #pragma once
 
 #include <arrow/api.h>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include "epochframe/aliases.h"
 
 

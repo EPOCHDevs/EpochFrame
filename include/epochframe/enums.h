@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <epoch_lab_shared/enum_wrapper.h>
+#include <epoch_core/enum_wrapper.h>
 
 
 CREATE_ENUM(EpochFrameTimezone, utc, est);

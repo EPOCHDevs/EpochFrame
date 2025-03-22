@@ -1,5 +1,5 @@
 #pragma once
-#include <epoch_lab_shared/enum_wrapper.h>
+#include <epoch_core/enum_wrapper.h>
 #include <optional>
 
 CREATE_ENUM(EpochDayOfWeek, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);

@@ -96,4 +96,9 @@ std::pair<std::string, std::string> parse_s3_path(const std::string& path);
 std::shared_ptr<arrow::io::RandomAccessFile> get_input_stream(const std::string& path);
 std::shared_ptr<arrow::io::OutputStream> get_output_stream(const std::string& path);
 
+struct ScopedS3 {
+    ScopedS3();
+    ~ScopedS3();
+};
+
 } // namespace epochframe

@@ -10,7 +10,7 @@
 #include "factory/table_factory.h"
 #include <arrow/api.h>
 #include <common/methods_helper.h>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include "index/index.h"
 #include <tabulate/table.hpp>
 #include "common/asserts.h"
@@ -681,7 +681,7 @@ namespace epochframe {
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::rand(Scalar const &other) const {
-        return from_base(m_compareOp->rand_(*other.value()));
+        return from_base(m_compareOp->rand_(other.value()));
     }
 
     template<class ChildType, class ArrowType>
