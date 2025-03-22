@@ -11,6 +11,8 @@
 #include <arrow/scalar.h>
 #include <fmt/format.h>
 #include <memory>
+#include "calendar/business_calendar/np_busdaycal.h"
+
 
 CREATE_ENUM(EpochOffsetType, RelativeDelta, Day, Hour, Minute, Second, Milli, Micro, Nano, Week,
             Month, MonthStart, MonthEnd, Quarter, QuarterStart, QuarterEnd, Year, YearStart,
