@@ -27,11 +27,13 @@ namespace epochframe {
     DataFrame::DataFrame(arrow::TablePtr const &data) : NDFrame(data) {
         auto columnNames = m_table->schema()->field_names();
         AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertStatusIsOk(m_table->Validate());
     }
 
     DataFrame::DataFrame(IndexPtr const &index, arrow::TablePtr const &data) : NDFrame<DataFrame, arrow::Table>(index, data) {
         auto columnNames = m_table->schema()->field_names();
         AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertStatusIsOk(m_table->Validate());
     }
 
     // ------------------------------------------------------------------------
