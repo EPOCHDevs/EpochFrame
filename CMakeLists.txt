@@ -43,6 +43,7 @@ find_package(Parquet 19.0.1 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 add_library(epochframe STATIC "")
+add_library(epoch::frame ALIAS epochframe)
 target_compile_definitions(epochframe PUBLIC -DSPDLOG_USE_STD_FORMAT)
 
 target_include_directories(epochframe
