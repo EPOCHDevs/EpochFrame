@@ -6,7 +6,7 @@
 #include "epochframe/aliases.h"
 #include <vector>
 #include <arrow/api.h>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include "common/exceptions.h"
 #include <optional>
 #include "factory/array_factory.h"

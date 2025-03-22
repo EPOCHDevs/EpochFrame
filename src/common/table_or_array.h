@@ -3,7 +3,7 @@
 
 #include "arrow/api.h"
 
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 
 
 namespace epochframe {

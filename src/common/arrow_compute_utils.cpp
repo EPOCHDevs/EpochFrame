@@ -4,7 +4,7 @@
 
 #include "arrow_compute_utils.h"
 #include "index/arrow_index.h"
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include <arrow/api.h>
 #include <vector>
 #include <memory>

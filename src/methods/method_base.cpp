@@ -5,7 +5,7 @@
 #include "method_base.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <epoch_lab_shared/macros.h>    // your assert/throw utilities
+#include <epoch_core/macros.h>    // your assert/throw utilities
 #include <unordered_map>
 #include <stdexcept>
 #include "common/methods_helper.h"

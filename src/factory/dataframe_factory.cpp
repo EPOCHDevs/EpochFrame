@@ -4,7 +4,7 @@
 
 #include "dataframe_factory.h"
 #include <arrow/api.h>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 
 #include "common/table_or_array.h"
 
@@ -47,8 +47,8 @@ namespace epochframe {
         AssertFromStream(data.size() == columnNames.size(), "Data and column names must have the same size");
         arrow::FieldVector fields;
 
-        for (auto const &name: columnNames) {
-            fields.push_back(field(name, data[0]->type()));
+        for (auto const & [i, name]: std::ranges::views::enumerate(columnNames)) {
+            fields.push_back(field(name, data[i]->type()));
         }
         return DataFrame(index, arrow::Table::Make(arrow::schema(fields), data));
     }

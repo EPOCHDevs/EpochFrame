@@ -1,6 +1,6 @@
 #include "datetime.h"
 
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 
 #include "factory/scalar_factory.h"
 #include "arrow/compute/api.h"

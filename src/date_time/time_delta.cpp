@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include <common/python_utils.h>
 
 

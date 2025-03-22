@@ -4,8 +4,8 @@
 #include "common/arrow_compute_utils.h"  // your arrow_utils::... wrappers
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <epoch_lab_shared/macros.h> // For AssertFromFormat or any custom asserts
-#include <epoch_lab_shared/ranges_to.h> // For AssertFromFormat or any custom asserts
+#include <epoch_core/macros.h> // For AssertFromFormat or any custom asserts
+#include <epoch_core/ranges_to.h> // For AssertFromFormat or any custom asserts
 #include "common/asserts.h"
 #include "common/arrow_agg.h"
 #include "factory/array_factory.h"

@@ -345,15 +345,9 @@ TEST_CASE("Resample numeric_only parameter", "[resample]") {
 
     SECTION("Numeric operations with mixed data types") {
         // Test numeric_only=true (which is implied by these operations)
-        auto resampled = mixed_frame.resample_by_agg(efo::TimeGrouperOptions{
+        REQUIRE_THROWS_AS(mixed_frame.resample_by_agg(efo::TimeGrouperOptions{
             .freq = days(1)
-        }).mean();
-
-        // Your implementation includes both columns
-        REQUIRE(resampled.column_names().size() == 2);
-
-        // Should have expected days
-        REQUIRE(resampled.size() == 5);  // Jan 1-5, 2005
+        }).mean(), std::runtime_error);
     }
 }
 

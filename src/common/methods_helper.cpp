@@ -6,7 +6,7 @@
 #include <fmt/format.h>
 #include <arrow/acero/exec_plan.h>
 #include <arrow/acero/options.h>
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include <tbb/parallel_for.h>
 #include <iostream>
 #include <arrow/compute/expression.h>

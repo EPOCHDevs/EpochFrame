@@ -2,7 +2,7 @@
 // Created by adesola on 2/13/25.
 //
 #include "epochframe/scalar.h"
-#include <epoch_lab_shared/macros.h>
+#include <epoch_core/macros.h>
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
 #include <methods/compare.h>

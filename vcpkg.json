@@ -1,0 +1,24 @@
+{
+  "name": "epochframe",
+  "version": "0.1.0",
+  "dependencies": [
+    "catch2",
+    "glaze",
+    "trompeloeil",
+    "tabulate",
+    "tbb",
+    "spdlog",
+    {
+      "name": "arrow",
+      "features": [
+        "acero",
+        "dataset",
+        "csv",
+        "json",
+        "parquet",
+        "s3",
+        "filesystem"
+      ]
+    }
+  ]
+}

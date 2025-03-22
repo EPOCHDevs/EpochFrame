@@ -5,28 +5,21 @@
 #include <fmt/format.h>
 #include <mutex>
 #include <atomic>
-#include <filesystem>
-#include <arrow/filesystem/s3fs.h>
-#include <arrow/filesystem/localfs.h>
+
 #include <arrow/compute/api.h>
 #include <sstream>
+#include "s3_manager.h"
+
 
 namespace epochframe {
 // Global S3 manager class for handling initialization/finalization
-class S3Manager {
-private:
-    static std::mutex s3_init_mutex_;
-    static std::atomic<bool> s3_initialized_;
-    static std::shared_ptr<arrow::fs::S3FileSystem> s3fs_;
 
-public:
     // Initialize S3 if not already initialized
-    static arrow::Status initialize() {
+    arrow::Status S3Manager::initialize() {
         if (s3_initialized_) {
             return arrow::Status::OK();
         }
 
-        std::lock_guard<std::mutex> lock(s3_init_mutex_);
         if (s3_initialized_) {
             return arrow::Status::OK();
         }
@@ -55,21 +48,43 @@ public:
         }
 
         s3_initialized_ = true;
-
-        // Register automatic finalization at program exit
-        std::atexit([]() {
-            if (s3_initialized_) {
-                AssertFromFormat(arrow::fs::FinalizeS3().ok(), "failed to finalize S3");
-                s3_initialized_ = false;
-                s3fs_ = nullptr;
-            }
-        });
-
         return arrow::Status::OK();
     }
+    // Manual finalization (should rarely be needed)
+    arrow::Status S3Manager::finalize() {
+        if (!s3_initialized_) {
+            return arrow::Status::OK();
+        }
 
+        auto status = arrow::fs::FinalizeS3();
+        if (status.ok()) {
+            s3_initialized_ = false;
+            s3fs_ = nullptr;
+        }
+        return status;
+    }
+
+    // Check if initialized
+    bool S3Manager::is_initialized() const {
+        return s3_initialized_.load();
+    }
+
+    S3Manager::S3Manager() {
+        AssertStatusIsOk(initialize());
+    }
+
+     S3Manager& S3Manager::Instance() {
+        static S3Manager s3_manager;
+        return s3_manager;
+    }
+
+    S3Manager::~S3Manager() {
+        if (is_initialized()) {
+            AssertStatusIsOk(finalize());
+        }
+    }
     // Get S3 filesystem, initializing if necessary
-    static arrow::Result<std::shared_ptr<arrow::fs::S3FileSystem>> get_filesystem() {
+    arrow::Result<std::shared_ptr<arrow::fs::S3FileSystem>> S3Manager::get_filesystem() {
         // Initialize if needed
         auto init_status = initialize();
         if (!init_status.ok()) {
@@ -77,11 +92,6 @@ public:
         }
 
         // Return cached filesystem if it exists
-        if (s3fs_) {
-            return s3fs_;
-        }
-
-        std::lock_guard<std::mutex> lock(s3_init_mutex_);
         if (s3fs_) {
             return s3fs_;
         }
@@ -114,36 +124,6 @@ public:
         return s3fs_;
     }
 
-    // Manual finalization (should rarely be needed)
-    static arrow::Status finalize() {
-        if (!s3_initialized_) {
-            return arrow::Status::OK();
-        }
-
-        std::lock_guard<std::mutex> lock(s3_init_mutex_);
-        if (!s3_initialized_) {
-            return arrow::Status::OK();
-        }
-
-        auto status = arrow::fs::FinalizeS3();
-        if (status.ok()) {
-            s3_initialized_ = false;
-            s3fs_ = nullptr;
-        }
-        return status;
-    }
-
-    // Check if initialized
-    static bool is_initialized() {
-        return s3_initialized_.load();
-    }
-};
-
-// Initialize static members
-std::mutex S3Manager::s3_init_mutex_;
-std::atomic<bool> S3Manager::s3_initialized_{false};
-std::shared_ptr<arrow::fs::S3FileSystem> S3Manager::s3fs_{nullptr};
-
 // Utility functions
 bool is_s3_path(const std::string& path) {
     return path.substr(0, 5) == "s3://";
@@ -173,7 +153,7 @@ std::pair<std::string, std::string> parse_s3_path(const std::string& path) {
 
 // Get S3FileSystem - main function to use in get_* functions
 arrow::Result<std::shared_ptr<arrow::fs::FileSystem>> get_s3_filesystem() {
-    return S3Manager::get_filesystem();
+    return S3Manager::Instance().get_filesystem();
 }
 
 // Get appropriate filesystem based on path (S3 or local)
@@ -874,5 +854,14 @@ void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buf
     // Update the buffer with the finished stream
     buffer = output_stream->Finish().ValueOrDie();
 }
+
+    ScopedS3::ScopedS3() {
+        AssertStatusIsOk(S3Manager::Instance().initialize());
+    }
+
+    ScopedS3::~ScopedS3() {
+        AssertStatusIsOk(S3Manager::Instance().finalize());
+    }
+
 
 } // namespace epochframe
