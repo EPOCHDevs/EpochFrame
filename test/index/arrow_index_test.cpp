@@ -25,10 +25,10 @@
 #include <index/range_index.h>
 
 
-#define TEST_CASE_TYPES epochframe::RangeIndex \
+#define TEST_CASE_TYPES epoch_frame::RangeIndex \
 //, arrow::TimestampArray
 
-using namespace epochframe;
+using namespace epoch_frame;
 //------------------------------------------------------------------------------
 // 1) Constructor & Basic Attributes
 //------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - Constructor & Basic Attributes",
 
     // Create an Arrow array
     std::vector<CType> data{0, 1, 2, 3, 4};
-    auto array = epochframe::factory::array::make_contiguous_array<CType>(data);
+    auto array = epoch_frame::factory::array::make_contiguous_array<CType>(data);
 
     SECTION("Basic construction, default name") {
         auto idx = std::make_shared<TestType>(array, MonotonicDirection::Increasing, "common");
@@ -124,7 +124,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - Equality checks",
     using CType     = typename TestType::value_type;
 
     std::vector<CType> data{1,2,3};
-    auto arr = epochframe::factory::array::make_contiguous_array<CType>(data);
+    auto arr = epoch_frame::factory::array::make_contiguous_array<CType>(data);
     auto idx1 = std::make_shared<TestType>(arr, MonotonicDirection::Increasing, "idxA");
     auto idx2 = std::make_shared<TestType>(arr, MonotonicDirection::Increasing, "idxB");
 
@@ -155,12 +155,12 @@ TEMPLATE_TEST_CASE("ArrowIndex - drop(labels)",
     using CType     = typename TestType::value_type;
 
     std::vector<CType> data{10, 20, 30, 40};
-    auto arr = epochframe::factory::array::make_contiguous_array(data);
+    auto arr = epoch_frame::factory::array::make_contiguous_array(data);
     auto idx = std::make_shared<TestType>(arr);
 
     SECTION("drop some existing labels") {
         std::vector<CType> toDrop{20, 40};
-        auto dropArr = epochframe::factory::array::make_contiguous_array<CType>(toDrop);
+        auto dropArr = epoch_frame::factory::array::make_contiguous_array<CType>(toDrop);
         auto dropped = idx->drop(Array(dropArr));
         // {10,30} remain
         REQUIRE(dropped->size() == 2);
@@ -178,7 +178,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - delete_/insert",
     using ArrowType = typename TestType::array_type;
     using CType = typename TestType::value_type;
 
-    auto idx = epochframe::factory::index::make_range(std::vector<CType>{10, 20, 30, 40}, epochframe::MonotonicDirection::Increasing);
+    auto idx = epoch_frame::factory::index::make_range(std::vector<CType>{10, 20, 30, 40}, epoch_frame::MonotonicDirection::Increasing);
 
     SECTION("delete_(loc=1)") {
         auto deleted = idx->delete_(1);
@@ -215,7 +215,7 @@ TEMPLATE_TEST_CASE("ArrowIndex - get_loc, slice_locs",
     using CType = typename TestType::value_type;
 
     std::vector<CType> data{10, 20, 30, 40, 50};
-    auto arr = epochframe::factory::array::make_contiguous_array<CType>(data);
+    auto arr = epoch_frame::factory::array::make_contiguous_array<CType>(data);
     auto idx = std::make_shared<TestType>(arr);
 
     SECTION("get_loc") {
@@ -237,24 +237,24 @@ TEST_CASE("ArrowIndex - searchsorted")
     SECTION("UINT array")
     {
         std::vector<uint64_t> rangeData{1, 2, 3};
-        auto idx = epochframe::factory::index::make_range(rangeData, MonotonicDirection::Increasing);
+        auto idx = epoch_frame::factory::index::make_range(rangeData, MonotonicDirection::Increasing);
 
-        REQUIRE(idx->searchsorted(Scalar(0UL), epochframe::SearchSortedSide::Left) ==
+        REQUIRE(idx->searchsorted(Scalar(0UL), epoch_frame::SearchSortedSide::Left) ==
                 0);
-        REQUIRE(idx->searchsorted(Scalar(1UL), epochframe::SearchSortedSide::Left) ==
+        REQUIRE(idx->searchsorted(Scalar(1UL), epoch_frame::SearchSortedSide::Left) ==
                 0);
-        REQUIRE(idx->searchsorted(Scalar(3UL), epochframe::SearchSortedSide::Left) ==
+        REQUIRE(idx->searchsorted(Scalar(3UL), epoch_frame::SearchSortedSide::Left) ==
                 2);
-        REQUIRE(idx->searchsorted(Scalar(4UL), epochframe::SearchSortedSide::Left) ==
+        REQUIRE(idx->searchsorted(Scalar(4UL), epoch_frame::SearchSortedSide::Left) ==
                 3);
     }
 
     SECTION("STRING array")
     {
         std::vector<std::string> stringData{"apple", "bread", "cheese", "milk"};
-        auto idx = epochframe::factory::index::make_object_index(stringData);
+        auto idx = epoch_frame::factory::index::make_object_index(stringData);
 
-        REQUIRE_THROWS(idx->searchsorted(Scalar("bread"), epochframe::SearchSortedSide::Left));
+        REQUIRE_THROWS(idx->searchsorted(Scalar("bread"), epoch_frame::SearchSortedSide::Left));
     }
 }
 
@@ -272,8 +272,8 @@ TEMPLATE_TEST_CASE("ArrowIndex - Set operations",
     std::vector<CType> dataA{1,2,3,4};
     std::vector<CType> dataB{3,4,5,6};
 
-    auto arrA = epochframe::factory::array::make_contiguous_array<CType>(dataA);
-    auto arrB = epochframe::factory::array::make_contiguous_array<CType>(dataB);
+    auto arrA = epoch_frame::factory::array::make_contiguous_array<CType>(dataA);
+    auto arrB = epoch_frame::factory::array::make_contiguous_array<CType>(dataB);
 
     auto idxA = std::make_shared<TestType>(arrA);
     auto idxB = std::make_shared<TestType>(arrB);
@@ -312,11 +312,11 @@ TEMPLATE_TEST_CASE("ArrowIndex - take/where/putmask",
     using CType = typename TestType::value_type;
 
     std::vector<CType> data{10, 20, 30, 40, 50};
-    auto arr = epochframe::factory::array::make_contiguous_array<CType>(data);
+    auto arr = epoch_frame::factory::array::make_contiguous_array<CType>(data);
     auto idx = std::make_shared<TestType>(arr);
 
     SECTION("take") {
-        auto indices = epochframe::factory::array::make_contiguous_array<uint64_t>({0, 2, 4});
+        auto indices = epoch_frame::factory::array::make_contiguous_array<uint64_t>({0, 2, 4});
         auto taken = idx->take(Array(indices), true);
         REQUIRE(taken->size() == 3);
     }
@@ -351,7 +351,7 @@ TEST_CASE("ArrowIndex Edge Cases - Null pointer construction", "[arrow_index][ed
 TEST_CASE("ArrowIndex Edge Cases - Empty array", "[arrow_index][edge_cases]")
 {
     std::vector<uint64_t > emptyData{};
-    auto idx = epochframe::factory::index::make_range(emptyData, MonotonicDirection::Increasing);
+    auto idx = epoch_frame::factory::index::make_range(emptyData, MonotonicDirection::Increasing);
 
     REQUIRE(idx->empty());
     REQUIRE(idx->size() == 0);

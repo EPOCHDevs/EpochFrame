@@ -9,7 +9,7 @@
 CREATE_ENUM(EpochFrameTimezone, utc, est);
 CREATE_ENUM(TimeDeltaUnit, Years, Months, Days, Hours, Minutes, Seconds, Milliseconds, Microseconds, Nanoseconds);
 
-namespace epochframe {
+namespace epoch_frame {
     enum class DropDuplicatesKeepPolicy {
         First,
         Last,

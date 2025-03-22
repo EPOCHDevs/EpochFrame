@@ -1,10 +1,10 @@
 #include "common/user_defined_compute_functions.h"
 #include "common/asserts.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include <cmath>
 #include <stdexcept>
 
-namespace epochframe
+namespace epoch_frame
 {
     std::optional<double> get_value(arrow::DoubleArray const& values, size_t index)
     {
@@ -291,4 +291,4 @@ namespace epochframe
      template Array zsqrt<Array>(Array const& values);
      template Series zsqrt<Series>(Series const& values);
      template DataFrame zsqrt<DataFrame>(DataFrame const& values);
-} // namespace epochframe
+} // namespace epoch_frame

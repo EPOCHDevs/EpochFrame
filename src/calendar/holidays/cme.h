@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 using namespace std::chrono_literals;
 
@@ -348,4 +348,4 @@ const HolidayData USThanksgivingFriday2022AndAfter = {
     .observance = fri_after_4th_thu,
 };
 
-} // namespace epochframe
+} // namespace epoch_frame

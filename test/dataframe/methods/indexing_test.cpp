@@ -3,18 +3,18 @@
 //
 // test_DataFrame.cpp
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include "factory/series_factory.h"
 #include <cmath>    // possibly for std::isnan, etc.
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 //--------------------------------------------------------------------------
 // Tests for DataFrame indexing operations

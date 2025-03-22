@@ -6,7 +6,7 @@
 #include "arrow_index.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
     class RangeIndex : public ArrowIndex<true> {
     public:
@@ -17,4 +17,4 @@ namespace epochframe {
 
         IndexPtr Make(std::shared_ptr<arrow::Array> array) const final;
     };
-} // namespace epochframe
+} // namespace epoch_frame

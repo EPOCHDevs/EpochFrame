@@ -1,7 +1,7 @@
 //
 // Created by adesola on 2/13/25.
 //
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include <epoch_core/macros.h>
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
@@ -10,13 +10,13 @@
 #include <arrow/compute/api.h>
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include "date_time/time_delta.h"
 #include "factory/scalar_factory.h"
 #include "date_time/datetime.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
     template<typename T>
     requires std::is_scalar_v<T>
@@ -430,4 +430,4 @@ namespace epochframe {
         auto ns = a.value - std::chrono::duration_cast<chrono_nanoseconds>(chrono_microseconds(b.to_microseconds())).count();
         return {ns, a.type};
     }
-} // namespace epochframe
+} // namespace epoch_frame

@@ -16,15 +16,15 @@
 #include "factory/index_factory.h"
 #include "index/arrow_index.h"
 #include <unordered_set>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/common.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/common.h"
+#include "epoch_frame/frame_or_series.h"
 
 namespace ac = arrow::acero;
 namespace cp = arrow::compute;
 
-namespace epochframe {
+namespace epoch_frame {
     arrow::TablePtr add_column(const arrow::TablePtr &table, const std::string &name,
                                const arrow::ChunkedArrayPtr &array) {
         auto result = table->AddColumn(table->num_columns(), arrow::field(name, array->type()), array);

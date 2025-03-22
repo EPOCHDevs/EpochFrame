@@ -7,8 +7,8 @@
 #include "common/asserts.h"
 #include <iostream>
 
-using namespace epochframe;
-using namespace epochframe::factory::scalar;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::scalar;
 using namespace std::chrono_literals;
 using namespace std::chrono;
 

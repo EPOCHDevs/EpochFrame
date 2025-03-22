@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <stdexcept>
 #include "common/methods_helper.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "index/index.h"
 #include "common/arrow_compute_utils.h"
 #include <tbb/parallel_for_each.h>
@@ -17,7 +17,7 @@
 #include "index/arrow_index.h"
 #include "common/table_or_array.h"
 
-namespace epochframe {
+namespace epoch_frame {
     MethodBase::MethodBase(const TableComponent& data): m_data(data) {
         if (m_data.second.is_table()) {
            AssertFromStream(m_data.second.table(), "Table is nullptr");

@@ -5,7 +5,7 @@
 #include "common/table_or_array.h"
 
 
-namespace epochframe::factory::table {
+namespace epoch_frame::factory::table {
 
 arrow::ChunkedArrayPtr make_empty_chunked_array(const arrow::DataTypePtr& type) {
     return std::make_shared<arrow::ChunkedArray>(std::vector<arrow::ArrayPtr>{}, type);
@@ -56,4 +56,4 @@ TableOrArray make_table_or_array(arrow::TablePtr const& table, const std::string
     return TableOrArray(table);
 }
 
-} // namespace epochframe::factory::table
+} // namespace epoch_frame::factory::table

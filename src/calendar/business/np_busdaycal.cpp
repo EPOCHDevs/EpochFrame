@@ -1,6 +1,8 @@
 #include "np_busdaycal.h"
 #include <common/python_utils.h>
-namespace epochframe::np
+
+
+namespace epoch_frame::np
 {
     int get_day_of_week(DateTime const& date)
     {
@@ -52,7 +54,7 @@ namespace epochframe::np
 
     void validate_busdays_in_week(int8_t busdays_in_weekmask)
     {
-        AssertWithTraceFromStream(busdays_in_weekmask > 0, "the business day weekmask must have at least one valid business day");
+        AssertFromFormat(busdays_in_weekmask > 0, "the business day weekmask must have at least one valid business day");
     }
 
     int8_t apply_business_day_roll(DateTime date, DateTime& out, BusDayOffsetRoll roll, WeekMask const& weekmask, auto holidays_begin, auto holidays_end)
@@ -75,7 +77,7 @@ namespace epochframe::np
                             day_of_week = 0;
                         }
                     } while (weekmask[day_of_week] == 0 || is_holiday(date, holidays_begin, holidays_end));
-                    
+
                     if (roll == BusDayOffsetRoll::ModifiedFollowing)
                     {
                         if (start_date.date.month != date.date.month)
@@ -89,7 +91,7 @@ namespace epochframe::np
                                 {
                                     day_of_week = 6;
                                 }
-                            } while (weekmask[day_of_week] == 0 || is_holiday(date, holidays_begin, holidays_end)); 
+                            } while (weekmask[day_of_week] == 0 || is_holiday(date, holidays_begin, holidays_end));
                         }
                     }
                     break;
@@ -98,13 +100,13 @@ namespace epochframe::np
                 case BusDayOffsetRoll::ModifiedPreceding:
                 {
                     do {
-                        --date;  
+                        --date;
                         if (--day_of_week == -1)
                         {
                             day_of_week = 6;
                         }
                     } while (weekmask[day_of_week] == 0 || is_holiday(date, holidays_begin, holidays_end));
-                    
+
                     if (roll == BusDayOffsetRoll::ModifiedPreceding)
                     {
                         if (start_date.date.month != date.date.month)
@@ -209,7 +211,7 @@ namespace epochframe::np
        holidays_end = find_earliest_holiday_on_or_after(date_end, holidays_begin, holidays_end);
 
        count = -(std::distance(holidays_begin, holidays_end));
-       
+
        whole_weeks = floor_div((date_end - date_begin).days(), 7);
        count += whole_weeks * busdays_in_weekmask;
 
@@ -286,7 +288,7 @@ namespace epochframe::np
 
     BusinessDayCalendar::BusinessDayCalendar(WeekMask const& weekmask, HolidayList const& holidays) : m_weekmask(weekmask), m_holidays(holidays) {
         m_busdays_in_weekmask = std::accumulate(weekmask.begin(), weekmask.end(), 0, std::plus<bool>());
-        AssertWithTraceFromStream(m_busdays_in_weekmask > 0, "Cannot construct a busdaycal with a weekmask of all false values");
+        AssertFromFormat(m_busdays_in_weekmask > 0, "Cannot construct a busdaycal with a weekmask of all false values");
     }
 
     HolidayList BusinessDayCalendar::offset(std::vector<DateTime> const& dates, std::vector<int64_t> const& offsets, BusDayOffsetRoll roll) {
@@ -310,11 +312,11 @@ namespace epochframe::np
     }
 
     WeekMask to_weekmask(WeekSet const& weekmask) {
-        WeekMask result(7);
+        WeekMask result;
         for (auto const& day : weekmask) {
             result[static_cast<uint8_t>(day)] = true;
         }
         return result;
     }
 
-} // namespace epochframe::np
+} // namespace epoch_frame::np

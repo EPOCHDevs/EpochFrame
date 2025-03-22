@@ -6,7 +6,7 @@
 #include "factory/array_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     DateTimeIndex::DateTimeIndex(std::shared_ptr<arrow::TimestampArray> array,  std::string const& name) : ArrowIndex<true>(
             factory::array::make_array(std::move(array)), name, MonotonicDirection::Increasing) {}
 
@@ -19,4 +19,4 @@ namespace epochframe {
     std::string DateTimeIndex::tz() const {
         return arrow_utils::get_tz(dtype());
     }
-} // namespace epochframe
+} // namespace epoch_frame

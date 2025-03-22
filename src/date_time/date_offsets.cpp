@@ -6,15 +6,15 @@
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
 #include "factory/scalar_factory.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "methods/temporal.h"
 #include "common/python_utils.h"
 #include <iostream>
 #include "index/index.h"
-
+#include "calendar/holiday/holiday_calendar.h"
 
 using namespace std::literals::chrono_literals;
-namespace epochframe {
+namespace epoch_frame {
     OffsetHandler::OffsetHandler(int64_t n) : n_(n) {}
 
     chrono_day get_days_in_month(chrono_year const& year, chrono_month const& month) noexcept {
@@ -256,4 +256,91 @@ namespace epochframe {
         auto date = factory::scalar::to_datetime(other).date;
         return date == easter(static_cast<int>(date.year));
     }
+
+        BusinessMixin::BusinessMixin(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const calendar::AbstractHolidayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
+    OffsetHandler(n), m_weekmask(weekmask), m_holidays(holidays), m_offset(std::move(timedelta)) {
+        AssertFromFormat(calendar, "calendar is not a valid business day calendar");
+        auto index = calendar->holidays();
+        std::shared_ptr<arrow::TimestampArray> _holidays = index->array().to_timestamp_view();
+        std::ranges::transform(*_holidays, std::back_inserter(m_holidays), [dt = index->dtype()](const std::optional<int64_t> &holiday) {
+            AssertFromFormat(holiday, "holiday is not a valid timestamp");
+            return factory::scalar::to_datetime(arrow::TimestampScalar{*holiday, dt});
+        });
+    }
+
+    BusinessMixin::BusinessMixin(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const np::BusinessDayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
+    OffsetHandler(n), m_weekmask(weekmask), m_holidays(holidays), m_calendar(calendar), m_offset(std::move(timedelta)) {
+        AssertFromFormat(m_calendar, "calendar is not a valid business day calendar");
+    }
+
+    BusinessDay::BusinessDay(int64_t n,  std::optional<TimeDelta> timedelta) : OffsetHandler(n), m_offset(std::move(timedelta)) {}
+
+    int64_t BusinessDay::diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const {
+        return relative_diff(start, end, *this);
+    }
+
+    int64_t BusinessDay::adjust_ndays(int8_t wday, int64_t weeks) const {
+        auto _n = n();
+        int64_t days{};
+        if (_n <= 0 && wday > 4) {
+            _n += 1;
+        }
+        _n -= (5 * weeks);
+
+        if (_n == 0 && wday > 4) {
+            days = 4 - wday;
+        } else if (wday > 4) {
+            days = (7 - wday) + (_n - 1);
+        } else if (wday + _n <= 4) {
+            days = _n;
+        } else {
+            days = _n + 2;
+        }
+        return days;
+    }
+
+    arrow::TimestampScalar BusinessDay::add(const arrow::TimestampScalar &other) const {
+        const auto _n = n();
+        const auto _other = factory::scalar::to_datetime(other);
+        auto wday = _other.weekday();
+        auto weeks = static_cast<int64_t>(floor_div(_n, 5));
+        auto days = adjust_ndays(wday, weeks);
+        auto result = _other + TimeDelta{{.days = static_cast<double>(7 * weeks + days)}};
+        if (m_offset) {
+            result = result + *m_offset;
+        }
+        return result.timestamp();
+    }
+
+    bool BusinessDay::is_on_offset(const arrow::TimestampScalar &other) const {
+        return factory::scalar::to_datetime(other).weekday() < 5;
+    }
+
+    CustomBusinessDay::CustomBusinessDay(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const calendar::AbstractHolidayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
+    BusinessMixin(n, weekmask, holidays, calendar, timedelta) {}
+
+    CustomBusinessDay::CustomBusinessDay(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, np::BusinessDayCalendarPtr const& calendar, std::optional<TimeDelta> timedelta) :
+    BusinessMixin(n, weekmask, holidays, calendar, timedelta) {}
+
+    int64_t CustomBusinessDay::diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const {
+        return relative_diff(start, end, *this);
+    }
+
+    arrow::TimestampScalar CustomBusinessDay::add(const arrow::TimestampScalar &other) const {
+        const auto roll = n() <= 0 ? np::BusDayOffsetRoll::Forward : np::BusDayOffsetRoll::Backward;
+        auto other_dt = factory::scalar::to_datetime(other);
+        auto date = DateTime(other_dt.date);
+        auto incr_dt = m_calendar->offset(date, n(), roll);
+        auto result = DateTime::combine(incr_dt.date, other_dt.time());
+        if (m_offset) {
+            result = result + *m_offset;
+        }
+        return result.timestamp();
+
+    }
+
+    bool CustomBusinessDay::is_on_offset(const arrow::TimestampScalar &other) const {
+        return m_calendar->is_busday(factory::scalar::to_datetime(other));
+    }
+
 }

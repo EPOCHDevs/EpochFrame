@@ -10,7 +10,7 @@
 #include <set>
 #include <cmath>
 
-namespace epochframe::factory::array {
+namespace epoch_frame::factory::array {
     arrow::ArrayPtr make_array(const arrow::ScalarVector &scalarVector,
                               std::shared_ptr<arrow::DataType> const &type);
 

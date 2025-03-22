@@ -5,7 +5,7 @@
 #pragma once
 #include "method_base.h"
 
-namespace epochframe {
+namespace epoch_frame {
     class CommonOperations : public MethodBase {
     public:
         explicit CommonOperations(TableComponent const& data) : MethodBase(data) {}

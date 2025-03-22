@@ -5,12 +5,12 @@
 #include <catch2/catch_approx.hpp>
 #include <arrow/array/builder_primitive.h>
 #include <arrow/compute/api.h>
-#include "epochframe/array.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/array.h"
+#include "epoch_frame/scalar.h"
 #include "factory/array_factory.h"
 #include "methods/temporal.h"
 
-using namespace epochframe;
+using namespace epoch_frame;
 using Catch::Approx;
 
 TEST_CASE("Array - Constructors", "[array][constructors]")
@@ -745,22 +745,22 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
     SECTION("tz_localize - Special cases") {
         // Test various ambiguous time handling options
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::EARLIEST));
+                                                epoch_frame::AmbiguousTimeHandling::EARLIEST));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::LATEST));
+                                                epoch_frame::AmbiguousTimeHandling::LATEST));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::NAT));
+                                                epoch_frame::AmbiguousTimeHandling::NAT));
 
         // Test various nonexistent time handling options
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::SHIFT_FORWARD));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::SHIFT_FORWARD));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::SHIFT_BACKWARD));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::SHIFT_BACKWARD));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::NAT));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::NAT));
     }
 
     SECTION("tz_localize and tz_convert - Scalar case") {

@@ -11,7 +11,7 @@ add_executable(epochframe_benchmark
 # Link libraries
 target_link_libraries(epochframe_benchmark
     PRIVATE
-    epochframe
+    epoch_frame
     Catch2::Catch2WithMain
 )
 

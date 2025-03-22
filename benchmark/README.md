@@ -134,7 +134,7 @@ To add a new benchmark:
 2. Include required headers:
    ```cpp
    #include <catch2/catch_all.hpp>
-   #include <epochframe/dataframe.h>  // or other needed headers
+   #include <epoch_frame/dataframe.h>  // or other needed headers
    ```
 3. Create a benchmark function with the `TEST_CASE` macro:
    ```cpp

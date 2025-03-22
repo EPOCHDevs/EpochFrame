@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 using namespace std::chrono_literals;
 
@@ -223,4 +223,4 @@ const HolidayData FordFuneral2007 = {
     .end_date = DateTime({2007y, std::chrono::January, 2d})
 };
 
-} // namespace epochframe 
+} // namespace epoch_frame

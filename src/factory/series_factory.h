@@ -4,10 +4,10 @@
 
 #pragma once
 #include "array_factory.h"
-#include "epochframe/series.h"
+#include "epoch_frame/series.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     template<typename ColumnT>
 inline Series make_series(IndexPtr const &index, std::vector<ColumnT> const &data,
                        std::optional<std::string> const &name={}) {

@@ -3,15 +3,15 @@
 // Created by adesola on 1/20/25.
 //
 
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 
 #include <unordered_set>
 
 #include "index/index.h"
 #include "methods/arith.h"
 #include "common/methods_helper.h"
-#include "epochframe/series.h"
-#include "epochframe/common.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/common.h"
 #include "factory/index_factory.h"
 #include "factory/array_factory.h"
 #include <tabulate/table.hpp>
@@ -19,7 +19,7 @@
 #include "common/arrow_compute_utils.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     // ------------------------------------------------------------------------
     // Constructors / Destructor / Assignment
     // ------------------------------------------------------------------------
@@ -35,6 +35,8 @@ namespace epochframe {
         AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
         AssertStatusIsOk(m_table->Validate());
     }
+
+
 
     // ------------------------------------------------------------------------
     // General Attributes
@@ -347,4 +349,4 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     ApplyDataFrameRollingWindowOperations DataFrame::expanding_apply(window::ExpandingWindowOptions const& options) const {
         return {std::make_unique<window::ExpandingWindow>(options), *this};
     }
-} // namespace epochframe
+} // namespace epoch_frame

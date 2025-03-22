@@ -6,15 +6,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/catch_approx.hpp>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/scalar.h"
 #include "factory/index_factory.h"
 #include "factory/array_factory.h"
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 TEST_CASE("String operations on Series", "[Series][StringOps]") {
     // Create a Series with string values for testing

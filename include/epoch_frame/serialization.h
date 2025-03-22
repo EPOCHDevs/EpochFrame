@@ -12,11 +12,11 @@
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
 
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/frame_or_series.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
 // Options structs for each format
 
@@ -101,4 +101,4 @@ struct ScopedS3 {
     ~ScopedS3();
 };
 
-} // namespace epochframe
+} // namespace epoch_frame

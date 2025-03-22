@@ -10,9 +10,9 @@
 #include <iostream>
 
 
-using namespace epochframe;
-using namespace epochframe::factory::scalar;
-namespace efo = epochframe::factory::offset;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::scalar;
+namespace efo = epoch_frame::factory::offset;
 
 using namespace std::chrono_literals;
 using namespace std::chrono;

@@ -11,9 +11,9 @@
 #include "factory/array_factory.h"
 #include "common/indexer.h"
 #include "methods/temporal.h"
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
 
     /**
@@ -214,4 +214,4 @@ namespace epochframe {
 
     extern template class ArrowIndex<true>;
     extern template class ArrowIndex<false>;
-} // namespace epochframe
+} // namespace epoch_frame

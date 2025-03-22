@@ -3,10 +3,21 @@
 #include <unordered_map>
 #include <any>
 
-namespace epochframe::calendar {
+CREATE_ENUM(EpochFrameMarketTimeType,
+    MarketOpen,
+    MarketClose,
+    BreakStart,
+    BreakEnd,
+    Pre,
+    Post
+);
 
-template<typename K, typename T>
+namespace epoch_frame::calendar {
+
+template<typename T>
     class ProtectedDict {
+        using K = EpochFrameMarketTimeType;
+
         public:
             ProtectedDict( auto&&... args) : m_dict(std::unordered_map<K, T>(std::forward<decltype(args)>(args)...)) {}
 
@@ -17,7 +28,7 @@ template<typename K, typename T>
             void _del(const K& key) {
                 _delitem_(key);
             }
-            
+
             const std::unordered_map<K, T>& dict() const {
                 return this->m_dict;
             }
@@ -30,14 +41,18 @@ template<typename K, typename T>
                 try {
                     return this->m_dict.at(key);
                 } catch (const std::out_of_range& e) {
-                    throw std::runtime_error("Key " + std::to_string(key) + " not found in dict");
+                    throw std::runtime_error("Key " + EpochFrameMarketTimeTypeWrapper::ToString(key) + " not found in dict");
                 }
             }
 
+        auto begin() const { return this->m_dict.cbegin(); }
+        auto end() const { return this->m_dict.cend();}
+
+        bool empty() const { return this->m_dict.empty(); }
       private:
             bool INIT_RAN_NORMALLY = true;
             std::unordered_map<K, T> m_dict;
-            
+
             void _setitem_(const K& key, const T& value) {
                 if (!this->INIT_RAN_NORMALLY) {
                     this->m_dict.insert_or_assign(key, value);

@@ -5,14 +5,14 @@
 #include <fmt/format.h>
 #include "arrow_index.h"
 #include "vector_functions/arrow_vector_functions.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "factory/array_factory.h"
 #include "visitors/search_sorted.h"
 #include "common/methods_helper.h"
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     template<bool IsMonotonic>
     ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ArrayPtr array, std::string name, std::optional<MonotonicDirection> monotonic_direction) :
             m_name(std::move(name)), m_array(Array(std::move(array))) {
@@ -22,7 +22,7 @@ namespace epochframe {
         AssertFromStream(m_array.null_count() == 0, "ArrowIndex constructed with null values");
 
         if constexpr (IsMonotonic) {
-            const auto &[counts, values] = epochframe::value_counts(m_array.value());
+            const auto &[counts, values] = epoch_frame::value_counts(m_array.value());
 
             auto all_unique = arrow_utils::call_unary_compute_scalar_as<arrow::BooleanScalar>(
                     arrow_utils::call_compute({counts, arrow::MakeScalar(1)}, "equal"), "all");
@@ -328,4 +328,4 @@ namespace epochframe {
 
     template class ArrowIndex<true>;
     template class ArrowIndex<false>;
-} // namespace epochframe
+} // namespace epoch_frame

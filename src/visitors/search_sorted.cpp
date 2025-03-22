@@ -5,7 +5,7 @@
 #include "search_sorted.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     arrow::Status SearchSortedVisitor::Visit(const arrow::UInt64Array &arr) {
         // Extract the scalar's raw value
         auto val_scalar = std::static_pointer_cast<arrow::UInt64Scalar>(value_);

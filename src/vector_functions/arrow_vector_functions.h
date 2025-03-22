@@ -3,13 +3,13 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "arrow/compute/api.h"
 #include "arrow/chunked_array.h"
 #include "common/asserts.h"
 
 
-namespace epochframe::vector {
+namespace epoch_frame::vector {
     inline arrow::ArrayPtr unique(arrow::ArrayPtr const & array) {
         return AssertContiguousArrayResultIsOk(arrow::compute::CallFunction("unique", {array}));
     }

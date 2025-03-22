@@ -3,7 +3,7 @@
 #include "aliases.h"
 #include "factory/date_offset_factory.h"
 
-namespace epochframe::calendar::us {
+namespace epoch_frame::calendar::us {
 
 using namespace std::chrono_literals;
 
@@ -439,4 +439,4 @@ const std::vector<DateTime> USNationalDaysofMourning = {
     "2018-12-05"__date  // President George H.W. Bush
 };
 
-} // namespace epochframe 
+} // namespace epoch_frame

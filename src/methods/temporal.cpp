@@ -6,7 +6,7 @@
 #include "common/arrow_compute_utils.h"
 #include <fmt/format.h>
 
-namespace epochframe {
+namespace epoch_frame {
     template<>
     TemporalOperation<true>::TemporalOperation(Array const &array) : m_data(array) {
         arrow::ArrayPtr ptr = array.value();
@@ -411,4 +411,4 @@ namespace epochframe {
                 std::format("Error during timezone conversion: {}", e.what()));
         }
     }
-} // namespace epochframe
+} // namespace epoch_frame

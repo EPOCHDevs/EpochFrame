@@ -5,7 +5,7 @@
 #include <catch.hpp>
 #include <functional>
 
-namespace efo = epochframe;
+namespace efo = epoch_frame;
 using Catch::Approx;
 
 TEST_CASE("pandas rolling example", "[window]")

@@ -3,7 +3,7 @@
 //
 
 #include "agg.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include "common/arrow_compute_utils.h"
 #include "index/arrow_index.h"
 #include "common/table_or_array.h"
@@ -13,7 +13,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace epochframe {
+namespace epoch_frame {
     Aggregator::Aggregator(const TableComponent& data) : MethodBase(data) {}
 
     SeriesOrScalar Aggregator::agg(AxisType axis, std::string const& agg, bool skip_null, arrow::compute::FunctionOptions const & options) const {

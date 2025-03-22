@@ -7,7 +7,7 @@
 #include "factory/array_factory.h"
 
 
-namespace epochframe::agg {
+namespace epoch_frame::agg {
     bool all(arrow::ChunkedArrayPtr const &array, bool skipNA, int minCount) {
         if (array->length() == 0) {
             // By Pandas convention, all([]) == true

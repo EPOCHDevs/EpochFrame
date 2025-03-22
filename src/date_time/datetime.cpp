@@ -5,10 +5,10 @@
 #include "factory/scalar_factory.h"
 #include "arrow/compute/api.h"
 #include "common/asserts.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     const int64_t MAXORDINAL = 3652059;
 
     // Constants for days in month (with -1 as placeholder for indexing)

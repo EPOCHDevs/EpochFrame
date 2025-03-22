@@ -4,7 +4,7 @@
 #include "methods/window.h"
 
 // Forward declarations and type aliases
-namespace epochframe {
+namespace epoch_frame {
     class DataFrame : public NDFrame<DataFrame, arrow::Table> {
     public:
         // ------------------------------------------------------------------------
@@ -179,4 +179,4 @@ namespace epochframe {
     private:
         DataFrame add_prefix_or_suffix(const std::string &prefix_or_suffix, bool is_prefix) const;
     };
-} // namespace epochframe
+} // namespace epoch_frame

@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 using namespace std::chrono_literals;
 
@@ -256,4 +256,4 @@ const HolidayData Matariki2024 = {
     .end_date = DateTime({2024y, std::chrono::December, 31d}),
 };
 
-} // namespace epochframe 
+} // namespace epoch_frame

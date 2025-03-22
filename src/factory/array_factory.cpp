@@ -6,10 +6,10 @@
 
 #include <random>
 
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 
 
-namespace epochframe::factory::array {
+namespace epoch_frame::factory::array {
     arrow::ArrayPtr make_array(const arrow::ScalarVector &scalarVector,
                               std::shared_ptr<arrow::DataType> const &type) {
         auto result = arrow::MakeBuilder(type);

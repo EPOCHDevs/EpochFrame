@@ -6,7 +6,7 @@
 #include "date_time/date_offsets.h"
 
 
-namespace epochframe::factory::offset {
+namespace epoch_frame::factory::offset {
     inline std::shared_ptr<FixedOffsetHandler> nanos(int64_t n) {
         return std::make_shared<NanoHandler>(n);
     }

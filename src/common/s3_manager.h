@@ -7,7 +7,7 @@
 #include <arrow/filesystem/s3fs.h>
 #include <arrow/filesystem/localfs.h>
 
-namespace epochframe {
+namespace epoch_frame {
 // Global S3 manager class for handling initialization/finalization
 class S3Manager {
 private:

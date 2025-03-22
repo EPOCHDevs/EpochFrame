@@ -4,10 +4,10 @@
 #include "factory/scalar_factory.h"
 #include "factory/date_offset_factory.h"
 #include "factory/index_factory.h"
-#include "epochframe/series.h"
+#include "epoch_frame/series.h"
 #include <iostream>
 
-namespace epochframe::calendar
+namespace epoch_frame::calendar
 {
 
     Holiday::Holiday(const HolidayData &data) : m_data(data), m_days_of_week_array(get_days_of_week_array()) {
@@ -95,5 +95,5 @@ namespace epochframe::calendar
         std::ranges::transform(m_data.days_of_week, values.begin(), [](auto dayofweek) { return static_cast<int64_t>(dayofweek); });
         return Array(factory::array::make_contiguous_array(values));
     }
-} // namespace epochframe
+} // namespace epoch_frame
 

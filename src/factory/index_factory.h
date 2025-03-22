@@ -7,13 +7,13 @@
 #include <vector>
 #include <methods/temporal.h>
 
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "arrow/scalar.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/enums.h"
 #include "date_time/date_offsets.h"
 
 
-namespace epochframe::factory::index {
+namespace epoch_frame::factory::index {
     IndexPtr make_range(std::vector<uint64_t> const&, MonotonicDirection monotonic_direction);
 
     IndexPtr from_range(int64_t start, int64_t stop, int64_t step = 1);

@@ -1,22 +1,22 @@
 /*
  * File: concat_test.cpp
- * Purpose: Test the concat feature from epochframe/common.h and methods_helper.cpp
+ * Purpose: Test the concat feature from epoch_frame/common.h and methods_helper.cpp
  */
 
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/dataframe.h"
-#include "epochframe/common.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/common.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include "factory/series_factory.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include <vector>
 #include <string>
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 
 TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {

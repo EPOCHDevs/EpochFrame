@@ -1,14 +1,14 @@
 #pragma once
 
-#include "epochframe/aliases.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/enums.h"
 #include <arrow/api.h>
 #include <algorithm>        // for std::lower_bound, std::upper_bound
 #include <stdexcept>
 #include <string>
 
 
-namespace epochframe {
+namespace epoch_frame {
     class SearchSortedVisitor : public arrow::ArrayVisitor {
     public:
         SearchSortedVisitor(const arrow::ScalarPtr &value,

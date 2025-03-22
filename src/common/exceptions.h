@@ -15,7 +15,7 @@ public: \
     explicit Name(const std::string &format_msg) : std::runtime_error(std::string{#Name} + " : " + format_msg) {} \
 }
 
-namespace epochframe {
+namespace epoch_frame {
     CREATE_EXCEPTION_CLASS(ApplyTypeError);
 
     CREATE_EXCEPTION_CLASS(ValueError);

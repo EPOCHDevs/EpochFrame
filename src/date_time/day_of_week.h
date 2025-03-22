@@ -4,7 +4,7 @@
 
 CREATE_ENUM(EpochDayOfWeek, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);
 
-namespace epochframe
+namespace epoch_frame
 {
     class Weekday
     {
@@ -69,4 +69,4 @@ namespace epochframe
     static const Weekday FR(EpochDayOfWeek::Friday);
     static const Weekday SA(EpochDayOfWeek::Saturday);
     static const Weekday SU(EpochDayOfWeek::Sunday);
-} // namespace epochframe
+} // namespace epoch_frame

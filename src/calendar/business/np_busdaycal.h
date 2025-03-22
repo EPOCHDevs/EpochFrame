@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../datetime.h"
+#include "date_time/datetime.h"
 #include <unordered_set>
-#include "../day_of_week.h"
+#include "date_time/day_of_week.h"
 
 
-namespace epochframe::np{
+namespace epoch_frame::np{
 
 
     enum class BusDayOffsetRoll{

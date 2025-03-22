@@ -1,12 +1,12 @@
 //
 // Created by adesola on 2/17/25.
 //
-#include "epochframe/integer_slice.h"
+#include "epoch_frame/integer_slice.h"
 #include <stdexcept>
 #include <algorithm>
 
 
-namespace epochframe {
+namespace epoch_frame {
     ResolvedIntegerSliceBound resolve_integer_slice(UnResolvedIntegerSliceBound const &bound, size_t length) {
 
         // Convert length to int64_t for arithmetic.

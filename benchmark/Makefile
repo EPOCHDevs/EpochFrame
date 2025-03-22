@@ -117,17 +117,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named epochframe
+# Target rules for targets named epoch_frame
 
 # Build rule for target.
-epochframe: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 epochframe
-.PHONY : epochframe
+epoch_frame: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 epoch_frame
+.PHONY : epoch_frame
 
 # fast build rule for target.
-epochframe/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/build
-.PHONY : epochframe/fast
+epoch_frame/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/build
+.PHONY : epoch_frame/fast
 
 #=============================================================================
 # Target rules for targets named epochframe_benchmark
@@ -147,7 +147,7 @@ src/common/arrow_agg.o: src/common/arrow_agg.cpp.o
 
 # target to build an object file
 src/common/arrow_agg.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_agg.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_agg.cpp.o
 .PHONY : src/common/arrow_agg.cpp.o
 
 src/common/arrow_agg.i: src/common/arrow_agg.cpp.i
@@ -155,7 +155,7 @@ src/common/arrow_agg.i: src/common/arrow_agg.cpp.i
 
 # target to preprocess a source file
 src/common/arrow_agg.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_agg.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_agg.cpp.i
 .PHONY : src/common/arrow_agg.cpp.i
 
 src/common/arrow_agg.s: src/common/arrow_agg.cpp.s
@@ -163,7 +163,7 @@ src/common/arrow_agg.s: src/common/arrow_agg.cpp.s
 
 # target to generate assembly for a file
 src/common/arrow_agg.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_agg.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_agg.cpp.s
 .PHONY : src/common/arrow_agg.cpp.s
 
 src/common/arrow_compute_utils.o: src/common/arrow_compute_utils.cpp.o
@@ -171,7 +171,7 @@ src/common/arrow_compute_utils.o: src/common/arrow_compute_utils.cpp.o
 
 # target to build an object file
 src/common/arrow_compute_utils.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_compute_utils.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_compute_utils.cpp.o
 .PHONY : src/common/arrow_compute_utils.cpp.o
 
 src/common/arrow_compute_utils.i: src/common/arrow_compute_utils.cpp.i
@@ -179,7 +179,7 @@ src/common/arrow_compute_utils.i: src/common/arrow_compute_utils.cpp.i
 
 # target to preprocess a source file
 src/common/arrow_compute_utils.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_compute_utils.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_compute_utils.cpp.i
 .PHONY : src/common/arrow_compute_utils.cpp.i
 
 src/common/arrow_compute_utils.s: src/common/arrow_compute_utils.cpp.s
@@ -187,7 +187,7 @@ src/common/arrow_compute_utils.s: src/common/arrow_compute_utils.cpp.s
 
 # target to generate assembly for a file
 src/common/arrow_compute_utils.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/arrow_compute_utils.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/arrow_compute_utils.cpp.s
 .PHONY : src/common/arrow_compute_utils.cpp.s
 
 src/common/asserts.o: src/common/asserts.cpp.o
@@ -195,7 +195,7 @@ src/common/asserts.o: src/common/asserts.cpp.o
 
 # target to build an object file
 src/common/asserts.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/asserts.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/asserts.cpp.o
 .PHONY : src/common/asserts.cpp.o
 
 src/common/asserts.i: src/common/asserts.cpp.i
@@ -203,7 +203,7 @@ src/common/asserts.i: src/common/asserts.cpp.i
 
 # target to preprocess a source file
 src/common/asserts.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/asserts.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/asserts.cpp.i
 .PHONY : src/common/asserts.cpp.i
 
 src/common/asserts.s: src/common/asserts.cpp.s
@@ -211,7 +211,7 @@ src/common/asserts.s: src/common/asserts.cpp.s
 
 # target to generate assembly for a file
 src/common/asserts.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/asserts.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/asserts.cpp.s
 .PHONY : src/common/asserts.cpp.s
 
 src/common/integer_slice.o: src/common/integer_slice.cpp.o
@@ -219,7 +219,7 @@ src/common/integer_slice.o: src/common/integer_slice.cpp.o
 
 # target to build an object file
 src/common/integer_slice.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/integer_slice.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/integer_slice.cpp.o
 .PHONY : src/common/integer_slice.cpp.o
 
 src/common/integer_slice.i: src/common/integer_slice.cpp.i
@@ -227,7 +227,7 @@ src/common/integer_slice.i: src/common/integer_slice.cpp.i
 
 # target to preprocess a source file
 src/common/integer_slice.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/integer_slice.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/integer_slice.cpp.i
 .PHONY : src/common/integer_slice.cpp.i
 
 src/common/integer_slice.s: src/common/integer_slice.cpp.s
@@ -235,7 +235,7 @@ src/common/integer_slice.s: src/common/integer_slice.cpp.s
 
 # target to generate assembly for a file
 src/common/integer_slice.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/integer_slice.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/integer_slice.cpp.s
 .PHONY : src/common/integer_slice.cpp.s
 
 src/common/methods_helper.o: src/common/methods_helper.cpp.o
@@ -243,7 +243,7 @@ src/common/methods_helper.o: src/common/methods_helper.cpp.o
 
 # target to build an object file
 src/common/methods_helper.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/methods_helper.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/methods_helper.cpp.o
 .PHONY : src/common/methods_helper.cpp.o
 
 src/common/methods_helper.i: src/common/methods_helper.cpp.i
@@ -251,7 +251,7 @@ src/common/methods_helper.i: src/common/methods_helper.cpp.i
 
 # target to preprocess a source file
 src/common/methods_helper.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/methods_helper.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/methods_helper.cpp.i
 .PHONY : src/common/methods_helper.cpp.i
 
 src/common/methods_helper.s: src/common/methods_helper.cpp.s
@@ -259,7 +259,7 @@ src/common/methods_helper.s: src/common/methods_helper.cpp.s
 
 # target to generate assembly for a file
 src/common/methods_helper.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/methods_helper.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/methods_helper.cpp.s
 .PHONY : src/common/methods_helper.cpp.s
 
 src/common/serialization.o: src/common/serialization.cpp.o
@@ -267,7 +267,7 @@ src/common/serialization.o: src/common/serialization.cpp.o
 
 # target to build an object file
 src/common/serialization.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/serialization.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/serialization.cpp.o
 .PHONY : src/common/serialization.cpp.o
 
 src/common/serialization.i: src/common/serialization.cpp.i
@@ -275,7 +275,7 @@ src/common/serialization.i: src/common/serialization.cpp.i
 
 # target to preprocess a source file
 src/common/serialization.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/serialization.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/serialization.cpp.i
 .PHONY : src/common/serialization.cpp.i
 
 src/common/serialization.s: src/common/serialization.cpp.s
@@ -283,7 +283,7 @@ src/common/serialization.s: src/common/serialization.cpp.s
 
 # target to generate assembly for a file
 src/common/serialization.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/serialization.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/serialization.cpp.s
 .PHONY : src/common/serialization.cpp.s
 
 src/common/user_defined_compute_functions.o: src/common/user_defined_compute_functions.cpp.o
@@ -291,7 +291,7 @@ src/common/user_defined_compute_functions.o: src/common/user_defined_compute_fun
 
 # target to build an object file
 src/common/user_defined_compute_functions.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/user_defined_compute_functions.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/user_defined_compute_functions.cpp.o
 .PHONY : src/common/user_defined_compute_functions.cpp.o
 
 src/common/user_defined_compute_functions.i: src/common/user_defined_compute_functions.cpp.i
@@ -299,7 +299,7 @@ src/common/user_defined_compute_functions.i: src/common/user_defined_compute_fun
 
 # target to preprocess a source file
 src/common/user_defined_compute_functions.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/user_defined_compute_functions.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/user_defined_compute_functions.cpp.i
 .PHONY : src/common/user_defined_compute_functions.cpp.i
 
 src/common/user_defined_compute_functions.s: src/common/user_defined_compute_functions.cpp.s
@@ -307,7 +307,7 @@ src/common/user_defined_compute_functions.s: src/common/user_defined_compute_fun
 
 # target to generate assembly for a file
 src/common/user_defined_compute_functions.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/common/user_defined_compute_functions.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/common/user_defined_compute_functions.cpp.s
 .PHONY : src/common/user_defined_compute_functions.cpp.s
 
 src/date_time/date_offsets.o: src/date_time/date_offsets.cpp.o
@@ -315,7 +315,7 @@ src/date_time/date_offsets.o: src/date_time/date_offsets.cpp.o
 
 # target to build an object file
 src/date_time/date_offsets.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/date_offsets.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/date_offsets.cpp.o
 .PHONY : src/date_time/date_offsets.cpp.o
 
 src/date_time/date_offsets.i: src/date_time/date_offsets.cpp.i
@@ -323,7 +323,7 @@ src/date_time/date_offsets.i: src/date_time/date_offsets.cpp.i
 
 # target to preprocess a source file
 src/date_time/date_offsets.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/date_offsets.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/date_offsets.cpp.i
 .PHONY : src/date_time/date_offsets.cpp.i
 
 src/date_time/date_offsets.s: src/date_time/date_offsets.cpp.s
@@ -331,7 +331,7 @@ src/date_time/date_offsets.s: src/date_time/date_offsets.cpp.s
 
 # target to generate assembly for a file
 src/date_time/date_offsets.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/date_offsets.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/date_offsets.cpp.s
 .PHONY : src/date_time/date_offsets.cpp.s
 
 src/date_time/datetime.o: src/date_time/datetime.cpp.o
@@ -339,7 +339,7 @@ src/date_time/datetime.o: src/date_time/datetime.cpp.o
 
 # target to build an object file
 src/date_time/datetime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/datetime.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/datetime.cpp.o
 .PHONY : src/date_time/datetime.cpp.o
 
 src/date_time/datetime.i: src/date_time/datetime.cpp.i
@@ -347,7 +347,7 @@ src/date_time/datetime.i: src/date_time/datetime.cpp.i
 
 # target to preprocess a source file
 src/date_time/datetime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/datetime.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/datetime.cpp.i
 .PHONY : src/date_time/datetime.cpp.i
 
 src/date_time/datetime.s: src/date_time/datetime.cpp.s
@@ -355,7 +355,7 @@ src/date_time/datetime.s: src/date_time/datetime.cpp.s
 
 # target to generate assembly for a file
 src/date_time/datetime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/datetime.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/datetime.cpp.s
 .PHONY : src/date_time/datetime.cpp.s
 
 src/date_time/relative_delta.o: src/date_time/relative_delta.cpp.o
@@ -363,7 +363,7 @@ src/date_time/relative_delta.o: src/date_time/relative_delta.cpp.o
 
 # target to build an object file
 src/date_time/relative_delta.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/relative_delta.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/relative_delta.cpp.o
 .PHONY : src/date_time/relative_delta.cpp.o
 
 src/date_time/relative_delta.i: src/date_time/relative_delta.cpp.i
@@ -371,7 +371,7 @@ src/date_time/relative_delta.i: src/date_time/relative_delta.cpp.i
 
 # target to preprocess a source file
 src/date_time/relative_delta.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/relative_delta.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/relative_delta.cpp.i
 .PHONY : src/date_time/relative_delta.cpp.i
 
 src/date_time/relative_delta.s: src/date_time/relative_delta.cpp.s
@@ -379,7 +379,7 @@ src/date_time/relative_delta.s: src/date_time/relative_delta.cpp.s
 
 # target to generate assembly for a file
 src/date_time/relative_delta.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/relative_delta.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/relative_delta.cpp.s
 .PHONY : src/date_time/relative_delta.cpp.s
 
 src/date_time/time_delta.o: src/date_time/time_delta.cpp.o
@@ -387,7 +387,7 @@ src/date_time/time_delta.o: src/date_time/time_delta.cpp.o
 
 # target to build an object file
 src/date_time/time_delta.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/time_delta.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/time_delta.cpp.o
 .PHONY : src/date_time/time_delta.cpp.o
 
 src/date_time/time_delta.i: src/date_time/time_delta.cpp.i
@@ -395,7 +395,7 @@ src/date_time/time_delta.i: src/date_time/time_delta.cpp.i
 
 # target to preprocess a source file
 src/date_time/time_delta.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/time_delta.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/time_delta.cpp.i
 .PHONY : src/date_time/time_delta.cpp.i
 
 src/date_time/time_delta.s: src/date_time/time_delta.cpp.s
@@ -403,7 +403,7 @@ src/date_time/time_delta.s: src/date_time/time_delta.cpp.s
 
 # target to generate assembly for a file
 src/date_time/time_delta.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/date_time/time_delta.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/date_time/time_delta.cpp.s
 .PHONY : src/date_time/time_delta.cpp.s
 
 src/factory/array_factory.o: src/factory/array_factory.cpp.o
@@ -411,7 +411,7 @@ src/factory/array_factory.o: src/factory/array_factory.cpp.o
 
 # target to build an object file
 src/factory/array_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/array_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/array_factory.cpp.o
 .PHONY : src/factory/array_factory.cpp.o
 
 src/factory/array_factory.i: src/factory/array_factory.cpp.i
@@ -419,7 +419,7 @@ src/factory/array_factory.i: src/factory/array_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/array_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/array_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/array_factory.cpp.i
 .PHONY : src/factory/array_factory.cpp.i
 
 src/factory/array_factory.s: src/factory/array_factory.cpp.s
@@ -427,7 +427,7 @@ src/factory/array_factory.s: src/factory/array_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/array_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/array_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/array_factory.cpp.s
 .PHONY : src/factory/array_factory.cpp.s
 
 src/factory/dataframe_factory.o: src/factory/dataframe_factory.cpp.o
@@ -435,7 +435,7 @@ src/factory/dataframe_factory.o: src/factory/dataframe_factory.cpp.o
 
 # target to build an object file
 src/factory/dataframe_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/dataframe_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/dataframe_factory.cpp.o
 .PHONY : src/factory/dataframe_factory.cpp.o
 
 src/factory/dataframe_factory.i: src/factory/dataframe_factory.cpp.i
@@ -443,7 +443,7 @@ src/factory/dataframe_factory.i: src/factory/dataframe_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/dataframe_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/dataframe_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/dataframe_factory.cpp.i
 .PHONY : src/factory/dataframe_factory.cpp.i
 
 src/factory/dataframe_factory.s: src/factory/dataframe_factory.cpp.s
@@ -451,7 +451,7 @@ src/factory/dataframe_factory.s: src/factory/dataframe_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/dataframe_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/dataframe_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/dataframe_factory.cpp.s
 .PHONY : src/factory/dataframe_factory.cpp.s
 
 src/factory/date_offset_factory.o: src/factory/date_offset_factory.cpp.o
@@ -459,7 +459,7 @@ src/factory/date_offset_factory.o: src/factory/date_offset_factory.cpp.o
 
 # target to build an object file
 src/factory/date_offset_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/date_offset_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/date_offset_factory.cpp.o
 .PHONY : src/factory/date_offset_factory.cpp.o
 
 src/factory/date_offset_factory.i: src/factory/date_offset_factory.cpp.i
@@ -467,7 +467,7 @@ src/factory/date_offset_factory.i: src/factory/date_offset_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/date_offset_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/date_offset_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/date_offset_factory.cpp.i
 .PHONY : src/factory/date_offset_factory.cpp.i
 
 src/factory/date_offset_factory.s: src/factory/date_offset_factory.cpp.s
@@ -475,7 +475,7 @@ src/factory/date_offset_factory.s: src/factory/date_offset_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/date_offset_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/date_offset_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/date_offset_factory.cpp.s
 .PHONY : src/factory/date_offset_factory.cpp.s
 
 src/factory/index_factory.o: src/factory/index_factory.cpp.o
@@ -483,7 +483,7 @@ src/factory/index_factory.o: src/factory/index_factory.cpp.o
 
 # target to build an object file
 src/factory/index_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/index_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/index_factory.cpp.o
 .PHONY : src/factory/index_factory.cpp.o
 
 src/factory/index_factory.i: src/factory/index_factory.cpp.i
@@ -491,7 +491,7 @@ src/factory/index_factory.i: src/factory/index_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/index_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/index_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/index_factory.cpp.i
 .PHONY : src/factory/index_factory.cpp.i
 
 src/factory/index_factory.s: src/factory/index_factory.cpp.s
@@ -499,7 +499,7 @@ src/factory/index_factory.s: src/factory/index_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/index_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/index_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/index_factory.cpp.s
 .PHONY : src/factory/index_factory.cpp.s
 
 src/factory/scalar_factory.o: src/factory/scalar_factory.cpp.o
@@ -507,7 +507,7 @@ src/factory/scalar_factory.o: src/factory/scalar_factory.cpp.o
 
 # target to build an object file
 src/factory/scalar_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/scalar_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/scalar_factory.cpp.o
 .PHONY : src/factory/scalar_factory.cpp.o
 
 src/factory/scalar_factory.i: src/factory/scalar_factory.cpp.i
@@ -515,7 +515,7 @@ src/factory/scalar_factory.i: src/factory/scalar_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/scalar_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/scalar_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/scalar_factory.cpp.i
 .PHONY : src/factory/scalar_factory.cpp.i
 
 src/factory/scalar_factory.s: src/factory/scalar_factory.cpp.s
@@ -523,7 +523,7 @@ src/factory/scalar_factory.s: src/factory/scalar_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/scalar_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/scalar_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/scalar_factory.cpp.s
 .PHONY : src/factory/scalar_factory.cpp.s
 
 src/factory/table_factory.o: src/factory/table_factory.cpp.o
@@ -531,7 +531,7 @@ src/factory/table_factory.o: src/factory/table_factory.cpp.o
 
 # target to build an object file
 src/factory/table_factory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/table_factory.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/table_factory.cpp.o
 .PHONY : src/factory/table_factory.cpp.o
 
 src/factory/table_factory.i: src/factory/table_factory.cpp.i
@@ -539,7 +539,7 @@ src/factory/table_factory.i: src/factory/table_factory.cpp.i
 
 # target to preprocess a source file
 src/factory/table_factory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/table_factory.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/table_factory.cpp.i
 .PHONY : src/factory/table_factory.cpp.i
 
 src/factory/table_factory.s: src/factory/table_factory.cpp.s
@@ -547,7 +547,7 @@ src/factory/table_factory.s: src/factory/table_factory.cpp.s
 
 # target to generate assembly for a file
 src/factory/table_factory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/factory/table_factory.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/factory/table_factory.cpp.s
 .PHONY : src/factory/table_factory.cpp.s
 
 src/index/arrow_index.o: src/index/arrow_index.cpp.o
@@ -555,7 +555,7 @@ src/index/arrow_index.o: src/index/arrow_index.cpp.o
 
 # target to build an object file
 src/index/arrow_index.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/arrow_index.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/arrow_index.cpp.o
 .PHONY : src/index/arrow_index.cpp.o
 
 src/index/arrow_index.i: src/index/arrow_index.cpp.i
@@ -563,7 +563,7 @@ src/index/arrow_index.i: src/index/arrow_index.cpp.i
 
 # target to preprocess a source file
 src/index/arrow_index.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/arrow_index.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/arrow_index.cpp.i
 .PHONY : src/index/arrow_index.cpp.i
 
 src/index/arrow_index.s: src/index/arrow_index.cpp.s
@@ -571,7 +571,7 @@ src/index/arrow_index.s: src/index/arrow_index.cpp.s
 
 # target to generate assembly for a file
 src/index/arrow_index.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/arrow_index.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/arrow_index.cpp.s
 .PHONY : src/index/arrow_index.cpp.s
 
 src/index/datetime_index.o: src/index/datetime_index.cpp.o
@@ -579,7 +579,7 @@ src/index/datetime_index.o: src/index/datetime_index.cpp.o
 
 # target to build an object file
 src/index/datetime_index.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/datetime_index.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/datetime_index.cpp.o
 .PHONY : src/index/datetime_index.cpp.o
 
 src/index/datetime_index.i: src/index/datetime_index.cpp.i
@@ -587,7 +587,7 @@ src/index/datetime_index.i: src/index/datetime_index.cpp.i
 
 # target to preprocess a source file
 src/index/datetime_index.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/datetime_index.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/datetime_index.cpp.i
 .PHONY : src/index/datetime_index.cpp.i
 
 src/index/datetime_index.s: src/index/datetime_index.cpp.s
@@ -595,7 +595,7 @@ src/index/datetime_index.s: src/index/datetime_index.cpp.s
 
 # target to generate assembly for a file
 src/index/datetime_index.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/datetime_index.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/datetime_index.cpp.s
 .PHONY : src/index/datetime_index.cpp.s
 
 src/index/object_index.o: src/index/object_index.cpp.o
@@ -603,7 +603,7 @@ src/index/object_index.o: src/index/object_index.cpp.o
 
 # target to build an object file
 src/index/object_index.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/object_index.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/object_index.cpp.o
 .PHONY : src/index/object_index.cpp.o
 
 src/index/object_index.i: src/index/object_index.cpp.i
@@ -611,7 +611,7 @@ src/index/object_index.i: src/index/object_index.cpp.i
 
 # target to preprocess a source file
 src/index/object_index.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/object_index.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/object_index.cpp.i
 .PHONY : src/index/object_index.cpp.i
 
 src/index/object_index.s: src/index/object_index.cpp.s
@@ -619,7 +619,7 @@ src/index/object_index.s: src/index/object_index.cpp.s
 
 # target to generate assembly for a file
 src/index/object_index.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/object_index.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/object_index.cpp.s
 .PHONY : src/index/object_index.cpp.s
 
 src/index/range_index.o: src/index/range_index.cpp.o
@@ -627,7 +627,7 @@ src/index/range_index.o: src/index/range_index.cpp.o
 
 # target to build an object file
 src/index/range_index.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/range_index.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/range_index.cpp.o
 .PHONY : src/index/range_index.cpp.o
 
 src/index/range_index.i: src/index/range_index.cpp.i
@@ -635,7 +635,7 @@ src/index/range_index.i: src/index/range_index.cpp.i
 
 # target to preprocess a source file
 src/index/range_index.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/range_index.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/range_index.cpp.i
 .PHONY : src/index/range_index.cpp.i
 
 src/index/range_index.s: src/index/range_index.cpp.s
@@ -643,7 +643,7 @@ src/index/range_index.s: src/index/range_index.cpp.s
 
 # target to generate assembly for a file
 src/index/range_index.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/range_index.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/range_index.cpp.s
 .PHONY : src/index/range_index.cpp.s
 
 src/index/struct_index.o: src/index/struct_index.cpp.o
@@ -651,7 +651,7 @@ src/index/struct_index.o: src/index/struct_index.cpp.o
 
 # target to build an object file
 src/index/struct_index.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/struct_index.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/struct_index.cpp.o
 .PHONY : src/index/struct_index.cpp.o
 
 src/index/struct_index.i: src/index/struct_index.cpp.i
@@ -659,7 +659,7 @@ src/index/struct_index.i: src/index/struct_index.cpp.i
 
 # target to preprocess a source file
 src/index/struct_index.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/struct_index.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/struct_index.cpp.i
 .PHONY : src/index/struct_index.cpp.i
 
 src/index/struct_index.s: src/index/struct_index.cpp.s
@@ -667,7 +667,7 @@ src/index/struct_index.s: src/index/struct_index.cpp.s
 
 # target to generate assembly for a file
 src/index/struct_index.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/index/struct_index.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/index/struct_index.cpp.s
 .PHONY : src/index/struct_index.cpp.s
 
 src/methods/agg.o: src/methods/agg.cpp.o
@@ -675,7 +675,7 @@ src/methods/agg.o: src/methods/agg.cpp.o
 
 # target to build an object file
 src/methods/agg.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/agg.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/agg.cpp.o
 .PHONY : src/methods/agg.cpp.o
 
 src/methods/agg.i: src/methods/agg.cpp.i
@@ -683,7 +683,7 @@ src/methods/agg.i: src/methods/agg.cpp.i
 
 # target to preprocess a source file
 src/methods/agg.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/agg.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/agg.cpp.i
 .PHONY : src/methods/agg.cpp.i
 
 src/methods/agg.s: src/methods/agg.cpp.s
@@ -691,7 +691,7 @@ src/methods/agg.s: src/methods/agg.cpp.s
 
 # target to generate assembly for a file
 src/methods/agg.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/agg.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/agg.cpp.s
 .PHONY : src/methods/agg.cpp.s
 
 src/methods/common_op.o: src/methods/common_op.cpp.o
@@ -699,7 +699,7 @@ src/methods/common_op.o: src/methods/common_op.cpp.o
 
 # target to build an object file
 src/methods/common_op.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/common_op.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/common_op.cpp.o
 .PHONY : src/methods/common_op.cpp.o
 
 src/methods/common_op.i: src/methods/common_op.cpp.i
@@ -707,7 +707,7 @@ src/methods/common_op.i: src/methods/common_op.cpp.i
 
 # target to preprocess a source file
 src/methods/common_op.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/common_op.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/common_op.cpp.i
 .PHONY : src/methods/common_op.cpp.i
 
 src/methods/common_op.s: src/methods/common_op.cpp.s
@@ -715,7 +715,7 @@ src/methods/common_op.s: src/methods/common_op.cpp.s
 
 # target to generate assembly for a file
 src/methods/common_op.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/common_op.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/common_op.cpp.s
 .PHONY : src/methods/common_op.cpp.s
 
 src/methods/groupby.o: src/methods/groupby.cpp.o
@@ -723,7 +723,7 @@ src/methods/groupby.o: src/methods/groupby.cpp.o
 
 # target to build an object file
 src/methods/groupby.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/groupby.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/groupby.cpp.o
 .PHONY : src/methods/groupby.cpp.o
 
 src/methods/groupby.i: src/methods/groupby.cpp.i
@@ -731,7 +731,7 @@ src/methods/groupby.i: src/methods/groupby.cpp.i
 
 # target to preprocess a source file
 src/methods/groupby.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/groupby.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/groupby.cpp.i
 .PHONY : src/methods/groupby.cpp.i
 
 src/methods/groupby.s: src/methods/groupby.cpp.s
@@ -739,7 +739,7 @@ src/methods/groupby.s: src/methods/groupby.cpp.s
 
 # target to generate assembly for a file
 src/methods/groupby.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/groupby.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/groupby.cpp.s
 .PHONY : src/methods/groupby.cpp.s
 
 src/methods/method_base.o: src/methods/method_base.cpp.o
@@ -747,7 +747,7 @@ src/methods/method_base.o: src/methods/method_base.cpp.o
 
 # target to build an object file
 src/methods/method_base.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/method_base.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/method_base.cpp.o
 .PHONY : src/methods/method_base.cpp.o
 
 src/methods/method_base.i: src/methods/method_base.cpp.i
@@ -755,7 +755,7 @@ src/methods/method_base.i: src/methods/method_base.cpp.i
 
 # target to preprocess a source file
 src/methods/method_base.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/method_base.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/method_base.cpp.i
 .PHONY : src/methods/method_base.cpp.i
 
 src/methods/method_base.s: src/methods/method_base.cpp.s
@@ -763,7 +763,7 @@ src/methods/method_base.s: src/methods/method_base.cpp.s
 
 # target to generate assembly for a file
 src/methods/method_base.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/method_base.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/method_base.cpp.s
 .PHONY : src/methods/method_base.cpp.s
 
 src/methods/select.o: src/methods/select.cpp.o
@@ -771,7 +771,7 @@ src/methods/select.o: src/methods/select.cpp.o
 
 # target to build an object file
 src/methods/select.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/select.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/select.cpp.o
 .PHONY : src/methods/select.cpp.o
 
 src/methods/select.i: src/methods/select.cpp.i
@@ -779,7 +779,7 @@ src/methods/select.i: src/methods/select.cpp.i
 
 # target to preprocess a source file
 src/methods/select.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/select.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/select.cpp.i
 .PHONY : src/methods/select.cpp.i
 
 src/methods/select.s: src/methods/select.cpp.s
@@ -787,7 +787,7 @@ src/methods/select.s: src/methods/select.cpp.s
 
 # target to generate assembly for a file
 src/methods/select.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/select.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/select.cpp.s
 .PHONY : src/methods/select.cpp.s
 
 src/methods/string.o: src/methods/string.cpp.o
@@ -795,7 +795,7 @@ src/methods/string.o: src/methods/string.cpp.o
 
 # target to build an object file
 src/methods/string.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/string.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/string.cpp.o
 .PHONY : src/methods/string.cpp.o
 
 src/methods/string.i: src/methods/string.cpp.i
@@ -803,7 +803,7 @@ src/methods/string.i: src/methods/string.cpp.i
 
 # target to preprocess a source file
 src/methods/string.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/string.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/string.cpp.i
 .PHONY : src/methods/string.cpp.i
 
 src/methods/string.s: src/methods/string.cpp.s
@@ -811,7 +811,7 @@ src/methods/string.s: src/methods/string.cpp.s
 
 # target to generate assembly for a file
 src/methods/string.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/string.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/string.cpp.s
 .PHONY : src/methods/string.cpp.s
 
 src/methods/struct_op.o: src/methods/struct_op.cpp.o
@@ -819,7 +819,7 @@ src/methods/struct_op.o: src/methods/struct_op.cpp.o
 
 # target to build an object file
 src/methods/struct_op.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/struct_op.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/struct_op.cpp.o
 .PHONY : src/methods/struct_op.cpp.o
 
 src/methods/struct_op.i: src/methods/struct_op.cpp.i
@@ -827,7 +827,7 @@ src/methods/struct_op.i: src/methods/struct_op.cpp.i
 
 # target to preprocess a source file
 src/methods/struct_op.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/struct_op.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/struct_op.cpp.i
 .PHONY : src/methods/struct_op.cpp.i
 
 src/methods/struct_op.s: src/methods/struct_op.cpp.s
@@ -835,7 +835,7 @@ src/methods/struct_op.s: src/methods/struct_op.cpp.s
 
 # target to generate assembly for a file
 src/methods/struct_op.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/struct_op.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/struct_op.cpp.s
 .PHONY : src/methods/struct_op.cpp.s
 
 src/methods/temporal.o: src/methods/temporal.cpp.o
@@ -843,7 +843,7 @@ src/methods/temporal.o: src/methods/temporal.cpp.o
 
 # target to build an object file
 src/methods/temporal.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/temporal.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/temporal.cpp.o
 .PHONY : src/methods/temporal.cpp.o
 
 src/methods/temporal.i: src/methods/temporal.cpp.i
@@ -851,7 +851,7 @@ src/methods/temporal.i: src/methods/temporal.cpp.i
 
 # target to preprocess a source file
 src/methods/temporal.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/temporal.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/temporal.cpp.i
 .PHONY : src/methods/temporal.cpp.i
 
 src/methods/temporal.s: src/methods/temporal.cpp.s
@@ -859,7 +859,7 @@ src/methods/temporal.s: src/methods/temporal.cpp.s
 
 # target to generate assembly for a file
 src/methods/temporal.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/temporal.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/temporal.cpp.s
 .PHONY : src/methods/temporal.cpp.s
 
 src/methods/time_grouper.o: src/methods/time_grouper.cpp.o
@@ -867,7 +867,7 @@ src/methods/time_grouper.o: src/methods/time_grouper.cpp.o
 
 # target to build an object file
 src/methods/time_grouper.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/time_grouper.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/time_grouper.cpp.o
 .PHONY : src/methods/time_grouper.cpp.o
 
 src/methods/time_grouper.i: src/methods/time_grouper.cpp.i
@@ -875,7 +875,7 @@ src/methods/time_grouper.i: src/methods/time_grouper.cpp.i
 
 # target to preprocess a source file
 src/methods/time_grouper.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/time_grouper.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/time_grouper.cpp.i
 .PHONY : src/methods/time_grouper.cpp.i
 
 src/methods/time_grouper.s: src/methods/time_grouper.cpp.s
@@ -883,7 +883,7 @@ src/methods/time_grouper.s: src/methods/time_grouper.cpp.s
 
 # target to generate assembly for a file
 src/methods/time_grouper.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/time_grouper.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/time_grouper.cpp.s
 .PHONY : src/methods/time_grouper.cpp.s
 
 src/methods/window.o: src/methods/window.cpp.o
@@ -891,7 +891,7 @@ src/methods/window.o: src/methods/window.cpp.o
 
 # target to build an object file
 src/methods/window.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/window.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/window.cpp.o
 .PHONY : src/methods/window.cpp.o
 
 src/methods/window.i: src/methods/window.cpp.i
@@ -899,7 +899,7 @@ src/methods/window.i: src/methods/window.cpp.i
 
 # target to preprocess a source file
 src/methods/window.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/window.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/window.cpp.i
 .PHONY : src/methods/window.cpp.i
 
 src/methods/window.s: src/methods/window.cpp.s
@@ -907,7 +907,7 @@ src/methods/window.s: src/methods/window.cpp.s
 
 # target to generate assembly for a file
 src/methods/window.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/methods/window.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/methods/window.cpp.s
 .PHONY : src/methods/window.cpp.s
 
 src/ndframe/array.o: src/ndframe/array.cpp.o
@@ -915,7 +915,7 @@ src/ndframe/array.o: src/ndframe/array.cpp.o
 
 # target to build an object file
 src/ndframe/array.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/array.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/array.cpp.o
 .PHONY : src/ndframe/array.cpp.o
 
 src/ndframe/array.i: src/ndframe/array.cpp.i
@@ -923,7 +923,7 @@ src/ndframe/array.i: src/ndframe/array.cpp.i
 
 # target to preprocess a source file
 src/ndframe/array.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/array.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/array.cpp.i
 .PHONY : src/ndframe/array.cpp.i
 
 src/ndframe/array.s: src/ndframe/array.cpp.s
@@ -931,7 +931,7 @@ src/ndframe/array.s: src/ndframe/array.cpp.s
 
 # target to generate assembly for a file
 src/ndframe/array.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/array.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/array.cpp.s
 .PHONY : src/ndframe/array.cpp.s
 
 src/ndframe/dataframe.o: src/ndframe/dataframe.cpp.o
@@ -939,7 +939,7 @@ src/ndframe/dataframe.o: src/ndframe/dataframe.cpp.o
 
 # target to build an object file
 src/ndframe/dataframe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/dataframe.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/dataframe.cpp.o
 .PHONY : src/ndframe/dataframe.cpp.o
 
 src/ndframe/dataframe.i: src/ndframe/dataframe.cpp.i
@@ -947,7 +947,7 @@ src/ndframe/dataframe.i: src/ndframe/dataframe.cpp.i
 
 # target to preprocess a source file
 src/ndframe/dataframe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/dataframe.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/dataframe.cpp.i
 .PHONY : src/ndframe/dataframe.cpp.i
 
 src/ndframe/dataframe.s: src/ndframe/dataframe.cpp.s
@@ -955,7 +955,7 @@ src/ndframe/dataframe.s: src/ndframe/dataframe.cpp.s
 
 # target to generate assembly for a file
 src/ndframe/dataframe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/dataframe.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/dataframe.cpp.s
 .PHONY : src/ndframe/dataframe.cpp.s
 
 src/ndframe/ndframe.o: src/ndframe/ndframe.cpp.o
@@ -963,7 +963,7 @@ src/ndframe/ndframe.o: src/ndframe/ndframe.cpp.o
 
 # target to build an object file
 src/ndframe/ndframe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/ndframe.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/ndframe.cpp.o
 .PHONY : src/ndframe/ndframe.cpp.o
 
 src/ndframe/ndframe.i: src/ndframe/ndframe.cpp.i
@@ -971,7 +971,7 @@ src/ndframe/ndframe.i: src/ndframe/ndframe.cpp.i
 
 # target to preprocess a source file
 src/ndframe/ndframe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/ndframe.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/ndframe.cpp.i
 .PHONY : src/ndframe/ndframe.cpp.i
 
 src/ndframe/ndframe.s: src/ndframe/ndframe.cpp.s
@@ -979,7 +979,7 @@ src/ndframe/ndframe.s: src/ndframe/ndframe.cpp.s
 
 # target to generate assembly for a file
 src/ndframe/ndframe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/ndframe.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/ndframe.cpp.s
 .PHONY : src/ndframe/ndframe.cpp.s
 
 src/ndframe/scalar.o: src/ndframe/scalar.cpp.o
@@ -987,7 +987,7 @@ src/ndframe/scalar.o: src/ndframe/scalar.cpp.o
 
 # target to build an object file
 src/ndframe/scalar.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/scalar.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/scalar.cpp.o
 .PHONY : src/ndframe/scalar.cpp.o
 
 src/ndframe/scalar.i: src/ndframe/scalar.cpp.i
@@ -995,7 +995,7 @@ src/ndframe/scalar.i: src/ndframe/scalar.cpp.i
 
 # target to preprocess a source file
 src/ndframe/scalar.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/scalar.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/scalar.cpp.i
 .PHONY : src/ndframe/scalar.cpp.i
 
 src/ndframe/scalar.s: src/ndframe/scalar.cpp.s
@@ -1003,7 +1003,7 @@ src/ndframe/scalar.s: src/ndframe/scalar.cpp.s
 
 # target to generate assembly for a file
 src/ndframe/scalar.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/scalar.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/scalar.cpp.s
 .PHONY : src/ndframe/scalar.cpp.s
 
 src/ndframe/series.o: src/ndframe/series.cpp.o
@@ -1011,7 +1011,7 @@ src/ndframe/series.o: src/ndframe/series.cpp.o
 
 # target to build an object file
 src/ndframe/series.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/series.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/series.cpp.o
 .PHONY : src/ndframe/series.cpp.o
 
 src/ndframe/series.i: src/ndframe/series.cpp.i
@@ -1019,7 +1019,7 @@ src/ndframe/series.i: src/ndframe/series.cpp.i
 
 # target to preprocess a source file
 src/ndframe/series.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/series.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/series.cpp.i
 .PHONY : src/ndframe/series.cpp.i
 
 src/ndframe/series.s: src/ndframe/series.cpp.s
@@ -1027,7 +1027,7 @@ src/ndframe/series.s: src/ndframe/series.cpp.s
 
 # target to generate assembly for a file
 src/ndframe/series.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/ndframe/series.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/ndframe/series.cpp.s
 .PHONY : src/ndframe/series.cpp.s
 
 src/vector_functions/arrow_vector_functions.o: src/vector_functions/arrow_vector_functions.cpp.o
@@ -1035,7 +1035,7 @@ src/vector_functions/arrow_vector_functions.o: src/vector_functions/arrow_vector
 
 # target to build an object file
 src/vector_functions/arrow_vector_functions.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/vector_functions/arrow_vector_functions.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/vector_functions/arrow_vector_functions.cpp.o
 .PHONY : src/vector_functions/arrow_vector_functions.cpp.o
 
 src/vector_functions/arrow_vector_functions.i: src/vector_functions/arrow_vector_functions.cpp.i
@@ -1043,7 +1043,7 @@ src/vector_functions/arrow_vector_functions.i: src/vector_functions/arrow_vector
 
 # target to preprocess a source file
 src/vector_functions/arrow_vector_functions.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/vector_functions/arrow_vector_functions.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/vector_functions/arrow_vector_functions.cpp.i
 .PHONY : src/vector_functions/arrow_vector_functions.cpp.i
 
 src/vector_functions/arrow_vector_functions.s: src/vector_functions/arrow_vector_functions.cpp.s
@@ -1051,7 +1051,7 @@ src/vector_functions/arrow_vector_functions.s: src/vector_functions/arrow_vector
 
 # target to generate assembly for a file
 src/vector_functions/arrow_vector_functions.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/vector_functions/arrow_vector_functions.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/vector_functions/arrow_vector_functions.cpp.s
 .PHONY : src/vector_functions/arrow_vector_functions.cpp.s
 
 src/visitors/search_sorted.o: src/visitors/search_sorted.cpp.o
@@ -1059,7 +1059,7 @@ src/visitors/search_sorted.o: src/visitors/search_sorted.cpp.o
 
 # target to build an object file
 src/visitors/search_sorted.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/visitors/search_sorted.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/visitors/search_sorted.cpp.o
 .PHONY : src/visitors/search_sorted.cpp.o
 
 src/visitors/search_sorted.i: src/visitors/search_sorted.cpp.i
@@ -1067,7 +1067,7 @@ src/visitors/search_sorted.i: src/visitors/search_sorted.cpp.i
 
 # target to preprocess a source file
 src/visitors/search_sorted.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/visitors/search_sorted.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/visitors/search_sorted.cpp.i
 .PHONY : src/visitors/search_sorted.cpp.i
 
 src/visitors/search_sorted.s: src/visitors/search_sorted.cpp.s
@@ -1075,7 +1075,7 @@ src/visitors/search_sorted.s: src/visitors/search_sorted.cpp.s
 
 # target to generate assembly for a file
 src/visitors/search_sorted.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/epochframe.dir/build.make CMakeFiles/epochframe.dir/src/visitors/search_sorted.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/epoch_frame.dir/build.make CMakeFiles/epoch_frame.dir/src/visitors/search_sorted.cpp.s
 .PHONY : src/visitors/search_sorted.cpp.s
 
 # Help Target
@@ -1086,7 +1086,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... epochframe"
+	@echo "... epoch_frame"
 	@echo "... epochframe_benchmark"
 	@echo "... src/common/arrow_agg.o"
 	@echo "... src/common/arrow_agg.i"

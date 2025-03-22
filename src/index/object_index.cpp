@@ -7,7 +7,7 @@
 #include "factory/array_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     ObjectIndex::ObjectIndex(std::shared_ptr<arrow::StringArray> array, std::string const& name)
             : ArrowIndex(factory::array::make_array(std::move(array)), name) {}
 

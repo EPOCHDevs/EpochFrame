@@ -3,12 +3,12 @@
 #include <optional>
 #include <string>
 #include <chrono>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "time_delta.h"
 #include <arrow/scalar.h>
 
 
-namespace epochframe {
+namespace epoch_frame {
 
     using namespace std::chrono;
     struct Time {

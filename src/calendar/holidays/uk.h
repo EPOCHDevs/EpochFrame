@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe::calendar {
+namespace epoch_frame::calendar {
 
 using namespace std::chrono_literals;
 
@@ -113,7 +113,7 @@ const HolidayData UKSpringBankHoliday1969to1970 = {
     .end_date = DateTime({1970y, std::chrono::December, 31d}),
 };
 
-// From 1971 onwards, it's the last Monday in May 
+// From 1971 onwards, it's the last Monday in May
 // (last Monday in May used to also be a holiday pre-1971, but as Whit Monday)
 const HolidayData UKSpringBankHolidayFrom1971 = {
     .name = "Spring Bank Holiday",
@@ -242,4 +242,4 @@ const HolidayData UKStateFuneralOfQueenElizabethII = {
     .end_date = DateTime({2022y, std::chrono::December, 31d}),
 };
 
-} // namespace epochframe 
+} // namespace epoch_frame

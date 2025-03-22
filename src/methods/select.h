@@ -4,12 +4,12 @@
 
 #pragma once
 #include "method_base.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/enums.h"
 #include "common/arrow_compute_utils.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "common/table_or_array.h"
 
-namespace epochframe {
+namespace epoch_frame {
     class Selections : public MethodBase {
     public:
         explicit Selections(TableComponent const & table): MethodBase(table) {}

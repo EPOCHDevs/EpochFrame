@@ -2,15 +2,15 @@
 #include <algorithm>
 #include <chrono>
 #include <common/asserts.h>
-#include <epochframe/series.h>
+#include <epoch_frame/series.h>
 
 
-namespace epochframe::calendar {
+namespace epoch_frame::calendar {
 
     TimeDelta MarketCalendar::_tdelta(const Time& time, int64_t day_offset) {
-        return TimeDelta({.days = static_cast<double>(day_offset), 
-                         .seconds = static_cast<double>(time.second.count()), 
-                         .minutes = static_cast<double>(time.minute.count()), 
+        return TimeDelta({.days = static_cast<double>(day_offset),
+                         .seconds = static_cast<double>(time.second.count()),
+                         .minutes = static_cast<double>(time.minute.count()),
                          .hours = static_cast<double>(time.hour.count())});
     }
 
@@ -22,7 +22,7 @@ MarketCalendar::MarketCalendar(std::optional<MarketTime> const& open_time, std::
     if (!open_time) {
        change_time(EpochFrameMarketTimeType::MarketOpen, {*open_time});
     }
-    
+
     if (!close_time) {
         change_time(EpochFrameMarketTimeType::MarketClose, {*close_time});
     }
@@ -36,7 +36,7 @@ MarketCalendar::MarketCalendar(std::optional<MarketTime> const& open_time, std::
 
 void MarketCalendar::prepare_regular_market_times() {
     auto oc_map = m_options.open_close_map;
-    AssertWithTraceFromStream(all_of(oc_map.begin(), oc_map.end(), [](auto const& pair) {
+    AssertFromFormat(std::all_of(oc_map.begin(), oc_map.end(), [](auto const& pair) {
         return pair.second == true || pair.second == false;
     }), "Values in open_close_map need to be true or false");
 
@@ -93,7 +93,7 @@ void MarketCalendar::set_time(EpochFrameMarketTimeType market_time, const std::v
     } else if (opens != EpochFrameOpenCloseType::Default) {
         m_options.open_close_map._set(market_time, opens);
     }
-    
+
     m_options.regular_market_times._set(market_time, times);
 
     if (!is_custom(market_time)) {
@@ -129,7 +129,7 @@ std::vector<MarketTime> MarketCalendar::get_time(EpochFrameMarketTimeType market
     if (!m_options.regular_market_times.contains(market_time)) {
         if (market_time == EpochFrameMarketTimeType::BreakStart || market_time == EpochFrameMarketTimeType::BreakEnd) {
             return {};
-        } 
+        }
         else if (market_time == EpochFrameMarketTimeType::MarketOpen || market_time == EpochFrameMarketTimeType::MarketClose) {
             throw std::runtime_error("You need to set market_times");
         }
@@ -211,7 +211,7 @@ IndexPtr MarketCalendar::tryholidays(const AbstractHolidayCalendarPtr& cal, cons
     throw std::runtime_error("Not implemented");
 }
 
-Series MarketCalendar::special_dates(std::vector<std::pair<Time, std::variant<IndexPtr, uint8_t>>> calendars, 
+Series MarketCalendar::special_dates(std::vector<std::pair<Time, std::variant<IndexPtr, uint8_t>>> calendars,
         std::vector<std::pair<Time, IndexPtr>> ad_hoc_dates, const Date& start, const Date& end) {
     throw std::runtime_error("Not implemented");
 }
@@ -220,4 +220,4 @@ Series MarketCalendar::special_dates(EpochFrameMarketTimeType market_time, const
     throw std::runtime_error("Not implemented");
 }
 
-} // namespace epochframe::calendar
+} // namespace epoch_frame::calendar

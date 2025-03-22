@@ -6,7 +6,7 @@
 #include "arrow_index.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     class DateTimeIndex : public ArrowIndex<true> {
 
     public:
@@ -17,4 +17,4 @@ namespace epochframe {
 
         std::string tz() const;
     };
-} // namespace epochframe
+} // namespace epoch_frame

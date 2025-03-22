@@ -2,7 +2,7 @@
 #include <cmath>
 
 
-namespace epochframe
+namespace epoch_frame
 {
     auto pymod(auto a, auto b)
     {
@@ -20,4 +20,4 @@ namespace epochframe
         auto result = static_cast<double>(a) / static_cast<double>(b);
         return std::floor(result);
     }
-} // namespace epochframe
+} // namespace epoch_frame

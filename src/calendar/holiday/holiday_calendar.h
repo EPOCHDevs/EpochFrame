@@ -9,13 +9,13 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include <optional>
 #include <tuple>
-#include "calendar/datetime.h"
+#include "date_time/datetime.h"
 
 
-namespace epochframe::calendar{
+namespace epoch_frame::calendar{
     // Forward declaration
     class AbstractHolidayCalendar;
 
@@ -205,4 +205,4 @@ return true; \
     }
 
     REGISTER_HOLIDAY_CALENDAR(USFederalHolidayCalendar);
-} // namespace epochframe
+} // namespace epoch_frame

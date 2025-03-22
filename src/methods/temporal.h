@@ -3,14 +3,14 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include "epochframe/array.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/array.h"
+#include "epoch_frame/scalar.h"
 #include <arrow/compute/api.h>
 #include <common/asserts.h>
 #include "common/arrow_compute_utils.h"
 
-namespace epochframe {
+namespace epoch_frame {
     struct IsoCalendarArray {
         Array year, week, day_of_week;
     };

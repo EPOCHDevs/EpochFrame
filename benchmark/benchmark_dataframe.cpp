@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <epochframe/dataframe.h>
+#include <epoch_frame/dataframe.h>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -10,7 +10,7 @@
 #include <functional>
 #include <vector>
 #include <arrow/api.h>
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "methods/window.h"
 #include "date_time/date_offsets.h"
 #include "methods/time_grouper.h"
@@ -18,7 +18,7 @@
 #include "factory/date_offset_factory.h"
 
 // Namespaces
-namespace efo = epochframe;
+namespace efo = epoch_frame;
 using namespace efo::factory::offset;
 
 // Setup Python environment with pandas
@@ -65,7 +65,7 @@ std::string get_python_path() {
 }
 
 // Helper function to create a DataFrame with random data
-epochframe::DataFrame create_random_dataframe(size_t rows, size_t cols) {
+epoch_frame::DataFrame create_random_dataframe(size_t rows, size_t cols) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-100.0, 100.0);
@@ -99,7 +99,7 @@ epochframe::DataFrame create_random_dataframe(size_t rows, size_t cols) {
     auto schema = arrow::schema(fields);
     auto table = arrow::Table::Make(schema, arrays);
     
-    return epochframe::DataFrame(table);
+    return epoch_frame::DataFrame(table);
 }
 
 // Create a Python script to run pandas benchmarks
@@ -395,7 +395,7 @@ std::vector<BenchmarkResult> run_all_benchmarks() {
             auto schema = arrow::schema(fields);
             auto table = arrow::Table::Make(schema, chunked_arrays);
             
-            auto df_with_group = epochframe::DataFrame(table);
+            auto df_with_group = epoch_frame::DataFrame(table);
             
             // GroupBy benchmark
             results.push_back(run_benchmark(
@@ -526,7 +526,7 @@ TEST_CASE("DataFrame GroupBy Operations", "[dataframe][benchmark][individual]") 
     auto schema = arrow::schema(fields);
     auto table = arrow::Table::Make(schema, chunked_arrays);
     
-    df = epochframe::DataFrame(table);
+    df = epoch_frame::DataFrame(table);
     
     BENCHMARK("EpochFrame DataFrame GroupBy Mean") {
         return df.group_by_agg("group").mean();
@@ -604,7 +604,7 @@ TEST_CASE("DataFrame Resample Operations", "[dataframe][benchmark][individual]")
     // Create an index from the timestamp array and set it on the DataFrame
     // We'll use the factory method to create the index
     auto index = std::make_shared<efo::DateTimeIndex>(timestamp_array);
-    df = epochframe::DataFrame(index, df.table());
+    df = epoch_frame::DataFrame(index, df.table());
     
     // Create options for resample - use braced initialization as shown in the test
     efo::TimeGrouperOptions options{

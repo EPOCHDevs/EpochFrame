@@ -7,6 +7,6 @@
 #include "array_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 }

@@ -7,7 +7,7 @@
 #include <cinttypes>
 
 
-namespace epochframe {
+namespace epoch_frame {
     struct ResolvedIntegerSliceBound {
         uint64_t start;
         uint64_t stop;

@@ -3,14 +3,14 @@
 #include <fstream>
 #include <random>
 
-#include "epochframe/dataframe.h"
-#include "epochframe/serialization.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/serialization.h"
 #include "factory/dataframe_factory.h"
 #include "factory/series_factory.h"
 #include "factory/index_factory.h"
 
 namespace {
-    using namespace epochframe;
+    using namespace epoch_frame;
     // Helper to create a temporary file path
     std::string get_temp_file_path(const std::string& prefix, const std::string& extension) {
         auto temp_dir = std::filesystem::temp_directory_path();

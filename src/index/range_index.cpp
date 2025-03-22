@@ -5,7 +5,7 @@
 #include "range_index.h"
 #include "factory/array_factory.h"
 
-namespace epochframe {
+namespace epoch_frame {
     RangeIndex::RangeIndex(std::shared_ptr<arrow::UInt64Array> array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name)
             : ArrowIndex(factory::array::make_array(std::move(array)), name, monotonic_direction) {}
 

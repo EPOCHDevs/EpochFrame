@@ -7,7 +7,7 @@
 #include <common/python_utils.h>
 
 
-namespace epochframe {
+namespace epoch_frame {
 
     std::pair<double, double> modf(double value)  {
         double f1;
@@ -179,4 +179,4 @@ TimeDelta& TimeDelta::operator*=(double other) {
     return *this;
 }
 
-} // namespace epochframe
+} // namespace epoch_frame

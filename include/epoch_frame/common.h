@@ -9,7 +9,7 @@
 #include <vector>
 #include "frame_or_series.h"
 
-namespace epochframe {
+namespace epoch_frame {
     struct ConcatOptions {
         std::vector<FrameOrSeries> frames;
         JoinType joinType{JoinType::Outer};

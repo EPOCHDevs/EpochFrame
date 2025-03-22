@@ -1,5 +1,5 @@
-#include <epochframe/dataframe.h>
-#include <epochframe/series.h>
+#include <epoch_frame/dataframe.h>
+#include <epoch_frame/series.h>
 #include <iostream>
 #include <vector>
 
@@ -14,7 +14,7 @@ int main() {
     std::cout << "==================================" << std::endl;
 
     // Create a DataFrame from a map of column names to vectors
-    epochframe::DataFrame df({
+    epoch_frame::DataFrame df({
         {"Name", {"Alice", "Bob", "Charlie", "David", "Eva"}},
         {"Age", {25, 30, 35, 40, 45}},
         {"Score", {85.5, 90.0, 78.5, 92.5, 88.0}}

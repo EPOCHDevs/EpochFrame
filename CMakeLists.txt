@@ -42,11 +42,11 @@ find_package(ArrowAcero 19.0.1 CONFIG REQUIRED)
 find_package(Parquet 19.0.1 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
-add_library(epochframe STATIC "")
-add_library(epoch::frame ALIAS epochframe)
-target_compile_definitions(epochframe PUBLIC -DSPDLOG_USE_STD_FORMAT)
+add_library(epoch_frame STATIC "")
+add_library(epoch::frame ALIAS epoch_frame)
+target_compile_definitions(epoch_frame PUBLIC -DSPDLOG_USE_STD_FORMAT)
 
-target_include_directories(epochframe
+target_include_directories(epoch_frame
         PUBLIC
         ${PROJECT_SOURCE_DIR}/include
         PRIVATE

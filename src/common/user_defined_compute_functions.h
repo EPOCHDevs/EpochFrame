@@ -1,9 +1,9 @@
 #pragma once
 #include <arrow/api.h>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     arrow::ArrayPtr ewm(arrow::DoubleArray const& values, int64_t minp,
     double com, bool adjust, bool ignore_na, std::shared_ptr<arrow::DoubleArray> const& deltas=nullptr, bool normalize=true);
 

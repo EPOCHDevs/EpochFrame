@@ -8,14 +8,14 @@
 #include <catch2/catch_approx.hpp>
 #include <limits>   // for std::numeric_limits (inf, NaN)
 #include <cmath>    // for isnan checks
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 TEST_CASE("DataFrame common operations", "[DataFrame][CommonOps]")
 {
@@ -174,9 +174,9 @@ TEST_CASE("DataFrame - Map Methods", "[dataframe][map]") {
     std::vector<std::string> col3 = {"a", "b", "c", "d", "e"};
     
     // Create chunked arrays for each column
-    auto chunked_col1 = epochframe::factory::array::make_array<int32_t>(col1);
-    auto chunked_col2 = epochframe::factory::array::make_array<double>(col2);
-    auto chunked_col3 = epochframe::factory::array::make_array<std::string>(col3);
+    auto chunked_col1 = epoch_frame::factory::array::make_array<int32_t>(col1);
+    auto chunked_col2 = epoch_frame::factory::array::make_array<double>(col2);
+    auto chunked_col3 = epoch_frame::factory::array::make_array<std::string>(col3);
     
     // Create schema and fields
     std::vector<std::string> column_names = {"col1", "col2", "col3"};
@@ -191,8 +191,8 @@ TEST_CASE("DataFrame - Map Methods", "[dataframe][map]") {
     auto table = arrow::Table::Make(arrow::schema(fields), columns);
     
     // Create the DataFrame using the factory method
-    auto index = epochframe::factory::index::from_range(5);
-    DataFrame df = epochframe::make_dataframe(index, table);
+    auto index = epoch_frame::factory::index::from_range(5);
+    DataFrame df = epoch_frame::make_dataframe(index, table);
     
     SECTION("map - basic functionality") {
         // Apply map to each column
@@ -275,7 +275,7 @@ TEST_CASE("DataFrame - Map Methods", "[dataframe][map]") {
 TEST_CASE("Series - Map Functions", "[series][map]") {
     // Create a Series using the factory method
     std::vector<int32_t> vec = {1, 2, 3, 4, 5};
-    auto chunked_array = epochframe::factory::array::make_array<int32_t>(vec);
+    auto chunked_array = epoch_frame::factory::array::make_array<int32_t>(vec);
     Series s(chunked_array);
     
     SECTION("map - basic functionality") {
@@ -329,8 +329,8 @@ TEST_CASE("DataFrame - Apply Function", "[dataframe][apply]") {
     std::vector<int32_t> col2 = {10, 20, 30, 40, 50};
     
     // Create chunked arrays for each column
-    auto chunked_col1 = epochframe::factory::array::make_array<int32_t>(col1);
-    auto chunked_col2 = epochframe::factory::array::make_array<int32_t>(col2);
+    auto chunked_col1 = epoch_frame::factory::array::make_array<int32_t>(col1);
+    auto chunked_col2 = epoch_frame::factory::array::make_array<int32_t>(col2);
     
     // Create schema and fields
     std::vector<std::string> column_names = {"col1", "col2"};
@@ -344,8 +344,8 @@ TEST_CASE("DataFrame - Apply Function", "[dataframe][apply]") {
     auto table = arrow::Table::Make(arrow::schema(fields), columns);
     
     // Create the DataFrame using the factory method
-    auto index = epochframe::factory::index::from_range(5);
-    DataFrame df = epochframe::make_dataframe(index, table);
+    auto index = epoch_frame::factory::index::from_range(5);
+    DataFrame df = epoch_frame::make_dataframe(index, table);
     
     SECTION("apply - column-wise operations") {
         // Apply function to each column to double the values
@@ -361,7 +361,7 @@ TEST_CASE("DataFrame - Apply Function", "[dataframe][apply]") {
             }
             
             // Create a new series with the doubled values
-            auto doubled_array = epochframe::factory::array::make_array<int32_t>(doubled);
+            auto doubled_array = epoch_frame::factory::array::make_array<int32_t>(doubled);
             return Series(doubled_array, name);
         }, AxisType::Column);
         

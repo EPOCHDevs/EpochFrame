@@ -12,7 +12,7 @@
 #include <flatbuffers/array.h>
 #include "date_time/day_of_week.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
     template<typename T>
     requires std::is_scalar_v<T>
@@ -291,4 +291,4 @@ namespace epochframe {
     class TimeDelta operator-(arrow::TimestampScalar const &a, arrow::TimestampScalar const &b);
     arrow::TimestampScalar operator+(arrow::TimestampScalar const &a, TimeDelta const &b);
     arrow::TimestampScalar operator-(arrow::TimestampScalar const &a, TimeDelta const &b);
-} // namespace epochframe
+} // namespace epoch_frame

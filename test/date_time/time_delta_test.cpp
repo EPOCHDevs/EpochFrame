@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cmath>
 
-using namespace epochframe;
+using namespace epoch_frame;
 
 TEST_CASE("TimeDelta - Construction", "[time_delta]") {
     SECTION("Default Constructor") {

@@ -4,16 +4,16 @@
 // test_DataFrame_comparison_and_logical.cpp
 
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include <cmath>    // possibly for std::isnan, etc.
-#include "epochframe/series.h"
+#include "epoch_frame/series.h"
 #include "factory/series_factory.h"
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 TEST_CASE("DataFrame comparison and logical ops", "[DataFrame][Comparison][Logical]")
 {

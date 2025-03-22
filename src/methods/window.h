@@ -1,18 +1,18 @@
 #pragma once
 #include "date_time/time_delta.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <epoch_core/enum_wrapper.h>
 #include <optional>
 #include <vector>
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 
 
 CREATE_ENUM(EpochFrameEWMWindowType, Alpha, HalfLife, Span, CenterOfMass);
 CREATE_ENUM(EpochFrameRollingWindowClosedType, Left, Right, Both, Neither);
 
-namespace epochframe
+namespace epoch_frame
 {
 
     namespace window
@@ -222,4 +222,4 @@ namespace epochframe
 
     extern template class EWMWindowOperations<true>;
     extern template class EWMWindowOperations<false>;
-} // namespace epochframe
+} // namespace epoch_frame

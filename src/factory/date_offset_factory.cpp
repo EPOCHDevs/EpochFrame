@@ -5,6 +5,6 @@
 #include "date_offset_factory.h"
 
 
-namespace epochframe::factory::offset {
+namespace epoch_frame::factory::offset {
 
 }

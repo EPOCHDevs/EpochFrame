@@ -31,8 +31,8 @@ EpochFrame uses vcpkg for dependency management:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/epochframe.git
-cd epochframe
+git clone https://github.com/yourusername/epoch_frame.git
+cd epoch_frame
 
 # Build with CMake
 mkdir build && cd build
@@ -48,13 +48,13 @@ make test
 If you prefer to manage dependencies manually:
 
 ```bash
-# Install dependencies 
+# Install dependencies
 # Ubuntu/Debian
 sudo apt-get install libarrow-dev libparquet-dev
 
 # Build EpochFrame
-git clone https://github.com/yourusername/epochframe.git
-cd epochframe
+git clone https://github.com/yourusername/epoch_frame.git
+cd epoch_frame
 mkdir build && cd build
 cmake ..
 make
@@ -65,11 +65,11 @@ make
 ### Creating a DataFrame
 
 ```cpp
-#include <epochframe/dataframe.h>
-#include <epochframe/series.h>
+#include <epoch_frame/dataframe.h>
+#include <epoch_frame/series.h>
 
 // Create a DataFrame from vectors
-auto df = epochframe::DataFrame({
+auto df = epoch_frame::DataFrame({
     {"A", {1, 2, 3, 4, 5}},
     {"B", {10.1, 20.2, 30.3, 40.4, 50.5}},
     {"C", {"a", "b", "c", "d", "e"}}
@@ -125,10 +125,10 @@ auto multi_group = df.groupby({"A", "C"}).sum();
 
 ```cpp
 // Create a DatetimeIndex
-auto date_range = epochframe::date_range("2023-01-01", periods=5, freq="D");
+auto date_range = epoch_frame::date_range("2023-01-01", periods=5, freq="D");
 
 // Create a time series DataFrame
-auto ts_df = epochframe::DataFrame({
+auto ts_df = epoch_frame::DataFrame({
     {"values", {10, 20, 30, 40, 50}}
 }, date_range);
 
@@ -143,7 +143,7 @@ auto rolling = ts_df["values"].rolling(3).mean();
 
 ```cpp
 // Create a Series of strings
-auto str_series = epochframe::Series({"apple", "banana", "cherry", "date"});
+auto str_series = epoch_frame::Series({"apple", "banana", "cherry", "date"});
 
 // String operations
 auto upper = str_series.str().upper();
@@ -171,8 +171,8 @@ EpochFrame typically outperforms pandas, especially for large datasets and compu
 auto custom = df["A"].apply([](int val) { return val * val + 1; });
 
 // Custom aggregation
-auto custom_agg = df.agg([](const epochframe::Series& s) { 
-    return s.max() - s.min(); 
+auto custom_agg = df.agg([](const epoch_frame::Series& s) {
+    return s.max() - s.min();
 });
 ```
 
@@ -183,7 +183,7 @@ auto custom_agg = df.agg([](const epochframe::Series& s) {
 std::shared_ptr<arrow::Table> arrow_table = df.to_arrow();
 
 // Create EpochFrame DataFrame from Arrow Table
-auto new_df = epochframe::DataFrame(arrow_table);
+auto new_df = epoch_frame::DataFrame(arrow_table);
 ```
 
 ### Serialization
@@ -193,20 +193,20 @@ auto new_df = epochframe::DataFrame(arrow_table);
 df.to_parquet("data.parquet");
 
 // Read from Parquet
-auto parquet_df = epochframe::read_parquet("data.parquet");
+auto parquet_df = epoch_frame::read_parquet("data.parquet");
 
 // Save to CSV
 df.to_csv("data.csv");
 
 // Read from CSV
-auto csv_df = epochframe::read_csv("data.csv");
+auto csv_df = epoch_frame::read_csv("data.csv");
 ```
 
 ## Documentation
 
-Complete API documentation is available at [docs.epochframe.org](https://docs.epochframe.org).
+Complete API documentation is available at [docs.epoch_frame.org](https://docs.epoch_frame.org).
 
-For detailed tutorials and examples, see the [User Guide](https://docs.epochframe.org/user-guide/).
+For detailed tutorials and examples, see the [User Guide](https://docs.epoch_frame.org/user-guide/).
 
 ## Benchmarking
 

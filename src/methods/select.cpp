@@ -6,10 +6,10 @@
 #include "arrow/api.h"
 #include "index/index.h"
 #include "common/methods_helper.h"
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
     TableComponent
     Selections::filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const {
@@ -32,8 +32,8 @@ namespace epochframe {
         std::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
     }
 
-    TableComponent Selections::drop_null(epochframe::DropMethod how,
-                                        epochframe::AxisType axis,
+    TableComponent Selections::drop_null(epoch_frame::DropMethod how,
+                                        epoch_frame::AxisType axis,
                                         const std::vector<std::string> &subset,
                                         bool ignore_index) const {
        AssertFromStream(how == DropMethod::Any, "drop_null only support any");
@@ -113,7 +113,7 @@ namespace epochframe {
                 arrow::Datum condition = std::visit(variant_visitor, cond);
 
                 if (m_data.second.is_table()) {
-                    return TableOrArray{epochframe::arrow_utils::apply_function_to_table(m_data.second.table(), [&](const arrow::Datum &column, std::string const& column_name) {
+                    return TableOrArray{epoch_frame::arrow_utils::apply_function_to_table(m_data.second.table(), [&](const arrow::Datum &column, std::string const& column_name) {
                            arrow::Datum _condition, _other;
                            if (condition.kind() == arrow::Datum::TABLE) {
                                _condition = get_array(*condition.table(), column_name, *arrow::MakeScalar(false));

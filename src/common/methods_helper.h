@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include <vector>
 #include <arrow/api.h>
 #include <epoch_core/macros.h>
@@ -11,9 +11,9 @@
 #include <optional>
 #include "factory/array_factory.h"
 #include "factory/scalar_factory.h"
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 
-namespace epochframe {
+namespace epoch_frame {
     arrow::TablePtr add_column(const arrow::TablePtr &table, const std::string &name,
                                const arrow::ChunkedArrayPtr &array);
 

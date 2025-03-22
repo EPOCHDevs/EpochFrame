@@ -2,33 +2,23 @@
 
 #include <common/python_utils.h>
 #include <string>
-#include "../datetime.h"
+#include "date_time/datetime.h"
 #include <unordered_map>
 #include <optional>
 #include <vector>
-#include <epoch_lab_shared/enum_wrapper.h>
-#include "../calendars/holiday_calendar.h"
-#include "../class_registry.h"
+#include <epoch_core/enum_wrapper.h>
+#include "holidays/holiday.h"
+#include "class_registry.h"
 
 
 // Define enum for OpenCloseType with serialization support
 CREATE_ENUM(EpochFrameOpenCloseType,
     Default,   // Use default behavior defined by the class
     True,      // Time opens the market (equivalent to true)
-    False      // Time closes the market (equivalent to false) 
+    False      // Time closes the market (equivalent to false)
 );
 
-CREATE_ENUM(EpochFrameMarketTimeType,
-    MarketOpen,
-    MarketClose,
-    BreakStart,
-    BreakEnd,
-    Pre,
-    Post
-);
-
-
-namespace epochframe::calendar {
+namespace epoch_frame::calendar {
 
 // MarketTime structure with optional cutoff date
 struct MarketTime {
@@ -38,8 +28,8 @@ struct MarketTime {
 };
 // For representing sequences of market times (for time transitions)
 using MarketTimes = std::vector<MarketTime>;
-using RegularMarketTimes = ProtectedDict<EpochFrameMarketTimeType, MarketTimes>;
-using OpenCloseMap = ProtectedDict<EpochFrameMarketTimeType, EpochFrameOpenCloseType>;
+using RegularMarketTimes = ProtectedDict<MarketTimes>;
+using OpenCloseMap = ProtectedDict<EpochFrameOpenCloseType>;
 using namespace std::chrono_literals;
 
 struct Interruption {
@@ -79,17 +69,17 @@ struct MarketCalendarOptions {
 };
 
 const RegularMarketTimes REGULAR_MARKET_TIMES{
-    {EpochFrameMarketTimeType::MarketOpen, MarketTimes{MarketTime{Time{0h}}}},
-    {EpochFrameMarketTimeType::MarketClose, MarketTimes{MarketTime{Time{23h}}}}
+    std::pair{EpochFrameMarketTimeType::MarketOpen, MarketTimes{MarketTime{Time{0h}}}},
+    std::pair{EpochFrameMarketTimeType::MarketClose, MarketTimes{MarketTime{Time{23h}}}}
 };
 
 const OpenCloseMap OPEN_CLOSE_MAP{
-    {EpochFrameMarketTimeType::MarketOpen, EpochFrameOpenCloseType::True},
-    {EpochFrameMarketTimeType::MarketClose, EpochFrameOpenCloseType::False},
-    {EpochFrameMarketTimeType::BreakStart, EpochFrameOpenCloseType::False},
-    {EpochFrameMarketTimeType::BreakEnd, EpochFrameOpenCloseType::True},
-    {EpochFrameMarketTimeType::Pre, EpochFrameOpenCloseType::True},
-    {EpochFrameMarketTimeType::Post, EpochFrameOpenCloseType::False}
+    std::pair{EpochFrameMarketTimeType::MarketOpen, EpochFrameOpenCloseType::True},
+    std::pair{EpochFrameMarketTimeType::MarketClose, EpochFrameOpenCloseType::False},
+    std::pair{EpochFrameMarketTimeType::BreakStart, EpochFrameOpenCloseType::False},
+    std::pair{EpochFrameMarketTimeType::BreakEnd, EpochFrameOpenCloseType::True},
+    std::pair{EpochFrameMarketTimeType::Pre, EpochFrameOpenCloseType::True},
+    std::pair{EpochFrameMarketTimeType::Post, EpochFrameOpenCloseType::False}
 };
 
 class MarketCalendar {
@@ -139,7 +129,7 @@ class MarketCalendar {
         std::optional<MarketTime> close_time_on(const Date& date) const {
             return get_time_on(EpochFrameMarketTimeType::MarketClose, date);
         }
-        
+
         std::optional<MarketTime> break_start_on(const Date& date) const {
             return get_time_on(EpochFrameMarketTimeType::BreakStart, date);
         }
@@ -206,8 +196,8 @@ class MarketCalendar {
 
         int64_t close_offset() const {
             return get_offset(EpochFrameMarketTimeType::MarketClose);
-        }        
-        
+        }
+
         Interruptions interruptions() const noexcept {
             return m_options.interruptions;
         }
@@ -224,17 +214,17 @@ class MarketCalendar {
 
         Series special_dates(EpochFrameMarketTimeType market_time, const Date& start, const Date& end, bool filter_holidays = true);
 
-        DataFrame schedule(const Date& start_date, const Date& end_date, std::string const& tz = "UTC", 
-        EpochFrameMarketTimeType start = EpochFrameMarketTimeType::MarketOpen, 
-        EpochFrameMarketTimeType end = EpochFrameMarketTimeType::MarketClose, 
+        DataFrame schedule(const Date& start_date, const Date& end_date, std::string const& tz = "UTC",
+        EpochFrameMarketTimeType start = EpochFrameMarketTimeType::MarketOpen,
+        EpochFrameMarketTimeType end = EpochFrameMarketTimeType::MarketClose,
         bool force_special_times = true, std::vector<EpochFrameMarketTimeType> market_times = {}, bool interruptions = false);
 
-        DataFrame schedule_from_days(IndexPtr const& days, std::string const& tz = "UTC", 
-        EpochFrameMarketTimeType start = EpochFrameMarketTimeType::MarketOpen, 
-        EpochFrameMarketTimeType end = EpochFrameMarketTimeType::MarketClose, 
+        DataFrame schedule_from_days(IndexPtr const& days, std::string const& tz = "UTC",
+        EpochFrameMarketTimeType start = EpochFrameMarketTimeType::MarketOpen,
+        EpochFrameMarketTimeType end = EpochFrameMarketTimeType::MarketClose,
         bool force_special_times = true, std::vector<EpochFrameMarketTimeType> market_times = {}, bool interruptions = false);
 
-        DataFrame date_range_htf(const DateOffsetHandlerPtr& frequency, const Date& start, const Date& end, 
+        DataFrame date_range_htf(const DateOffsetHandlerPtr& frequency, const Date& start, const Date& end,
         std::optional<int64_t> periods = {}, std::optional<bool> closed = {});
 
     private:
@@ -262,7 +252,7 @@ class MarketCalendar {
 
         IndexPtr tryholidays(const AbstractHolidayCalendarPtr& cal, const Date& s, const Date& e);
 
-        Series special_dates(std::vector<std::pair<Time, std::variant<IndexPtr, uint8_t>>> calendars, 
+        Series special_dates(std::vector<std::pair<Time, std::variant<IndexPtr, uint8_t>>> calendars,
         std::vector<std::pair<Time, IndexPtr>> ad_hoc_dates, const Date& start, const Date& end);
 
 };

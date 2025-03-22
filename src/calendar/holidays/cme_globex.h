@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 using namespace std::chrono_literals;
 
@@ -218,4 +218,4 @@ const HolidayData ChristmasCME = {
     .observance = nearest_workday,
 };
 
-} // namespace epochframe
+} // namespace epoch_frame

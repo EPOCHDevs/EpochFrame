@@ -6,7 +6,7 @@
 #include "method_base.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     class Comparison : public MethodBase {
 
     public:

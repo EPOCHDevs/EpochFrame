@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
-#include <epochframe/series.h>
-#include <epochframe/dataframe.h>
+#include <epoch_frame/series.h>
+#include <epoch_frame/dataframe.h>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -18,7 +18,7 @@ extern void recordBenchmark(const std::string& category, const std::string& oper
                          size_t dataSize, double efTime, double pdTime);
 
 // Namespaces
-namespace efo = epochframe;
+namespace efo = epoch_frame;
 using namespace efo;
 using std::setprecision;
 using std::fixed;
@@ -79,7 +79,7 @@ std::string generate_random_string(size_t length, std::mt19937& gen) {
 }
 
 // Helper function to create a Series with random string data
-epochframe::Series create_random_string_series(size_t size) {
+epoch_frame::Series create_random_string_series(size_t size) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> length_dis(5, 15);  // Random string lengths between 5 and 15
@@ -102,7 +102,7 @@ epochframe::Series create_random_string_series(size_t size) {
         throw std::runtime_error(status.ToString());
     }
     
-    return epochframe::Series(array);
+    return epoch_frame::Series(array);
 }
 
 // Create a Python script to run pandas string operation benchmarks

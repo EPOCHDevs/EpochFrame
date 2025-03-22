@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 
 #define CALL_STRING_OPERATION(name) Type name() const { return call_function(#name); }
 #define CALL_TRIM_OPERATION(name) Type name(const arrow::compute::TrimOptions& options) const { return call_function(#name, &options); }
@@ -11,7 +11,7 @@
 #define CALL_SPLIT_OPERATION(name) Type name(const arrow::compute::SplitOptions& options) const { return call_function(#name, &options); }
 #define CALL_REPLACE_OPERATION(name) Type name(const arrow::compute::ReplaceSliceOptions& options) const { return call_function(#name, &options); }
 #define CALL_REPLACE_SUBSTRING_OPERATION(name) Type name(const arrow::compute::ReplaceSubstringOptions& options) const { return call_function(#name, &options); }
-namespace epochframe {
+namespace epoch_frame {
     template<bool is_array>
     class StringOperation {
 

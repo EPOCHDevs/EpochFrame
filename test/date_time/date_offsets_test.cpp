@@ -9,14 +9,14 @@
 #include "factory/scalar_factory.h"
 #include "common/asserts.h"
 #include <iostream>
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 #include "date_time/relative_delta_options.h"
 #include "date_time/day_of_week.h"
 
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::scalar;
-namespace efo = epochframe::factory::offset;
-using namespace epochframe;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::scalar;
+namespace efo = epoch_frame::factory::offset;
+using namespace epoch_frame;
 
 // Helper function to create timestamp scalars for testing
 arrow::TimestampScalar create_timestamp(int64_t value) {
@@ -25,7 +25,7 @@ arrow::TimestampScalar create_timestamp(int64_t value) {
 }
 
 // Helper function to get a timestamp value from an IIndex at a specific position
-int64_t get_timestamp_value(const std::shared_ptr<epochframe::IIndex>& index, int pos) {
+int64_t get_timestamp_value(const std::shared_ptr<epoch_frame::IIndex>& index, int pos) {
     auto scalar = index->array().value()->GetScalar(pos).ValueOrDie();
     auto ts_scalar = std::static_pointer_cast<arrow::TimestampScalar>(scalar);
     REQUIRE(ts_scalar != nullptr);
@@ -660,7 +660,7 @@ TEST_CASE("DateRange - With New Offset Types", "[date_range]") {
 TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     SECTION("Basic RelativeDelta Offset") {
         // Create a relative delta offset with 2 days
-        epochframe::RelativeDeltaOption delta_option{.days = 2.0};
+        epoch_frame::RelativeDeltaOption delta_option{.days = 2.0};
         auto delta_handler = efo::date_offset(1, delta_option);
         REQUIRE(delta_handler->code() == "DateOffset(RelativeDelta(days=2, ))");
         REQUIRE(delta_handler->is_fixed() == false);
@@ -678,7 +678,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
 
     SECTION("Combined RelativeDelta Offset - Multiple Units") {
         // Create a complex relative delta with multiple components
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .years = 1.0,
             .months = 2.0,
             .days = 5.0
@@ -695,7 +695,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
 
     SECTION("RelativeDelta with Time Components") {
         // Create a relative delta with time components
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .hours = 3,
             .minutes = 15,
             .seconds = 30
@@ -712,7 +712,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
 
     SECTION("Negative RelativeDelta Offset") {
         // Create a negative relative delta
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .days = -3.0,
             .hours = -6
         };
@@ -728,7 +728,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
 
     /* Commenting out date_range tests until the Arrow less_than function is properly registered */
     SECTION("DateRange with RelativeDelta - Daily Range") {
-        epochframe::RelativeDeltaOption delta_option{.days = 1.0};
+        epoch_frame::RelativeDeltaOption delta_option{.days = 1.0};
         auto delta_handler = efo::date_offset(1, delta_option);
         
         auto start_date = "2023-01-01"_date;
@@ -744,7 +744,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     }
 
     SECTION("DateRange with RelativeDelta - Weekly Range") {
-        epochframe::RelativeDeltaOption delta_option{.weeks = 1.0};
+        epoch_frame::RelativeDeltaOption delta_option{.weeks = 1.0};
         auto delta_handler = efo::date_offset(1, delta_option);
         
         auto start_date = "2023-01-01"_date;
@@ -767,7 +767,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     }
 
     SECTION("DateRange with Complex RelativeDelta") {
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .months = 1.0,
             .day = 15
         };
@@ -803,9 +803,9 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     
     SECTION("DateRange with Weekday RelativeDelta") {
         // Test for weekday offsets - advancing to next Monday
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .weeks = 1.0,
-            .weekday = epochframe::FR
+            .weekday = epoch_frame::FR
         };
         auto weekday_handler = efo::date_offset(1, delta_option);
         
@@ -834,7 +834,7 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     
     SECTION("DateRange with Year-Month End RelativeDelta") {
         // Test for year-end and month-end combination
-        epochframe::RelativeDeltaOption delta_option{
+        epoch_frame::RelativeDeltaOption delta_option{
             .months = 3.0,  // Quarterly
             .day = 31       // Month end
         };

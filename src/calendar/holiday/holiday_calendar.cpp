@@ -1,18 +1,16 @@
 #include "holiday_calendar.h"
-
 #include <iostream>
+#include <epoch_core/macros.h>
+#include "epoch_frame/common.h"
 
-#include "epoch_lab_shared/macros.h"
-#include "epochframe/common.h"
-
-namespace epochframe::calendar
+namespace epoch_frame::calendar
 {
 
     AbstractHolidayCalendar::AbstractHolidayCalendar(const AbstractHolidayCalendarData& data)
         : name(data.name), rules(data.rules)
     {
-        AssertWithTraceFromFormat(data.rules.size() > 0, "Rules must contain at least one holiday");
-        AssertWithTraceFromFormat(!data.name.empty(), "Name must be non-empty");
+        AssertFromFormat(data.rules.size() > 0, "Rules must contain at least one holiday");
+        AssertFromFormat(!data.name.empty(), "Name must be non-empty");
     }
 
     // Find a rule by name
@@ -105,4 +103,4 @@ namespace epochframe::calendar
         calendar_factories[data.name] = [data]()
         { return std::make_shared<AbstractHolidayCalendar>(data); };
     }
-} // namespace epochframe
+} // namespace epoch_frame

@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 
 using namespace std::chrono_literals;
 
@@ -426,4 +426,4 @@ const HolidayData ChineseNationalDay = {
     .days_of_week = std::unordered_set<int>{0, 1, 2, 3, 4, 5, 6},
 };
 
-} // namespace epochframe
+} // namespace epoch_frame

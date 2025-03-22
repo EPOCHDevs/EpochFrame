@@ -1,5 +1,5 @@
 #pragma once
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 #include "date_time/date_offsets.h"
 
 
@@ -7,7 +7,7 @@ CREATE_ENUM(EpochTimeGrouperClosedType, Left, Right);
 CREATE_ENUM(EpochTimeGrouperLabelType, Left, Right);
 CREATE_ENUM(EpochTimeGrouperOrigin, Epoch, Start, StartDay, EndDay, End);
 
-namespace epochframe {
+namespace epoch_frame {
 using OriginType = std::variant<DateTime, EpochTimeGrouperOrigin>;
 struct TimeGrouperOptions {
     DateOffsetHandlerPtr freq;

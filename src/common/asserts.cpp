@@ -5,7 +5,7 @@
 #include "factory/array_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     void AssertStatusIsOk(const arrow::Status &status) {
         if (!status.ok()) throw std::runtime_error(status.ToString());
     }

@@ -4,7 +4,7 @@
 #include "factory/date_offset_factory.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 using namespace factory::offset;
 using namespace std::chrono_literals;
     constexpr auto previous_saturday = [](const DateTime& date) -> DateTime {

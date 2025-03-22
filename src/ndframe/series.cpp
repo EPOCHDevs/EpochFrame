@@ -1,13 +1,13 @@
 //
 // Created by adesola on 2/16/25.
 //
-#include "epochframe/series.h"
+#include "epoch_frame/series.h"
 #include "factory/index_factory.h"
 #include "common/asserts.h"
 #include "index/index.h"
 #include <arrow/api.h>
 #include <tabulate/table.hpp>
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include "methods/arith.h"
 #include <arrow/chunked_array.h>
 #include <factory/array_factory.h>
@@ -18,7 +18,7 @@
 #include "common/methods_helper.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     // ------------------------------------------------------------------------
     // Constructors / Destructor / Assignment
     // ------------------------------------------------------------------------

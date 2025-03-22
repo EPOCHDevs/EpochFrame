@@ -1,16 +1,14 @@
 #pragma once
 
 #include <string>
-#include "../date_offsets.h"
+#include "date_time/date_offsets.h"
 #include <optional>
-#include "../day_of_week.h"
+#include "date_time/day_of_week.h"
 #include <vector>
 #include <set>
-#include "epochframe/aliases.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/aliases.h"
 
-
-namespace epochframe
+namespace epoch_frame
 {
     using Observance = std::function<DateTime(DateTime const&)>;
     struct HolidayData {
@@ -24,4 +22,4 @@ namespace epochframe
        Observance observance{nullptr};
        std::set<EpochDayOfWeek> days_of_week;
     };
-} // namespace epochframe
+} // namespace epoch_frame

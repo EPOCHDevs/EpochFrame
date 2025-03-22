@@ -55,7 +55,7 @@ namespace arrow{
 }
 
 // Forward-declare IIndex and NDFrame for pointer aliases:
-namespace epochframe {
+namespace epoch_frame {
     class IIndex;
 
     class Scalar;
@@ -100,4 +100,4 @@ namespace epochframe {
         class AbstractHolidayCalendar;
         using AbstractHolidayCalendarPtr = std::shared_ptr<AbstractHolidayCalendar>;
     }
-} // namespace epochframe
+} // namespace epoch_frame

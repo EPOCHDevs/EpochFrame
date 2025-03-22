@@ -10,7 +10,7 @@
 #include "methods/groupby.h"
 #include "methods/window.h"
 
-namespace epochframe {
+namespace epoch_frame {
     class Series : public NDFrame<Series, arrow::ChunkedArray> {
 
     public:

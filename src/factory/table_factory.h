@@ -2,10 +2,10 @@
 
 #include <arrow/api.h>
 #include <epoch_core/macros.h>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 
 
-namespace epochframe::factory::table {
+namespace epoch_frame::factory::table {
 
 // Creates an empty arrow Table with the given schema (0 rows).
 arrow::TablePtr make_empty_table(const arrow::SchemaPtr& schema);
@@ -42,4 +42,4 @@ int64_t get_size(std::shared_ptr<T> const& arr) {
     }
 }
 
-} // namespace epochframe::factory::table
+} // namespace epoch_frame::factory::table

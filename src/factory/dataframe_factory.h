@@ -2,11 +2,11 @@
 
 #include <arrow/array/builder_base.h>
 #include <arrow/table.h>
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include "array_factory.h"
 #include "index/arrow_index.h"
 
-namespace epochframe {
+namespace epoch_frame {
     DataFrame make_dataframe(arrow::TablePtr const &data);
 
     DataFrame make_dataframe(IndexPtr const &index, arrow::TablePtr const &data);

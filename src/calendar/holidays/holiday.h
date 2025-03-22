@@ -1,11 +1,11 @@
 #pragma once
 
 #include "holiday_data.h"
-#include "epochframe/aliases.h"
-#include "epochframe/array.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/array.h"
 #include "factory/date_offset_factory.h"
 
-namespace epochframe::calendar
+namespace epoch_frame::calendar
 {
     constexpr auto next_monday = [](const DateTime& date) -> DateTime {
         switch (date.weekday()) {
@@ -131,7 +131,7 @@ namespace epochframe::calendar
     using HolidayPtr = std::shared_ptr<Holiday>;
 
     using namespace std::literals::chrono_literals;
-    using epochframe::factory::offset::date_offset;
+    using epoch_frame::factory::offset::date_offset;
 
     const HolidayData USMemorialDay = {
         .name = "Memorial Day",
@@ -179,15 +179,15 @@ namespace epochframe::calendar
         .name = "Good Friday",
         .month = std::chrono::January,
         .day = 1d,
-        .offset = {epochframe::factory::offset::easter_offset(), epochframe::factory::offset::days(-2)}
+        .offset = {epoch_frame::factory::offset::easter_offset(), epoch_frame::factory::offset::days(-2)}
     };
 
     const HolidayData EasterMonday = {
         .name = "Easter Monday",
         .month = std::chrono::January,
         .day = 1d,
-        .offset = {epochframe::factory::offset::easter_offset(), epochframe::factory::offset::days(1)}
+        .offset = {epoch_frame::factory::offset::easter_offset(), epoch_frame::factory::offset::days(1)}
     };
 
 
-} // namespace epochframe
+} // namespace epoch_frame

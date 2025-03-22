@@ -1,1 +1,1 @@
-target_sources(epochframe PRIVATE search_sorted.cpp)
+target_sources(epoch_frame PRIVATE search_sorted.cpp)

@@ -15,8 +15,8 @@
 #include <vector>
 #include <string>
 
-using namespace epochframe::factory::index;
-using namespace epochframe;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame;
 
 TEST_CASE("make_object_index from std::vector<std::string>", "[object_index]")
 {

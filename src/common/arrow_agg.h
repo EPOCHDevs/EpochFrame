@@ -5,10 +5,10 @@
 #pragma once
 
 #include <flatbuffers/array.h>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 
 
-namespace epochframe::agg {
+namespace epoch_frame::agg {
     bool all(arrow::ChunkedArrayPtr const &, bool skipNA = true, int minCount = 1);
     bool all(arrow::ArrayPtr const & array, bool skipNA = true, int minCount = 1);
 

@@ -10,7 +10,7 @@
 #include <arrow/type.h>
 #include <arrow/compute/api.h>
 
-namespace epochframe::factory::index {
+namespace epoch_frame::factory::index {
     IndexPtr make_range(std::vector<uint64_t> const& x, MonotonicDirection monotonic_direction) {
         return std::make_shared<RangeIndex>(PtrCast<arrow::UInt64Array>(array::make_contiguous_array(x)), monotonic_direction);
     }
@@ -217,4 +217,4 @@ namespace epochframe::factory::index {
     }
 
 
-} // namespace epochframe::factory::index
+} // namespace epoch_frame::factory::index

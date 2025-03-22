@@ -3,14 +3,14 @@
 //
 
 #pragma once
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include <variant>
 #include "index/index.h"
 #include "common/table_or_array.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     class FrameOrSeries {
     public:
         FrameOrSeries() = default;

@@ -14,16 +14,16 @@
 #include "factory/index_factory.h"
 #include "index/datetime_index.h"
 
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include <utility>
 #include <common/methods_helper.h>
-#include <epochframe/common.h>
+#include <epoch_frame/common.h>
 #include <factory/array_factory.h>
 #include <index/arrow_index.h>
 #include <vector_functions/arrow_vector_functions.h>
 #include <regex>
 
-namespace epochframe {
+namespace epoch_frame {
     namespace cp = arrow::compute;
     namespace ac = arrow::acero;
 

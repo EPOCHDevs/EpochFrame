@@ -1,6 +1,6 @@
-#include <epochframe/dataframe.h>
-#include <epochframe/series.h>
-#include <epochframe/scalar.h>
+#include <epoch_frame/dataframe.h>
+#include <epoch_frame/series.h>
+#include <epoch_frame/scalar.h>
 #include "date_time/datetime.h"
 #include "factory/date_offset_factory.h"
 #include "index/datetime_index.h"
@@ -19,11 +19,11 @@ int main() {
     std::cout << "=======================================" << std::endl;
 
     // Create a date range for the time series (daily data for a month)
-    auto start_date = epochframe::datetime::parse_date("2023-01-01");
+    auto start_date = epoch_frame::datetime::parse_date("2023-01-01");
     int num_days = 30;
     
     // Generate daily datetime index
-    auto date_range = epochframe::factory::offset::date_range(
+    auto date_range = epoch_frame::factory::offset::date_range(
         start_date, num_days, "D");
     
     // Generate some random stock price data
@@ -44,10 +44,10 @@ int main() {
     }
     
     // Create a time series DataFrame with stock prices
-    epochframe::DataFrame stock_data({
+    epoch_frame::DataFrame stock_data({
         {"Price", prices},
         {"Volume", std::vector<int>(num_days, 100000)} // Constant volume for simplicity
-    }, std::make_shared<epochframe::DatetimeIndex>(date_range));
+    }, std::make_shared<epoch_frame::DatetimeIndex>(date_range));
     
     std::cout << "\n1. Daily stock price data:" << std::endl;
     std::cout << stock_data << std::endl;
@@ -95,8 +95,8 @@ int main() {
     std::cout << stock_data << std::endl;
     
     // Filter based on date range
-    auto mid_month = epochframe::datetime::parse_date("2023-01-15");
-    auto end_month = epochframe::datetime::parse_date("2023-01-30");
+    auto mid_month = epoch_frame::datetime::parse_date("2023-01-15");
+    auto end_month = epoch_frame::datetime::parse_date("2023-01-30");
     
     auto filtered_dates = stock_data.loc(mid_month, end_month);
     

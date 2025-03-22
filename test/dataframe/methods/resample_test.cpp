@@ -6,15 +6,15 @@
 #include "factory/index_factory.h"
 #include "factory/date_offset_factory.h"
 #include "factory/dataframe_factory.h"
-#include "epochframe/series.h"
-#include "epochframe/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/dataframe.h"
 #include "index/index.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/enums.h"
 #include "factory/scalar_factory.h"
 #include <chrono>
 #include <vector>
 #include <iostream>
-namespace efo = epochframe;
+namespace efo = epoch_frame;
 using namespace efo::factory::array;
 using namespace efo::factory::offset;
 using namespace efo::factory::index;
@@ -33,7 +33,7 @@ arrow::ArrayPtr make_array(const std::vector<efo::DateTime>& dates) {
 }
 
 // Utility function to create a multi-index (struct index) from arrays with optional names
-epochframe::IndexPtr make_multi_index(const std::vector<arrow::ArrayPtr>& arrays,
+epoch_frame::IndexPtr make_multi_index(const std::vector<arrow::ArrayPtr>& arrays,
                                      const std::vector<std::string>& field_names = {}) {
     // Create field names if not provided or if the size doesn't match
     std::vector<std::string> names = field_names;
@@ -53,7 +53,7 @@ epochframe::IndexPtr make_multi_index(const std::vector<arrow::ArrayPtr>& arrays
     auto struct_array = arrow::StructArray::Make(arrays, names).ValueOrDie();
 
     // Create index from struct array
-    return epochframe::factory::index::make_index(struct_array, std::nullopt, "");
+    return epoch_frame::factory::index::make_index(struct_array, std::nullopt, "");
 }
 
 TEST_CASE("Generate Bins", "[resample]") {

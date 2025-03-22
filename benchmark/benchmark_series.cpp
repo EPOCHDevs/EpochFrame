@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <epochframe/series.h>
+#include <epoch_frame/series.h>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -7,11 +7,11 @@
 #include <chrono>
 #include <cstdio> // for FILE, popen, pclose
 #include <arrow/api.h>
-#include <epochframe/scalar.h>
+#include <epoch_frame/scalar.h>
 #include <methods/window.h>
 
 // Namespaces
-namespace efo = epochframe;
+namespace efo = epoch_frame;
 using namespace efo;
 
 // Get path to Python executable in virtual environment
@@ -20,7 +20,7 @@ std::string get_series_python_path() {
 }
 
 // Helper function to create a Series with random data
-epochframe::Series create_random_series(size_t size) {
+epoch_frame::Series create_random_series(size_t size) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-100.0, 100.0);
@@ -41,7 +41,7 @@ epochframe::Series create_random_series(size_t size) {
         throw std::runtime_error(status.ToString());
     }
     
-    return epochframe::Series(array);
+    return epoch_frame::Series(array);
 }
 
 // Create a Python script to run pandas Series benchmarks

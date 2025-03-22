@@ -10,13 +10,13 @@
 #include <memory>
 #include <stdexcept>
 #include <fmt/format.h>
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
 #include <tbb/task_arena.h>
 #include "factory/array_factory.h"
 
-namespace epochframe::arrow_utils {
+namespace epoch_frame::arrow_utils {
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end) {
         return index.Make(slice_array(index.array().value(), start, end));
     }
@@ -248,12 +248,12 @@ namespace epochframe::arrow_utils {
 
     TableOrArray diff(const TableOrArray &table, int64_t periods, bool pad) {
         arrow::compute::PairwiseOptions options{periods};
-        
+
         // Process the array chunk by chunk to avoid "Vector kernel cannot execute chunkwise" error
         if (table.is_chunked_array()) {
             auto chunked_array = table.chunked_array();
             std::vector<std::shared_ptr<arrow::Array>> result_chunks;
-            
+
             for (int i = 0; i < chunked_array->num_chunks(); i++) {
                 auto chunk = chunked_array->chunk(i);
                 auto array_result = arrow::compute::CallFunction("pairwise_diff", {chunk}, &options);
@@ -262,7 +262,7 @@ namespace epochframe::arrow_utils {
                 }
                 result_chunks.push_back(array_result.ValueOrDie().make_array());
             }
-            
+
             auto result = std::make_shared<arrow::ChunkedArray>(result_chunks);
             if (pad) {
                 return TableOrArray{result};
@@ -277,7 +277,7 @@ namespace epochframe::arrow_utils {
             return TableOrArray{apply_function_to_table(table.table(), [&](const arrow::Datum &arr, std::string const&) {
                 const auto& chunked_array = arr.chunked_array();
                 std::vector<std::shared_ptr<arrow::Array>> result_chunks;
-                
+
                 for (int i = 0; i < chunked_array->num_chunks(); i++) {
                     auto chunk = chunked_array->chunk(i);
                     auto array_result = arrow::compute::CallFunction("pairwise_diff", {chunk}, &options);
@@ -286,7 +286,7 @@ namespace epochframe::arrow_utils {
                     }
                     result_chunks.push_back(array_result.ValueOrDie().make_array());
                 }
-                
+
                 auto result = std::make_shared<arrow::ChunkedArray>(result_chunks);
                 if (pad) {
                     return result;
@@ -304,7 +304,7 @@ namespace epochframe::arrow_utils {
         if (periods == 0) {
             return array;
         }
-        
+
         auto abs_periods = std::abs(periods);
         auto nans = factory::array::make_null_array(abs_periods, array->type());
         if (abs_periods == array->length()) {
@@ -343,54 +343,54 @@ namespace epochframe::arrow_utils {
         return TableOrArray{_pct_change(table.chunked_array(), periods)};
     }
 
-    arrow::ScalarPtr cov(const arrow::ChunkedArrayPtr &array, 
-                        const arrow::ChunkedArrayPtr &other, 
-                        std::optional<int64_t> min_periods, 
+    arrow::ScalarPtr cov(const arrow::ChunkedArrayPtr &array,
+                        const arrow::ChunkedArrayPtr &other,
+                        std::optional<int64_t> min_periods,
                         int64_t ddof) {
         AssertFromFormat(array->length() == other->length(), "covariance: array and other must have the same length");
-        
+
         // Convert chunked arrays to contiguous arrays for easier processing
         auto x_array = AssertContiguousArrayResultIsOk(arrow::Concatenate(array->chunks()));
         auto y_array = AssertContiguousArrayResultIsOk(arrow::Concatenate(other->chunks()));
-        
+
         // Calculate means
         arrow::compute::ScalarAggregateOptions agg_options(/*skip_nulls=*/true, /*min_count=*/min_periods.value_or(1));
         auto x_mean = AssertCastScalarResultIsOk<arrow::DoubleScalar>(
             call_unary_agg_compute(x_array, "mean", agg_options));
         auto y_mean = AssertCastScalarResultIsOk<arrow::DoubleScalar>(
             call_unary_agg_compute(y_array, "mean", agg_options));
-        
+
         if (!x_mean.is_valid || !y_mean.is_valid) {
             // Return null scalar if we can't compute means
             return std::make_shared<arrow::DoubleScalar>();  // Invalid/null scalar
         }
-        
+
         // Calculate (x - mean_x) for each element
         auto x_centered = call_compute_array({arrow::Datum(x_array), arrow::Datum(x_mean)}, "subtract");
-        
+
         // Calculate (y - mean_y) for each element
         auto y_centered = call_compute_array({arrow::Datum(y_array), arrow::Datum(y_mean)}, "subtract");
-        
+
         // Calculate (x - mean_x) * (y - mean_y)
         auto products = call_compute_array({arrow::Datum(x_centered), arrow::Datum(y_centered)}, "multiply");
-        
+
         // Calculate sum of products
         auto sum = AssertCastScalarResultIsOk<arrow::DoubleScalar>(
             call_unary_agg_compute(products, "sum", agg_options));
-        
+
         if (!sum.is_valid) {
             return std::make_shared<arrow::DoubleScalar>();  // Invalid/null scalar
         }
-        
+
         // Count valid pairs
         arrow::compute::CountOptions count_options;
         count_options.mode = arrow::compute::CountOptions::ONLY_VALID;
         auto valid_count = AssertCastScalarResultIsOk<arrow::Int64Scalar>(
             call_unary_agg_compute(products, "count", count_options));
-        
+
         // Calculate covariance: sum / (count - ddof)
         double cov_value = sum.value / (valid_count.value - ddof);
-        
+
         // Return the covariance as a scalar
         return std::make_shared<arrow::DoubleScalar>(cov_value);
     }
@@ -399,27 +399,27 @@ namespace epochframe::arrow_utils {
                            std::optional<int64_t> min_periods,
                            int64_t ddof) {
         AssertFromFormat(array->length() == other->length(), "correlation: array and other must have the same length");
-        
+
         // Default min_periods if not specified
         int64_t min_p = min_periods.value_or(1);
-        
+
         // Calculate covariance
         auto cov_scalar = cov(array, other, min_p, ddof);
-        
+
         // Calculate variances for each array
         auto var_x_scalar = cov(array, array, min_p, ddof);
         auto var_y_scalar = cov(other, other, min_p, ddof);
-        
+
         // Check if all scalars are valid
         if (!cov_scalar->is_valid || !var_x_scalar->is_valid || !var_y_scalar->is_valid) {
             return std::make_shared<arrow::DoubleScalar>(); // Return null scalar
         }
-        
+
         // Extract values from the scalars
         auto cov_val = static_cast<arrow::DoubleScalar*>(cov_scalar.get())->value;
         auto var_x_val = static_cast<arrow::DoubleScalar*>(var_x_scalar.get())->value;
         auto var_y_val = static_cast<arrow::DoubleScalar*>(var_y_scalar.get())->value;
-        
+
         // Calculate Pearson correlation
         double corr_val;
         if (var_x_val <= 0 || var_y_val <= 0) {
@@ -427,9 +427,9 @@ namespace epochframe::arrow_utils {
         } else {
             corr_val = cov_val / std::sqrt(var_x_val * var_y_val);
         }
-        
+
         return std::make_shared<arrow::DoubleScalar>(corr_val);
     }
-    
-    
-} // namespace epochframe::arrow_utils
+
+
+} // namespace epoch_frame::arrow_utils

@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include <arrow/compute/api.h>
 
-namespace epochframe {
+namespace epoch_frame {
     class StructOperation {
     public:
         StructOperation(arrow::ArrayPtr const&);

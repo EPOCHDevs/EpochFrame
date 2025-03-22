@@ -5,7 +5,7 @@
 #include "index/datetime_index.h"
 #include <execution>
 
-namespace epochframe
+namespace epoch_frame
 {
     std::vector<int64_t> generate_bins(Array const& values, Array const& binner,
                                        EpochTimeGrouperClosedType closed)
@@ -419,4 +419,4 @@ namespace epochframe
         }
         return {binner, bin_edges};
     }
-} // namespace epochframe
+} // namespace epoch_frame

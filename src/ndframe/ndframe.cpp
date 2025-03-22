@@ -4,8 +4,8 @@
 //
 
 #include "ndframe.h"
-#include "epochframe/scalar.h"
-#include "epochframe/series.h"
+#include "epoch_frame/scalar.h"
+#include "epoch_frame/series.h"
 #include "factory/index_factory.h"
 #include "factory/table_factory.h"
 #include <arrow/api.h>
@@ -23,10 +23,10 @@
 #include <tbb/parallel_for_each.h>
 #include "common/table_or_array.h"
 #include "common/series_or_scalar.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include "common/arrow_compute_utils.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
 //////////////////////////////////////////////////////////////////////////
 /// CONSTRUCTORS, DESTRUCTOR, ASSIGNMENT
@@ -939,4 +939,4 @@ namespace epochframe {
             }
     }
 
-} // namespace epochframe
+} // namespace epoch_frame

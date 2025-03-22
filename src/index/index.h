@@ -10,13 +10,13 @@
 #include <arrow/scalar.h>
 #include <arrow/compute/api.h>
 
-#include "epochframe/aliases.h"
-#include "epochframe/scalar.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/scalar.h"
+#include "epoch_frame/enums.h"
 #include "common/indexer.h"
-#include "epochframe/integer_slice.h"
+#include "epoch_frame/integer_slice.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
 /// Abstract base class for an IIndex, closely mirroring Pandas IIndex behavior.
 /// Implementation details vary for RangeIndex, DateTimeIndex, StringIndex, etc.
@@ -179,4 +179,4 @@ namespace epochframe {
         virtual TemporalOperation<true> dt() const = 0;
     };
 
-} // namespace epochframe
+} // namespace epoch_frame

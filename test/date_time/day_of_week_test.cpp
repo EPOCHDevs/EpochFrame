@@ -7,8 +7,8 @@
 #include "common/asserts.h"
 #include <iostream>
 
-using namespace epochframe;
-using namespace epochframe::factory::scalar;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::scalar;
 
 // Helper function to create timestamp scalars for testing
 inline arrow::TimestampScalar create_timestamp(int64_t value) {
