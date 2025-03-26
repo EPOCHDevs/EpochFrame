@@ -8,7 +8,7 @@
 #include "factory/dataframe_factory.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/dataframe.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "epoch_frame/enums.h"
 #include "factory/scalar_factory.h"
 #include <chrono>
@@ -61,15 +61,15 @@ TEST_CASE("Generate Bins", "[resample]") {
     struct TestCase {
         std::string name;
         std::vector<int64_t> binner;
-        EpochTimeGrouperClosedType closed;
+        epoch_core::GrouperClosedType closed;
         std::vector<int64_t> expected;
     };
 
     std::vector<TestCase> test_cases = {
-        {"Left closed", {0, 3, 6, 9}, EpochTimeGrouperClosedType::Left, {2, 5, 6}},
-        {"Right closed", {0, 3, 6, 9}, EpochTimeGrouperClosedType::Right, {3, 6, 6}},
-        {"Left closed 2", {0, 3, 6}, EpochTimeGrouperClosedType::Left, {2, 5}},
-        {"Right closed 2", {0, 3, 6}, EpochTimeGrouperClosedType::Right, {3, 6}}
+        {"Left closed", {0, 3, 6, 9}, epoch_core::GrouperClosedType::Left, {2, 5, 6}},
+        {"Right closed", {0, 3, 6, 9}, epoch_core::GrouperClosedType::Right, {3, 6, 6}},
+        {"Left closed 2", {0, 3, 6}, epoch_core::GrouperClosedType::Left, {2, 5}},
+        {"Right closed 2", {0, 3, 6}, epoch_core::GrouperClosedType::Right, {3, 6}}
     };
 
     for (auto const& [name, binner, closed, expected] : test_cases) {
@@ -106,12 +106,12 @@ TEST_CASE("Pandas examples", "[resample]") {
             }, {3, 12, 21}, {efo::DateTime(date), efo::DateTime(date, 0h, 3min), efo::DateTime(date, 0h, 6min)}},
             {"Sum(label=right)", efo::TimeGrouperOptions{
                 .freq = minutes(3),
-                .label = EpochTimeGrouperLabelType::Right
+                .label = epoch_core::GrouperLabelType::Right
             }, {3, 12, 21}, {efo::DateTime(date, 0h, 3min), efo::DateTime(date, 0h, 6min), efo::DateTime(date, 0h, 9min)}},
             {"Sum(closed=right, label=right)", efo::TimeGrouperOptions{
                 .freq = minutes(3),
-                .closed = EpochTimeGrouperClosedType::Right,
-                .label = EpochTimeGrouperLabelType::Right
+                .closed = epoch_core::GrouperClosedType::Right,
+                .label = epoch_core::GrouperLabelType::Right
             }, {0, 6, 15, 15}, {efo::DateTime(date), efo::DateTime(date, 0h, 3min), efo::DateTime(date, 0h, 6min), efo::DateTime(date, 0h, 9min)}},
         };
 
@@ -204,7 +204,7 @@ TEST_CASE("Pandas resample group_keys", "[resample]") {
         for (const auto& col_name : result.column_names()) {
             auto result_array = result[col_name].array();
             auto expected_array = expected[col_name].array();
-            REQUIRE(efo::Array(result_array) == efo::Array(expected_array));
+            REQUIRE(efo::Array(result_array).is_equal(efo::Array(expected_array)));
         }
     }
 
@@ -260,7 +260,7 @@ TEST_CASE("Resample with different origins", "[resample]") {
         // Test with origin=Start
         auto resampled_start = series.resample_by_agg(efo::TimeGrouperOptions{
             .freq = minutes(17),
-            .origin = EpochTimeGrouperOrigin::Start
+            .origin = epoch_core::GrouperOrigin::Start
         }).sum();
 
         // Check the result size (actual implementation returns 4)
@@ -512,7 +512,7 @@ TEST_CASE("Resample with different labels", "[resample]") {
         // Test with label=right (similar to Pandas example)
         auto right_labeled = series.resample_by_agg(efo::TimeGrouperOptions{
             .freq = minutes(3),
-            .label = EpochTimeGrouperLabelType::Right
+            .label = epoch_core::GrouperLabelType::Right
         }).sum();
 
         // Check that we have right number of periods
@@ -535,8 +535,8 @@ TEST_CASE("Resample with different labels", "[resample]") {
         // Test with closed=right, label=right (similar to Pandas example)
         auto closed_right = series.resample_by_agg(efo::TimeGrouperOptions{
             .freq = minutes(3),
-            .closed = EpochTimeGrouperClosedType::Right,
-            .label = EpochTimeGrouperLabelType::Right
+            .closed = epoch_core::GrouperClosedType::Right,
+            .label = epoch_core::GrouperLabelType::Right
         }).sum();
 
         // Expected sum values (same as in Pandas examples)

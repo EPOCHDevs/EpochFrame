@@ -224,13 +224,13 @@ namespace epoch_frame {
 
         ChildType tail(uint64_t n = 10) const;
 
-        ChildType iloc(const arrow::ArrayPtr &indexes) const;
+        ChildType iloc(const Array &indexes) const;
 
         // ChildType iloc(const std::vector<int64_t> &indexes) const;
 
         ChildType iloc(const UnResolvedIntegerSliceBound &indexes) const;
 
-        ChildType loc(const arrow::ArrayPtr &labels) const;
+        ChildType loc(const Array &labels) const;
 
         ChildType loc(const Series &filter_or_labels) const;
 
@@ -245,7 +245,7 @@ namespace epoch_frame {
 
         ChildType where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const;
 
-        ChildType isin(arrow::ArrayPtr const& values) const;
+        ChildType isin(const Array &values) const;
 
         //--------------------------------------------------------------------------
         // 10) Comparison ops
@@ -389,6 +389,7 @@ namespace epoch_frame {
             return EWMWindowOperations<is_table>(options, dynamic_cast<const ChildType&>(*this));
         }
 
+        // Assignments
 
     protected:
         IndexPtr m_index;

@@ -77,6 +77,8 @@ public:
     friend TimeDelta operator*(double other, const TimeDelta& self) { return self * other; }
     TimeDelta& operator*=(double other);
 
+    std::strong_ordering operator<=>(const TimeDelta& other) const;
+
 private:
     // Core attributes matching Python's timedelta internal representation
     int64_t days_;

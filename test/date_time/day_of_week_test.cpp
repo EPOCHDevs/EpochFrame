@@ -34,16 +34,16 @@ namespace {
     constexpr int64_t TS_SATURDAY = BASE_TS + 6 * DAYS;   // 2023-01-07 (Saturday)
 }
 
-TEST_CASE("DayOfWeek - Basic Functionality", "[day_of_week]") {
+TEST_CASE("epoch_core::EpochDayOfWeek - Basic Functionality", "[day_of_week]") {
     SECTION("WeekdayConstructor") {
         // Test all weekday constructors using the correct API
-        REQUIRE(static_cast<int>(MO.weekday()) == static_cast<int>(EpochDayOfWeek::Monday));
-        REQUIRE(static_cast<int>(TU.weekday()) == static_cast<int>(EpochDayOfWeek::Tuesday));
-        REQUIRE(static_cast<int>(WE.weekday()) == static_cast<int>(EpochDayOfWeek::Wednesday));
-        REQUIRE(static_cast<int>(TH.weekday()) == static_cast<int>(EpochDayOfWeek::Thursday));
-        REQUIRE(static_cast<int>(FR.weekday()) == static_cast<int>(EpochDayOfWeek::Friday));
-        REQUIRE(static_cast<int>(SA.weekday()) == static_cast<int>(EpochDayOfWeek::Saturday));
-        REQUIRE(static_cast<int>(SU.weekday()) == static_cast<int>(EpochDayOfWeek::Sunday));
+        REQUIRE(static_cast<int>(MO.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Monday));
+        REQUIRE(static_cast<int>(TU.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Tuesday));
+        REQUIRE(static_cast<int>(WE.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Wednesday));
+        REQUIRE(static_cast<int>(TH.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Thursday));
+        REQUIRE(static_cast<int>(FR.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Friday));
+        REQUIRE(static_cast<int>(SA.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Saturday));
+        REQUIRE(static_cast<int>(SU.weekday()) == static_cast<int>(epoch_core::EpochDayOfWeek::Sunday));
 
         // Test with n parameter
         REQUIRE(MO(1).n().value_or(0) == 1);
@@ -61,18 +61,18 @@ TEST_CASE("DayOfWeek - Basic Functionality", "[day_of_week]") {
         auto monday_2nd = monday(2);
         auto monday_last = monday(-1);
         
-        REQUIRE(monday_1st.weekday() == EpochDayOfWeek::Monday);
+        REQUIRE(monday_1st.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_1st.n().value_or(0) == 1);
         
-        REQUIRE(monday_2nd.weekday() == EpochDayOfWeek::Monday);
+        REQUIRE(monday_2nd.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_2nd.n().value_or(0) == 2);
         
-        REQUIRE(monday_last.weekday() == EpochDayOfWeek::Monday);
+        REQUIRE(monday_last.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_last.n().value_or(0) == -1);
     }
 }
 
-TEST_CASE("DayOfWeek - Timestamp Detection", "[day_of_week]") {
+TEST_CASE("epoch_core::EpochDayOfWeek - Timestamp Detection", "[day_of_week]") {
     SECTION("GetWeekday") {
         // Create time_points from the timestamp values
         auto sunday_tp = to_datetime(arrow::TimestampScalar(TS_SUNDAY, arrow::TimeUnit::NANO));
@@ -94,17 +94,17 @@ TEST_CASE("DayOfWeek - Timestamp Detection", "[day_of_week]") {
     }
 }
 
-TEST_CASE("DayOfWeek - Weekday Matching", "[day_of_week]") {
+TEST_CASE("epoch_core::EpochDayOfWeek - Weekday Matching", "[day_of_week]") {
     SECTION("Weekday Comparison") {
-        Weekday monday1(EpochDayOfWeek::Monday);
-        Weekday monday2(EpochDayOfWeek::Monday);
-        Weekday tuesday(EpochDayOfWeek::Tuesday);
+        Weekday monday1(epoch_core::EpochDayOfWeek::Monday);
+        Weekday monday2(epoch_core::EpochDayOfWeek::Monday);
+        Weekday tuesday(epoch_core::EpochDayOfWeek::Tuesday);
         
         REQUIRE(monday1 == monday2);
         REQUIRE(monday1 != tuesday);
         
-        Weekday first_monday(EpochDayOfWeek::Monday, 1);
-        Weekday second_monday(EpochDayOfWeek::Monday, 2);
+        Weekday first_monday(epoch_core::EpochDayOfWeek::Monday, 1);
+        Weekday second_monday(epoch_core::EpochDayOfWeek::Monday, 2);
         
         REQUIRE(first_monday != second_monday);
     }

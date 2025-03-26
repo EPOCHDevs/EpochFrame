@@ -17,6 +17,19 @@ namespace epoch_frame {
         chrono_second second{0};
         chrono_microsecond microsecond{0};
         std::string tz{""};
+
+        bool operator==(const Time &other) const = default;
+        friend std::ostream& operator<<(std::ostream &os, Time const& time) {
+            os << time.hour << ":" << time.minute << ":" << time.second;
+            if (time.microsecond.count() > 0) {
+                os << "." << time.microsecond;
+            }
+            if (!time.tz.empty()) {
+                os << "[" << time.tz << "]";
+            }
+            return os;
+        }
+
     };
     struct Date {
         chrono_year year;
@@ -50,7 +63,11 @@ namespace epoch_frame {
         DateTime normalize() const {
             return DateTime{date, 0h, 0min, 0s, 0us, tz};
         }
-        
+
+        DateTime replace_tz(std::string const& _tz) const {
+            return DateTime{date, hour, minute, second, microsecond, _tz};
+        }
+
         bool operator==(const DateTime &other) const = default;
 
         std::strong_ordering operator<=>(const DateTime &other) const;

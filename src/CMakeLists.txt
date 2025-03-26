@@ -8,6 +8,7 @@ add_subdirectory(ndframe)
 add_subdirectory(visitors)
 add_subdirectory(vector_functions)
 
+message(STATUS "ARROW_BUILD_STATIC: ${ARROW_BUILD_STATIC}")
 target_link_libraries(epoch_frame
         PUBLIC TBB::tbb
         "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Parquet::parquet_static,Parquet::parquet_shared>"

@@ -19,8 +19,8 @@ namespace epoch_frame {
         // ------------------------------------------------------------------------
         Series();
 
-        Series(arrow::ChunkedArrayPtr const &data, std::optional<std::string> const &name = {});
-        Series(arrow::ArrayPtr const &data, std::optional<std::string> const &name = {});
+        explicit Series(arrow::ChunkedArrayPtr const &data, std::optional<std::string> const &name = {});
+        explicit Series(arrow::ArrayPtr const &data, std::optional<std::string> const &name = {});
         Series(arrow::ScalarPtr const &data, IndexPtr const& index, std::optional<std::string> const &name={});
         Series(IndexPtr index, arrow::ChunkedArrayPtr data, std::optional<std::string> const &name = {});
         Series(IndexPtr index, arrow::ArrayPtr data, std::optional<std::string> const &name = {});
@@ -38,7 +38,7 @@ namespace epoch_frame {
         }
 
         DataFrame to_frame(std::optional<std::string> const &name=std::nullopt) const;
-        DataFrame transpose() const;
+        DataFrame transpose(IndexPtr const& new_index) const;
 
         std::optional<std::string> name() const {
             return m_name;
@@ -53,7 +53,7 @@ namespace epoch_frame {
         }
 
         friend std::ostream &operator<<(std::ostream &os, Series const &series);
-
+        std::string repr() const;
         //--------------------------------------------------------------------------
         // 2) Basic arithmetic: +, -, *, / with NDFrame and Scalar
         //--------------------------------------------------------------------------
@@ -118,7 +118,7 @@ namespace epoch_frame {
         [[nodiscard]] TemporalOperation<true> dt() const {
             return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
-        
+
         /**
          * Return a StringOperation object that can be used to call string methods on this Series.
          * @return StringOperation
@@ -126,11 +126,11 @@ namespace epoch_frame {
         [[nodiscard]] StringOperation<true> str() const {
             return StringOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
-        
+
 
         GroupByAgg<Series> resample_by_agg(const TimeGrouperOptions &options) const;
         GroupByApply resample_by_apply(const TimeGrouperOptions &options, bool groupKeys=true) const;
-                
+
         AggRollingWindowOperations<false> rolling_agg(window::RollingWindowOptions const& options) const;
         ApplySeriesRollingWindowOperations rolling_apply(window::RollingWindowOptions const& options) const;
 
@@ -145,7 +145,13 @@ namespace epoch_frame {
 
         Scalar cov(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;
 
-        Scalar corr(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;  
+        Scalar corr(Series const &other, int64_t min_periods=1, int64_t ddof=1) const;
+
+
+        Series assign(IndexPtr const&, arrow::ChunkedArrayPtr const&) const;
+        Series assign(Series const& s) const {
+            return assign(s.index(), s.array());
+        }
 
         using NDFrame::from_base;
 

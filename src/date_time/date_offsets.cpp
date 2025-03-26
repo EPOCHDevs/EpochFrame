@@ -10,8 +10,8 @@
 #include "methods/temporal.h"
 #include "common/python_utils.h"
 #include <iostream>
-#include "index/index.h"
-#include "calendar/holiday/holiday_calendar.h"
+#include "epoch_frame/index.h"
+#include "holiday/holiday_calendar.h"
 
 using namespace std::literals::chrono_literals;
 namespace epoch_frame {
@@ -135,17 +135,17 @@ namespace epoch_frame {
         auto tzinfo = other_scalar.dt().tz();
 
         if (!tzinfo.empty()) {
-            other_scalar = other_scalar.dt().tz_convert("UTC");
+            other_scalar = other_scalar.dt().replace_tz("");
         }
         other_scalar = Scalar{other_scalar.to_datetime() + (m_offset * static_cast<double>(n()))};
 
         if (!tzinfo.empty()) {
-            other_scalar = other_scalar.dt().tz_convert(tzinfo);
+            other_scalar = other_scalar.dt().tz_localize(tzinfo);
         }
         return other_scalar.timestamp();
     }
 
-    WeekHandler::WeekHandler(int64_t n, std::optional<EpochDayOfWeek> weekday) : FixedOffsetHandler(n), m_weekday(weekday) {}
+    WeekHandler::WeekHandler(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday) : FixedOffsetHandler(n), m_weekday(weekday) {}
 
     int64_t WeekHandler::diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const {
         return relative_diff(start, end, *this);
@@ -256,21 +256,33 @@ namespace epoch_frame {
         auto date = factory::scalar::to_datetime(other).date;
         return date == easter(static_cast<int>(date.year));
     }
-
-        BusinessMixin::BusinessMixin(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const calendar::AbstractHolidayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
-    OffsetHandler(n), m_weekmask(weekmask), m_holidays(holidays), m_offset(std::move(timedelta)) {
-        AssertFromFormat(calendar, "calendar is not a valid business day calendar");
-        auto index = calendar->holidays();
-        std::shared_ptr<arrow::TimestampArray> _holidays = index->array().to_timestamp_view();
-        std::ranges::transform(*_holidays, std::back_inserter(m_holidays), [dt = index->dtype()](const std::optional<int64_t> &holiday) {
-            AssertFromFormat(holiday, "holiday is not a valid timestamp");
-            return factory::scalar::to_datetime(arrow::TimestampScalar{*holiday, dt});
-        });
+    BusinessMixin::BusinessMixin(np::BusinessDayCalendarPtr  calendar, int64_t n, std::optional<TimeDelta> timedelta):OffsetHandler(n), m_calendar(std::move(calendar)), m_offset(std::move(timedelta)) {
+        AssertFromFormat(m_calendar, "calendar is not a valid business day calendar");
     }
 
-    BusinessMixin::BusinessMixin(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const np::BusinessDayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
-    OffsetHandler(n), m_weekmask(weekmask), m_holidays(holidays), m_calendar(calendar), m_offset(std::move(timedelta)) {
-        AssertFromFormat(m_calendar, "calendar is not a valid business day calendar");
+    BusinessMixin::BusinessMixin(BusinessMixinParams  params, int64_t n, std::optional<TimeDelta> timedelta) :
+    OffsetHandler(n),  m_offset(std::move(timedelta)) {
+        if (params.calendar) {
+            std::visit([&]<typename T>(T x) {
+                AssertFromFormat( x != nullptr, "calendar is not a valid business day calendar");
+
+                if constexpr (std::is_same_v<T, np::BusinessDayCalendarPtr>) {
+                    m_calendar = std::move(x);
+                }
+                else {
+                    auto index = x->holidays();
+                    std::shared_ptr<arrow::TimestampArray> _holidays = index->array().to_timestamp_view();
+                    std::ranges::transform(*_holidays, std::back_inserter(params.holidays), [dt = index->dtype()](const std::optional<int64_t> &holiday) {
+                            AssertFromFormat(holiday, "holiday is not a valid timestamp");
+                            return factory::scalar::to_datetime(arrow::TimestampScalar{*holiday, dt});
+                    });
+                    m_calendar = std::make_shared<np::BusinessDayCalendar>(params.weekmask, params.holidays);
+                }
+            }, *params.calendar);
+        }
+        else {
+            m_calendar = std::make_shared<np::BusinessDayCalendar>(params.weekmask, params.holidays);
+        }
     }
 
     BusinessDay::BusinessDay(int64_t n,  std::optional<TimeDelta> timedelta) : OffsetHandler(n), m_offset(std::move(timedelta)) {}
@@ -315,19 +327,16 @@ namespace epoch_frame {
     bool BusinessDay::is_on_offset(const arrow::TimestampScalar &other) const {
         return factory::scalar::to_datetime(other).weekday() < 5;
     }
+    CustomBusinessDay::CustomBusinessDay(np::BusinessDayCalendarPtr  calendar, int64_t n,  std::optional<TimeDelta> timedelta):BusinessMixin(std::move(calendar), n, std::move(timedelta)){}
 
-    CustomBusinessDay::CustomBusinessDay(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, const calendar::AbstractHolidayCalendarPtr& calendar, std::optional<TimeDelta> timedelta) :
-    BusinessMixin(n, weekmask, holidays, calendar, timedelta) {}
-
-    CustomBusinessDay::CustomBusinessDay(int64_t n, np::WeekMask const& weekmask, std::vector<DateTime> const& holidays, np::BusinessDayCalendarPtr const& calendar, std::optional<TimeDelta> timedelta) :
-    BusinessMixin(n, weekmask, holidays, calendar, timedelta) {}
+    CustomBusinessDay::CustomBusinessDay(BusinessMixinParams params, int64_t n, std::optional<TimeDelta> timedelta):BusinessMixin(std::move(params), n, std::move(timedelta)){}
 
     int64_t CustomBusinessDay::diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const {
         return relative_diff(start, end, *this);
     }
 
     arrow::TimestampScalar CustomBusinessDay::add(const arrow::TimestampScalar &other) const {
-        const auto roll = n() <= 0 ? np::BusDayOffsetRoll::Forward : np::BusDayOffsetRoll::Backward;
+        const auto roll = n() <= 0 ? np::BusDayOffsetRoll::Following : np::BusDayOffsetRoll::Preceding;
         auto other_dt = factory::scalar::to_datetime(other);
         auto date = DateTime(other_dt.date);
         auto incr_dt = m_calendar->offset(date, n(), roll);

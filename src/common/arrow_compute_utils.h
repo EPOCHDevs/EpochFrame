@@ -247,7 +247,7 @@ namespace epoch_frame::arrow_utils {
         }
     }
 
-    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func);
+    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func, bool merge_chunks=true);
 
     inline arrow::Datum call_compute_replace_with_mask(
         const arrow::Datum &input,

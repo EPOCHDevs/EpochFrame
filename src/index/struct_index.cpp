@@ -9,10 +9,12 @@
 
 namespace epoch_frame {
     StructIndex::StructIndex(std::shared_ptr<arrow::StructArray> array, std::string const& name)
-            : ArrowIndex(factory::array::make_array(std::move(array)), name) {}
+            : ArrowIndex(factory::array::make_array(std::move(array)), name) {
+        validate_monotonic_nature(MonotonicDirection::NotMonotonic);
+    }
 
     StructIndex::StructIndex(std::shared_ptr<arrow::Array> array, std::string const& name)
-        : ArrowIndex(std::move(array), name) {}
+        : StructIndex(std::dynamic_pointer_cast<arrow::StructArray>(std::move(array)), name) {}
 
     IndexPtr StructIndex::Make(std::shared_ptr<arrow::Array> array) const {
         return std::make_shared<StructIndex>(std::move(array), name());

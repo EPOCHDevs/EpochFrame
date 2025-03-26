@@ -1,6 +1,7 @@
 #include "datetime.h"
 
 #include <epoch_core/macros.h>
+#include <methods/temporal.h>
 
 #include "factory/scalar_factory.h"
 #include "arrow/compute/api.h"
@@ -205,29 +206,15 @@ namespace epoch_frame {
         if (tz_ == this->tz) {
             return *this;
         }
-
-        AssertFromFormat(this->tz.empty(), "tz is not empty. got {}.", this->tz);
-        auto ts = timestamp();
-        arrow::ScalarPtr localized;
-        if (tz_.empty()) {
-            localized = AssertScalarResultIsOk(arrow::compute::LocalTimestamp(ts));
-        }
-        else {
-            localized = AssertScalarResultIsOk(arrow::compute::AssumeTimezone(ts, arrow::compute::AssumeTimezoneOptions{tz_}));
-        }
-        return Scalar(localized).to_datetime();
+        return Scalar{timestamp()}.dt().tz_localize(tz_).to_datetime();
     }
 
-    DateTime DateTime::tz_convert(const std::string &tz) const {
-        if (tz == this->tz) {
+    DateTime DateTime::tz_convert(const std::string &tz_) const {
+        if (tz_ == this->tz) {
             return *this;
         }
 
-        AssertFromStream(!this->tz.empty(), "this.tz must not be None, got: " << this->tz);
-
-        auto ts = timestamp();
-        auto converted = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::AssumeTimezone(ts, arrow::compute::AssumeTimezoneOptions{tz.empty() ? "UTC": tz}));
-        return factory::scalar::to_datetime(converted);
+        return Scalar{timestamp()}.dt().tz_convert(tz_).to_datetime();
     }
 
     DateTime DateTime::from_str(const std::string &str) {

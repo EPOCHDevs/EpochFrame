@@ -12,6 +12,7 @@
 #include "common/arrow_compute_utils.h"
 #include "factory/array_factory.h"    // The provided factory::array::make_array<...>()
 #include "factory/index_factory.h"
+#include "factory/dataframe_factory.h"
 
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
@@ -23,12 +24,15 @@
 #include <limits>
 #include <index/object_index.h>
 #include <index/range_index.h>
+#include "epoch_frame/series.h"
+#include "epoch_frame/dataframe.h"
 
 
 #define TEST_CASE_TYPES epoch_frame::RangeIndex \
 //, arrow::TimestampArray
 
 using namespace epoch_frame;
+namespace ef = epoch_frame;
 //------------------------------------------------------------------------------
 // 1) Constructor & Basic Attributes
 //------------------------------------------------------------------------------
@@ -232,30 +236,31 @@ TEMPLATE_TEST_CASE("ArrowIndex - get_loc, slice_locs",
     }
 }
 
-TEST_CASE("ArrowIndex - searchsorted")
+TEMPLATE_TEST_CASE("ArrowIndex - searchsorted",
+                   "[arrow_index][search]",
+                   TEST_CASE_TYPES)
 {
-    SECTION("UINT array")
-    {
-        std::vector<uint64_t> rangeData{1, 2, 3};
-        auto idx = epoch_frame::factory::index::make_range(rangeData, MonotonicDirection::Increasing);
+    using ArrowType = typename TestType::array_type;
+    using CType     = typename TestType::value_type;
 
-        REQUIRE(idx->searchsorted(Scalar(0UL), epoch_frame::SearchSortedSide::Left) ==
-                0);
-        REQUIRE(idx->searchsorted(Scalar(1UL), epoch_frame::SearchSortedSide::Left) ==
-                0);
-        REQUIRE(idx->searchsorted(Scalar(3UL), epoch_frame::SearchSortedSide::Left) ==
-                2);
-        REQUIRE(idx->searchsorted(Scalar(4UL), epoch_frame::SearchSortedSide::Left) ==
-                3);
-    }
+    // Sorted data
+    std::vector<CType> data{10, 20, 30, 40, 50};
+    auto arr = epoch_frame::factory::array::make_contiguous_array<CType>(data);
+    auto idx = std::make_shared<TestType>(arr);
 
-    SECTION("STRING array")
-    {
-        std::vector<std::string> stringData{"apple", "bread", "cheese", "milk"};
-        auto idx = epoch_frame::factory::index::make_object_index(stringData);
+    // Test for left side
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(1)), epoch_frame::SearchSortedSide::Left) == 0);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(10)), epoch_frame::SearchSortedSide::Left) == 0);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(11)), epoch_frame::SearchSortedSide::Left) == 1);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(50)), epoch_frame::SearchSortedSide::Left) == 4);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(51)), epoch_frame::SearchSortedSide::Left) == 5);
 
-        REQUIRE_THROWS(idx->searchsorted(Scalar("bread"), epoch_frame::SearchSortedSide::Left));
-    }
+    // Test for right side
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(1)), epoch_frame::SearchSortedSide::Right) == 0);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(10)), epoch_frame::SearchSortedSide::Right) == 1);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(11)), epoch_frame::SearchSortedSide::Right) == 1);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(50)), epoch_frame::SearchSortedSide::Right) == 5);
+    REQUIRE(idx->searchsorted(Scalar(static_cast<CType>(51)), epoch_frame::SearchSortedSide::Right) == 5);
 }
 
 //------------------------------------------------------------------------------
@@ -340,11 +345,11 @@ TEST_CASE("ArrowIndex Edge Cases - Null pointer construction", "[arrow_index][ed
     std::shared_ptr<arrow::Array> nullArray;
     REQUIRE_THROWS_AS(
             std::make_shared<RangeIndex>(nullArray, MonotonicDirection::Increasing),
-            std::invalid_argument
+            std::runtime_error
     );
     REQUIRE_THROWS_AS(
         std::make_shared<ObjectIndex>(nullArray),
-        std::invalid_argument
+        std::runtime_error
 );
 }
 
@@ -361,7 +366,193 @@ TEST_CASE("ArrowIndex Edge Cases - Empty array", "[arrow_index][edge_cases]")
     REQUIRE_FALSE(minVal.is_valid());
     REQUIRE_FALSE(maxVal.is_valid());
 
-    // argmin/argmax might throw or return -1 or 0; adapt to your code’s contract:
+    // argmin/argmax might throw or return -1 or 0; adapt to your code's contract:
     REQUIRE_NOTHROW(idx->argmin());
     REQUIRE_NOTHROW(idx->argmax());
+}
+
+//------------------------------------------------------------------------------
+// Testing Series and DataFrame assign functions with index operations
+//------------------------------------------------------------------------------
+
+TEST_CASE("Index - Series and DataFrame assign", "[index][assign]")
+{
+    using namespace epoch_frame;
+
+    // Create test indices
+    auto index1 = factory::index::make_object_index({"a", "b", "c", "d", "e"});
+    auto index2 = factory::index::make_object_index({"b", "c", "f"});
+    auto index3 = factory::index::make_object_index({"a", "c", "e"});
+
+    SECTION("Series::assign throws on invalid index") {
+        // Create original series
+        std::vector<int64_t> data1{1, 2, 3, 4, 5};
+        auto array1 = factory::array::make_array<int64_t>(data1);
+        Series series1(index1, array1);
+
+        // Create data to assign
+        std::vector<int64_t> data2{20, 30, 60};
+        auto array2 = factory::array::make_array<int64_t>(data2);
+
+        REQUIRE_THROWS(series1.assign(index2, array2));
+    }
+
+    SECTION("Series::assign with identical indices") {
+        // Create original series
+        std::vector<int64_t> data1{1, 2, 3, 4, 5};
+        auto array1 = factory::array::make_array<int64_t>(data1);
+        Series series1(index1, array1);
+
+        // Create data to assign with identical indices
+        std::vector<int64_t> data2{10, 20, 30, 40, 50};
+        auto array2 = factory::array::make_array<int64_t>(data2);
+
+        // Test assign with identical indices
+        auto result = series1.assign(index1, array2);
+
+        // Check results - should completely replace the series
+        REQUIRE(result.index()->equals(index1));
+        for (int i = 0; i < 5; i++) {
+            REQUIRE(result.iloc(i).value()->Equals(arrow::Int64Scalar(data2[i])));
+        }
+    }
+
+    SECTION("Series::assign with non-matching indices") {
+        // Create original series with index1 = {"a", "b", "c", "d", "e"}
+        std::vector<int64_t> data1{1, 2, 3, 4, 5};
+        auto array1 = factory::array::make_array<int64_t>(data1);
+        Series series1(index1, array1);
+
+        // Create data to assign with index3 = {"a", "c", "e"}
+        std::vector<int64_t> data3{10, 30, 50};
+        auto array3 = factory::array::make_array<int64_t>(data3);
+
+        // Test assign with non-matching indices
+        auto result = series1.assign(index3, array3);
+
+        // Check results - only matching indices should be updated
+        REQUIRE(result.index()->equals(index1));
+        REQUIRE(result.iloc(0).value()->Equals(arrow::Int64Scalar(10)));   // "a" is updated
+        REQUIRE(result.iloc(1).value()->Equals(arrow::Int64Scalar(2)));    // "b" is unchanged
+        REQUIRE(result.iloc(2).value()->Equals(arrow::Int64Scalar(30)));   // "c" is updated
+        REQUIRE(result.iloc(3).value()->Equals(arrow::Int64Scalar(4)));    // "d" is unchanged
+        REQUIRE(result.iloc(4).value()->Equals(arrow::Int64Scalar(50)));   // "e" is updated
+    }
+
+    SECTION("DataFrame::assign with matching indices") {
+        // Create original dataframe
+        std::vector<std::vector<int64_t>> data1 = {
+            {1, 2, 3, 4, 5},
+            {10, 20, 30, 40, 50}
+        };
+
+        auto df1 = make_dataframe<int64_t>(index1, data1, {"col1", "col2"});
+
+        // Create data to assign
+        std::vector<std::vector<int64_t>> data2 = {
+            {200, 300, 600},
+            {2000, 3000, 6000}
+        };
+
+        auto df2 = make_dataframe<int64_t>(index2, data2, {"col1", "col2"});
+
+        // Test assign with matching indices
+        REQUIRE_THROWS(df1.assign(index2, df2.tableComponent().second.table()));
+    }
+
+    SECTION("DataFrame::assign with identical indices") {
+        // Create original dataframe
+        std::vector<std::vector<int64_t>> data1 = {
+            {1, 2, 3, 4, 5},
+            {10, 20, 30, 40, 50}
+        };
+
+        auto df1 = make_dataframe<int64_t>(index1, data1, {"col1", "col2"});
+
+        // Create replacement data with identical indices
+        std::vector<std::vector<int64_t>> data2 = {
+            {100, 200, 300, 400, 500},
+            {1000, 2000, 3000, 4000, 5000}
+        };
+
+        auto df2 = make_dataframe<int64_t>(index1, data2, {"col1", "col2"});
+
+        // Test assign with identical indices
+        auto result = df1.assign(index1, df2.tableComponent().second.table());
+
+        // Check results - should completely replace the dataframe
+        REQUIRE(result.index()->equals(index1));
+
+        for (int i = 0; i < 5; i++) {
+            REQUIRE(result.iloc(i, "col1").value()->Equals(arrow::Int64Scalar(data2[0][i])));
+            REQUIRE(result.iloc(i, "col2").value()->Equals(arrow::Int64Scalar(data2[1][i])));
+        }
+    }
+
+    SECTION("DataFrame::assign with DataFrame overload") {
+        // Create original dataframe
+        std::vector<std::vector<int64_t>> data1 = {
+            {1, 2, 3, 4, 5},
+            {10, 20, 30, 40, 50}
+        };
+
+        auto df1 = make_dataframe<int64_t>(index1, data1, {"col1", "col2"});
+
+        // Create data to assign with index3 = {"a", "c", "e"}
+        std::vector<std::vector<int64_t>> data3 = {
+            {100, 300, 500},
+            {1000, 3000, 5000}
+        };
+
+        auto df3 = make_dataframe<int64_t>(index3, data3, {"col1", "col2"});
+
+        // Test assign with DataFrame overload
+        auto result = df1.assign(df3);
+
+        // Check results - only matching indices should be updated
+        REQUIRE(result.index()->equals(index1));
+
+        // Updated values
+        REQUIRE(result.iloc(0, "col1").value()->Equals(arrow::Int64Scalar(100)));   // "a" is updated
+        REQUIRE(result.iloc(0, "col2").value()->Equals(arrow::Int64Scalar(1000)));
+        REQUIRE(result.iloc(2, "col1").value()->Equals(arrow::Int64Scalar(300)));   // "c" is updated
+        REQUIRE(result.iloc(2, "col2").value()->Equals(arrow::Int64Scalar(3000)));
+        REQUIRE(result.iloc(4, "col1").value()->Equals(arrow::Int64Scalar(500)));   // "e" is updated
+        REQUIRE(result.iloc(4, "col2").value()->Equals(arrow::Int64Scalar(5000)));
+
+        // Unchanged values
+        REQUIRE(result.iloc(1, "col1").value()->Equals(arrow::Int64Scalar(2)));    // "b" is unchanged
+        REQUIRE(result.iloc(1, "col2").value()->Equals(arrow::Int64Scalar(20)));
+        REQUIRE(result.iloc(3, "col1").value()->Equals(arrow::Int64Scalar(4)));    // "d" is unchanged
+        REQUIRE(result.iloc(3, "col2").value()->Equals(arrow::Int64Scalar(40)));
+    }
+
+    SECTION("DataFrame::assign with Series to new column") {
+        // Create original dataframe
+        std::vector<std::vector<int64_t>> data1 = {
+            {1, 2, 3, 4, 5},
+            {10, 20, 30, 40, 50}
+        };
+
+        auto df1 = make_dataframe<int64_t>(index1, data1, {"col1", "col2"});
+
+        // Create a series to add as a new column
+        std::vector<int64_t> series_data{100, 200, 300, 400, 500};
+        auto series_array = factory::array::make_array<int64_t>(series_data);
+        Series new_series(index1, series_array);
+
+        // Test assign with Series to new column
+        auto result = df1.assign("col3", new_series);
+
+        // Check results
+        REQUIRE(result.index()->equals(index1));
+        REQUIRE(result.num_cols() == 3);
+
+        // Verify existing columns remain unchanged
+        for (int i = 0; i < 5; i++) {
+            REQUIRE(result.iloc(i, "col1").value()->Equals(arrow::Int64Scalar(data1[0][i])));
+            REQUIRE(result.iloc(i, "col2").value()->Equals(arrow::Int64Scalar(data1[1][i])));
+            REQUIRE(result.iloc(i, "col3").value()->Equals(arrow::Int64Scalar(series_data[i])));
+        }
+    }
 }

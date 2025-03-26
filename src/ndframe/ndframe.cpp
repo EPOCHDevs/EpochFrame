@@ -11,7 +11,7 @@
 #include <arrow/api.h>
 #include <common/methods_helper.h>
 #include <epoch_core/macros.h>
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include <tabulate/table.hpp>
 #include "common/asserts.h"
 #include "index/arrow_index.h"
@@ -493,8 +493,8 @@ namespace epoch_frame {
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::iloc(const arrow::ArrayPtr &indexes) const {
-        return from_base(m_select->itake(indexes, arrow::compute::TakeOptions()));
+    ChildType NDFrame<ChildType, ArrowType>::iloc(const Array &indexes) const {
+        return from_base(m_select->itake(indexes.value(), arrow::compute::TakeOptions()));
     }
 
     template<class ChildType, class ArrowType>
@@ -509,26 +509,30 @@ namespace epoch_frame {
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::loc(const arrow::ArrayPtr &labels) const {
-        return from_base(m_select->take(labels, arrow::compute::TakeOptions{}));
+    ChildType NDFrame<ChildType, ArrowType>::loc(const Array &filter_or_labels) const {
+        if (filter_or_labels.type()->id() == arrow::Type::BOOL) {
+            AssertFromFormat(filter_or_labels.length() == size(), "Length of labels must match length of index");
+            const auto chunked = std::make_shared<arrow::ChunkedArray>(filter_or_labels.value());
+            return from_base(m_select->filter(chunked, arrow::compute::FilterOptions{}));
+        }
+        return from_base(m_select->take(filter_or_labels.value(), arrow::compute::TakeOptions{}));
     }
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const Series &filter_or_labels) const {
         AssertFromStream(filter_or_labels.index()->equals(m_index), "IIndex mismatch");
         if (filter_or_labels.array()->type()->id() == arrow::Type::BOOL) {
-            return from_base(m_select->filter(filter_or_labels.array(), arrow::compute::FilterOptions{}));
+            return from_base(m_select->filter(
+                filter_or_labels.array(), arrow::compute::FilterOptions{}));
         }
-        return loc(filter_or_labels.array());
+        return from_base(m_select->take(
+            factory::array::make_contiguous_array(filter_or_labels.array()), arrow::compute::TakeOptions{}));
     }
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const SliceType &label_slice) const {
         auto [start, end, _] = m_index->slice_locs(label_slice.first, label_slice.second);
         AssertFromStream(start <= end, "Start index must be less than end index");
-        if (start == end) {
-            return ChildType();
-        }
         auto table_slice =arrow_utils::slice_array(m_table, start, end);
         auto index_slice = arrow_utils::integer_slice_index(*m_index, start, end);
         return from_base(std::move(index_slice), table_slice);
@@ -536,7 +540,7 @@ namespace epoch_frame {
 
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const IndexPtr& newIndex) const {
-        return from_base(m_select->take(newIndex->array().value(), arrow::compute::TakeOptions{}));
+        return from_base(m_select->take(newIndex, arrow::compute::TakeOptions{}));
     }
 
     template<class ChildType, class ArrowType>
@@ -562,8 +566,8 @@ namespace epoch_frame {
     }
 
     template<class ChildType, class ArrowType>
-    ChildType NDFrame<ChildType, ArrowType>::isin(arrow::ArrayPtr const& values) const {
-        return from_base(m_select->is_in(values));
+    ChildType NDFrame<ChildType, ArrowType>::isin(const Array &values) const {
+        return from_base(m_select->is_in(values.value()));
     }
 
 //////////////////////////////////////////////////////////////////////////

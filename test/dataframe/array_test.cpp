@@ -85,8 +85,11 @@ TEST_CASE("Array - Operators", "[array][operators]")
 
     SECTION("Comparison operators")
     {
-        REQUIRE(arr1 == arr3);
-        REQUIRE(arr1 != arr2);
+        REQUIRE( (arr1 == arr3).sum() == 3_scalar );
+        REQUIRE( (arr1 != arr2).sum() == 3_scalar );
+
+        REQUIRE( arr1.is_equal(arr3) );
+        REQUIRE( !arr1.is_equal(arr2) );
     }
 
     SECTION("Arithmetic operators with arrays")
@@ -716,7 +719,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         Array utc_array = ts_array.dt().tz_localize("UTC");
 
         // Try to localize again - should throw
-        REQUIRE_THROWS_AS(utc_array.dt().tz_localize("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(utc_array.dt().tz_localize("America/New_York"), std::runtime_error);
     }
 
     SECTION("tz_convert - Basic functionality") {
@@ -739,7 +742,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
 
     SECTION("tz_convert - Error cases") {
         // Try to convert a naive timestamp - should throw
-        REQUIRE_THROWS_AS(ts_array.dt().tz_convert("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(ts_array.dt().tz_convert("America/New_York"), std::runtime_error);
     }
 
     SECTION("tz_localize - Special cases") {
@@ -782,7 +785,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         REQUIRE(ts_type->timezone() == "UTC");
 
         // Try to localize again - should throw
-        REQUIRE_THROWS_AS(utc_scalar.dt().tz_localize("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(utc_scalar.dt().tz_localize("America/New_York"), std::runtime_error);
 
         // Use tz_convert to change timezone
         REQUIRE_NOTHROW(utc_scalar.dt().tz_convert("America/New_York"));
@@ -794,7 +797,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         REQUIRE(ts_type->timezone() == "America/New_York");
 
         // Try to convert a naive timestamp - should throw
-        REQUIRE_THROWS_AS(ts_scalar.dt().tz_convert("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(ts_scalar.dt().tz_convert("America/New_York"), std::runtime_error);
     }
 }
 

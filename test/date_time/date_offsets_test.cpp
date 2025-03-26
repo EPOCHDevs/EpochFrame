@@ -5,7 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "factory/date_offset_factory.h"
 #include "factory/index_factory.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "factory/scalar_factory.h"
 #include "common/asserts.h"
 #include <iostream>
@@ -886,20 +886,20 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
     
     SECTION("Week with Day of Week Anchoring") {
         SECTION("Monday anchoring") {
-            auto monday_handler = efo::weeks(1, EpochDayOfWeek::Monday);
+            auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);
             REQUIRE(to_datetime(monday_handler->add(sunday)) == DateTime{{2023y, January, 2d}});
             REQUIRE(to_datetime(monday_handler->add(monday)) == DateTime{{2023y, January, 9d}});
         }
 
         SECTION("Friday anchoring") {
-            auto friday_handler = efo::weeks(1, EpochDayOfWeek::Friday);
+            auto friday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Friday);
             REQUIRE(to_datetime(friday_handler->add(sunday)) == DateTime{{2023y, January, 6d}});
             REQUIRE(to_datetime(friday_handler->add(friday)) == DateTime{{2023y, January, 13d}});
         }
     }
     
     SECTION("Week Handlers - Multiple Week Increment with Anchoring") {
-            auto wednesday_handler = efo::weeks(2, EpochDayOfWeek::Wednesday);
+            auto wednesday_handler = efo::weeks(2, epoch_core::EpochDayOfWeek::Wednesday);
             REQUIRE(to_datetime(wednesday_handler->add(sunday)) == DateTime{{2023y, January, 11d}});
             REQUIRE(to_datetime(wednesday_handler->add(wednesday)) == DateTime{{2023y, January, 18d}});
     }
@@ -912,7 +912,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
         REQUIRE(week_handler->is_on_offset(monday));
         
         // Test with day anchoring as well
-        auto monday_handler = efo::weeks(1, EpochDayOfWeek::Monday);
+        auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);
         // Again, just make sure it doesn't crash
         REQUIRE(monday_handler->is_on_offset(monday));
     }
@@ -933,7 +933,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
         }
 
         SECTION("Mondays between two dates") {
-            auto monday_handler = efo::weeks(1, EpochDayOfWeek::Monday);
+            auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);
             auto diff = monday_handler->diff(ts1, ts2);
             REQUIRE(diff == 4);
         }
@@ -971,7 +971,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
         REQUIRE(range[4].to_datetime() == DateTime{.date={2023y, January, 29d}});
     }
     SECTION("DateRange with week frequency - anchored") {
-        auto week_handler = efo::weeks(1, EpochDayOfWeek::Wednesday);
+        auto week_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Wednesday);
         auto start = "2023-01-01"_date;
         auto end = "2023-01-31"_date;
 

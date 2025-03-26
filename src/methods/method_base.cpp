@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include "common/methods_helper.h"
 #include "epoch_frame/scalar.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "common/arrow_compute_utils.h"
 #include <tbb/parallel_for_each.h>
 #include <iostream>

@@ -91,9 +91,9 @@ namespace epoch_frame {
     using DataFrameToDataFrameCallable = std::function<DataFrame(DataFrame const&)>;
     using SeriesToSeriesCallable = std::function<Series(Series const&)>;
 
-    using LocRowArgumentVariant = std::variant<SliceType, Series, IndexPtr, arrow::ArrayPtr , DataFrameToSeriesCallable>;
-    using LocColArgumentVariant = std::variant<StringVector, arrow::ArrayPtr, StringVectorCallable>;
-    using WhereConditionVariant = std::variant<Series, DataFrame, arrow::ArrayPtr, DataFrameToSeriesCallable, DataFrameToDataFrameCallable>;
+    using LocRowArgumentVariant = std::variant<SliceType, Series, IndexPtr, Array , DataFrameToSeriesCallable>;
+    using LocColArgumentVariant = std::variant<StringVector, Array, StringVectorCallable>;
+    using WhereConditionVariant = std::variant<Series, DataFrame, Array, DataFrameToSeriesCallable, DataFrameToDataFrameCallable>;
     using WhereOtherVariant = std::variant<Scalar, DataFrame, DataFrameToDataFrameCallable>;
 
     namespace calendar {

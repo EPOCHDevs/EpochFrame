@@ -32,8 +32,7 @@ namespace epoch_frame::calendar
         IndexPtr holiday_dates = apply_rule(dates);
 
         if (!m_data.days_of_week.empty()) {
-            auto dayofweek = holiday_dates->dt().day_of_week(arrow::compute::DayOfWeekOptions{});
-            auto filter = dayofweek.is_in(m_days_of_week_array);
+            auto filter = holiday_dates->day_of_week(arrow::compute::DayOfWeekOptions{}).is_in(m_days_of_week_array);
             holiday_dates = holiday_dates->filter(filter, false);
         }
 

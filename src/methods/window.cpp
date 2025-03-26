@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "common/python_utils.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "index/datetime_index.h"
 #include "epoch_frame/common.h"
 #include "epoch_frame/dataframe.h"
@@ -40,14 +40,14 @@ namespace epoch_frame
             {
                 auto start = end - m_window_size;
                 start = std::clamp<int64_t>(
-                        (m_closed == EpochFrameRollingWindowClosedType::Both ||
-                         m_closed == EpochFrameRollingWindowClosedType::Left)
+                        (m_closed == epoch_core::RollingWindowClosedType::Both ||
+                         m_closed == epoch_core::RollingWindowClosedType::Left)
                             ? start - 1
                             : start,
                         0, num_values);
                 end = std::clamp<int64_t>(
-                        (m_closed == EpochFrameRollingWindowClosedType::Neither ||
-                         m_closed == EpochFrameRollingWindowClosedType::Left)
+                        (m_closed == epoch_core::RollingWindowClosedType::Neither ||
+                         m_closed == epoch_core::RollingWindowClosedType::Left)
                             ? end - 1
                             : end,
                         0, num_values);
@@ -114,7 +114,7 @@ namespace epoch_frame
                 auto window = m_data.iloc({bound.start, bound.end});
                 auto result = window.agg(AxisType::Row, agg_name, skip_null, options );
                 if constexpr (is_dataframe) {
-                    auto s = result.transpose();
+                    auto s = result.transpose(nullptr);
                     results[i] = s.table();
                 } else {
                     results[i] = result.value();

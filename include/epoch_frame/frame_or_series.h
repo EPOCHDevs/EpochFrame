@@ -6,7 +6,7 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
 #include <variant>
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "common/table_or_array.h"
 
 

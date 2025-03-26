@@ -9,6 +9,7 @@
 #include <arrow/array.h>
 #include <arrow/scalar.h>
 #include <arrow/compute/api.h>
+#include <methods/temporal.h>
 
 #include "epoch_frame/aliases.h"
 #include "epoch_frame/scalar.h"
@@ -30,7 +31,7 @@ namespace epoch_frame {
         /// Return the underlying Arrow array representation
         virtual class Array array() const = 0;
 
-
+        virtual std::string repr() const = 0;
         /// Return the arrow DataType
         virtual std::shared_ptr<arrow::DataType> dtype() const = 0;
 
@@ -101,21 +102,27 @@ namespace epoch_frame {
 
         /// Return a new IIndex with element at certain location removed
         /// Pandas uses .delete() with an integer or slice for positional removal
-        virtual IndexPtr delete_(IndexType loc) const = 0;
+        virtual IndexPtr delete_(int64_t loc) const = 0;
 
         /// Insert a new value at position 'loc'
         /// Return a new IIndex
         virtual IndexPtr
-        insert(IndexType loc, Scalar const &value) const = 0;
+        insert(int64_t loc, Scalar const &value) const = 0;
 
         // ------------------------------------------------------------------------
         // Searching / Slicing
         virtual IndexPtr iloc(UnResolvedIntegerSliceBound const&) const = 0;
-        virtual Scalar at(IndexType loc) const = 0;
+        virtual Scalar at(int64_t loc) const = 0;
+        IndexPtr iat(int64_t loc) const {
+            return Make(AssertResultIsOk(MakeArrayFromScalar(*at(loc).value(), 1)));
+        }
+        /// Return true if 'label' is in the index
+        virtual bool contains(Scalar const &label) const = 0;
 
         /// Return the integer location of 'label' in the index (like Pandas .get_loc())
         /// Could throw if not found
         virtual IndexType get_loc(Scalar const &label) const = 0;
+        virtual std::vector<int64_t> get_loc(IndexPtr const & other) const = 0;
 
         /// Return integer locations for start/end labels (like Pandas .slice_locs)
         /// e.g. used internally for slicing
@@ -176,6 +183,39 @@ namespace epoch_frame {
 
         virtual IndexPtr Make(std::shared_ptr<arrow::Array> array) const = 0;
 
+        // temporals
+        virtual IndexPtr normalize() const {
+            return Make(dt().normalize().value());
+        }
+
+        virtual IndexPtr tz_localize(const std::string& timezone,
+                         AmbiguousTimeHandling ambiguous = AmbiguousTimeHandling::RAISE,
+                         NonexistentTimeHandling nonexistent = NonexistentTimeHandling::RAISE) const {
+            return Make(dt().tz_localize(timezone, ambiguous, nonexistent).value());
+        }
+
+        virtual Array day_of_week(arrow::compute::DayOfWeekOptions const & options) const {
+            return dt().day_of_week(options);
+        }
+
+        virtual IndexPtr tz_convert(const std::string& timezone) const {
+            return Make(dt().tz_convert(timezone).value());
+        }
+
+        virtual IndexPtr replace_tz(const std::string& timezone) const {
+            return Make(dt().replace_tz(timezone).value());
+        }
+
+        virtual IndexPtr local_timestamp() const {
+            return Make(dt().local_timestamp().value());
+        }
+
+        template<typename T>
+        std::vector<T> to_vector() const {
+            return array().to_vector<T>();
+        }
+
+    protected:
         virtual TemporalOperation<true> dt() const = 0;
     };
 

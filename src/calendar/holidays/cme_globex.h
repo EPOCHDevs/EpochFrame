@@ -1,8 +1,8 @@
 #pragma once
-#include "holiday.h"
-#include "aliases.h"
+#include "date_time/holiday/holiday.h"
+#include "epoch_frame/aliases.h"
 #include "factory/date_offset_factory.h"
-
+#include <chrono>
 
 namespace epoch_frame {
 
@@ -21,11 +21,11 @@ const HolidayData USNewYearsDay = {
     .day = 1d,
     .start_date = DateTime({1952y, std::chrono::September, 29d}),
     .days_of_week = {
-        EpochDayOfWeek::Monday,
-        EpochDayOfWeek::Tuesday,
-        EpochDayOfWeek::Wednesday,
-        EpochDayOfWeek::Thursday,
-        EpochDayOfWeek::Friday,
+        epoch_core::EpochDayOfWeek::Monday,
+        epoch_core::EpochDayOfWeek::Tuesday,
+        epoch_core::EpochDayOfWeek::Wednesday,
+        epoch_core::EpochDayOfWeek::Thursday,
+        epoch_core::EpochDayOfWeek::Friday,
     }
 };
 
@@ -39,11 +39,11 @@ const HolidayData USMartinLutherKingJrFrom2022 = {
     .offset = {date_offset(MO(3))},
     .start_date = DateTime({2022y, std::chrono::January, 1d}),
     .days_of_week = {
-        EpochDayOfWeek::Monday,
-        EpochDayOfWeek::Tuesday,
-        EpochDayOfWeek::Wednesday,
-        EpochDayOfWeek::Thursday,
-        EpochDayOfWeek::Friday,
+        epoch_core::EpochDayOfWeek::Monday,
+        epoch_core::EpochDayOfWeek::Tuesday,
+        epoch_core::EpochDayOfWeek::Wednesday,
+        epoch_core::EpochDayOfWeek::Thursday,
+        epoch_core::EpochDayOfWeek::Friday,
     }
 };
 

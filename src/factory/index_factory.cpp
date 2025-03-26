@@ -118,6 +118,10 @@ namespace epoch_frame::factory::index {
         return make_index(array::make_contiguous_array(index_array), monotonic_direction, name);
     }
 
+    IndexPtr make_empty_index(arrow::DataTypePtr const& type, std::optional<MonotonicDirection> monotonic_direction, std::string const& name) {
+        return make_index(array::make_null_array(0, type), monotonic_direction, name);
+    }
+
     std::shared_ptr<DateTimeIndex>  date_range(std::vector<int64_t> const& arr, arrow::DataTypePtr const& type) {
         arrow::TimestampBuilder builder(type, arrow::default_memory_pool());
         AssertStatusIsOk(builder.AppendValues(arr));
@@ -216,5 +220,35 @@ namespace epoch_frame::factory::index {
         return index;
     }
 
+    IndexPtr make_datetime_index(std::vector<int64_t> const& timestamps, std::string const& name, std::string const& tz) {
+        arrow::TimestampBuilder builder(arrow::timestamp(arrow::TimeUnit::NANO, tz), arrow::default_memory_pool());
+        if (std::ranges::is_sorted(timestamps)) {
+            AssertStatusIsOk(builder.AppendValues(timestamps));
+        }
+        else {
+            auto sorted = timestamps;
+            std::ranges::sort(sorted);
+            AssertStatusIsOk(builder.AppendValues(sorted));
+        }
 
+        return std::make_shared<DateTimeIndex>(AssertContiguousArrayResultIsOk(builder.Finish()), name);
+    }
+
+    IndexPtr make_datetime_index(std::vector<arrow::TimestampScalar> const& timestamps, std::string const& name, std::string const& tz) {
+        std::vector<int64_t> scalars;
+        scalars.reserve(timestamps.size());
+        for (auto const& timestamp : timestamps) {
+            scalars.emplace_back(timestamp.value);
+        }
+        return make_datetime_index(scalars, name, tz);
+    }
+
+    IndexPtr make_datetime_index(std::vector<DateTime> const& timestamps, std::string const& name, std::string const& tz) {
+        std::vector<int64_t> scalars;
+        scalars.reserve(timestamps.size());
+        for (auto const& timestamp : timestamps) {
+            scalars.emplace_back(timestamp.timestamp().value);
+        }
+        return make_datetime_index(scalars, name, tz);
+    }
 } // namespace epoch_frame::factory::index

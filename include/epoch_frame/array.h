@@ -91,17 +91,23 @@ public:
      * @brief Equality operator
      *
      * @param other The Array to compare with
-     * @return true if the arrays are equal, false otherwise
+     * @return A boolean Array with the result of the comparison
      */
-    bool operator==(const Array& other) const;
+    Array operator==(const Array& other) const;
+    Array operator==(const Scalar& other) const;
+
+    bool is_equal(const Array& other) const{
+        return m_array->Equals(other.m_array);
+    }
 
     /**
      * @brief Inequality operator
      *
      * @param other The Array to compare with
-     * @return true if the arrays are not equal, false otherwise
+     * @return A boolean Array with the result of the comparison
      */
-    bool operator!=(const Array& other) const;
+    Array operator!=(const Array& other) const;
+    Array operator!=(const Scalar& other) const;
 
     /**
      * @brief Less than operator
@@ -316,6 +322,10 @@ public:
     bool is_valid() const {
         return m_array != nullptr;
     }
+
+    Array insert(int64_t loc, Scalar const &val) const;
+
+    Array delete_(int64_t loc) const;
 
     /**
      * @brief Convert values to a vector
@@ -605,9 +615,12 @@ public:
     Array sqrt() const;
 
     Array where(const Array& mask, const Scalar& replacement) const;
+    Array where(const Array& mask, const Array& replacement) const;
 
 private:
     arrow::ArrayPtr m_array;
+
+    uint64_t resolve_index(int64_t idx) const;
 };
 
 // Scalar-Array operations

@@ -402,7 +402,7 @@ TEST_CASE("DataFrame isin method", "[DataFrame][Isin]") {
     };
     DataFrame df = make_dataframe<int64_t>(idx, data, {"A", "B", "C"});
     // Allowed values for column A: {2, 4}
-    auto allowed = make_contiguous_array(std::vector<int64_t>{2, 4});
+    Array allowed{make_contiguous_array(std::vector<int64_t>{2, 4})};
     DataFrame bool_df = df.isin(allowed);
     // Expected: In column A, row0: 1 -> false; row1: 2 -> true; row2: 3 -> false; row3: 4 -> true; row4: 5 -> false
     REQUIRE(bool_df.iloc(0, "A") == Scalar(false));

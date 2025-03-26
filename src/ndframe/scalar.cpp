@@ -58,8 +58,16 @@ namespace epoch_frame {
     Scalar::Scalar(const DateTime &other)
             : m_scalar(std::make_shared<arrow::TimestampScalar>(other.timestamp())) {}
 
+    Scalar::Scalar(const Date& other):Scalar(DateTime(other)){}
+
     Scalar::Scalar(const arrow::TimestampScalar &other)
             : m_scalar(std::make_shared<arrow::TimestampScalar>(other)) {}
+
+    Scalar::Scalar(const arrow::DurationScalar &other)
+            : m_scalar(std::make_shared<arrow::DurationScalar>(other)) {}
+
+    Scalar::Scalar(const TimeDelta &other)
+            : m_scalar(std::make_shared<arrow::DurationScalar>(other.to_nanoseconds(), arrow::TimeUnit::NANO)) {}
 
     Scalar::Scalar(std::string const &other)
             : Scalar(arrow::MakeScalar(other)) {}
@@ -93,6 +101,10 @@ namespace epoch_frame {
     }
 
     Scalar Scalar::cast(arrow::DataTypePtr const &type) const {
+        auto type_id = type->id();
+        if (type->Equals(m_scalar->type) || is_list_like(type_id) || arrow::is_string(type_id)) {
+            return *this;
+        }
         return Scalar{AssertResultIsOk(m_scalar->CastTo(type))};
     }
 
@@ -332,8 +344,7 @@ namespace epoch_frame {
 
     arrow::TimestampScalar Scalar::timestamp(std::string const &format) const {
         if (arrow::is_string(m_scalar->type->id())) {
-            auto scalar = std::make_shared<arrow::StringScalar>("2024-01-01");
-            auto result = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::Strptime(scalar, arrow::compute::StrptimeOptions{format, arrow::TimeUnit::NANO}));
+            auto result = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::Strptime(m_scalar, arrow::compute::StrptimeOptions{format, arrow::TimeUnit::NANO}));
             return result;
         }
         auto scalarPtr = std::dynamic_pointer_cast<arrow::TimestampScalar>(m_scalar);
@@ -351,8 +362,8 @@ namespace epoch_frame {
         return factory::scalar::to_datetime(timestamp(format));
     }
 
-    EpochDayOfWeek Scalar::weekday() const {
-        return static_cast<EpochDayOfWeek>(to_datetime().weekday());
+    epoch_core::EpochDayOfWeek Scalar::weekday() const {
+        return static_cast<epoch_core::EpochDayOfWeek>(to_datetime().weekday());
     }
 
     Array Scalar::to_array(int64_t length) const {

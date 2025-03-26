@@ -16,6 +16,8 @@
 #include "factory/index_factory.h"
 #include "index/arrow_index.h"
 #include <unordered_set>
+#include <index/datetime_index.h>
+
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/common.h"
@@ -337,10 +339,23 @@ namespace epoch_frame {
                     merged
             };
         }
+
         auto indexField = merged->schema()->GetFieldIndex(indexName);
         AssertFromStream(indexField != -1, "Failed to find index");
-
         auto index = merged->column(indexField);
+
+        if (index->type()->id() == arrow::Type::TIMESTAMP) {
+            const auto sorted_index = AssertResultIsOk(SortIndices(merged, arrow::SortOptions{
+                {
+                    arrow::compute::SortKey{indexName}
+                }
+            }));
+            merged = AssertTableResultIsOk(arrow::compute::Take(merged, sorted_index));
+            auto dt_index = factory::array::make_contiguous_array(merged->column(indexField));
+            return DataFrame(std::make_shared<DateTimeIndex>(dt_index, ""),
+                        AssertResultIsOk(merged->RemoveColumn(indexField)));
+        }
+
         return DataFrame(factory::index::make_index(index, std::nullopt, ""),
                          AssertResultIsOk(merged->RemoveColumn(indexField)));
     }

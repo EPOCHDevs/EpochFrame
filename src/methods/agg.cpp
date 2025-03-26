@@ -12,6 +12,7 @@
 #include <string>
 #include <memory>
 #include <stdexcept>
+#include <index/object_index.h>
 
 namespace epoch_frame {
     Aggregator::Aggregator(const TableComponent& data) : MethodBase(data) {}
@@ -49,7 +50,7 @@ namespace epoch_frame {
             auto index = factory::array::make_contiguous_array(concat_table->GetColumnByName("index"));
             auto value = concat_table->GetColumnByName("value");
             AssertFromStream(index != nullptr && value != nullptr, "IIndex or value column not found");
-            return SeriesOrScalar{Series(m_data.first->Make(index), value)};
+            return SeriesOrScalar{Series(std::make_shared<ObjectIndex>(index), value)};
         }
         if (agg == "min" || agg == "max") {
             const arrow::ChunkedArrayVector columns = table->columns();

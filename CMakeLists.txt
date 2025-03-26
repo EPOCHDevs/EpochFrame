@@ -1,9 +1,25 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
+# Add option for shared vs static libraries (default to shared for development)
+option(BUILD_SHARED_LIBS "Build libraries as shared instead of static" ON)
+message(STATUS "Building libraries as ${BUILD_SHARED_LIBS}")
+if(BUILD_SHARED_LIBS)
+  message(STATUS "Building SHARED libraries")
+else()
+  message(STATUS "Building STATIC libraries")
+endif()
+
 # Set binary and library output directories to keep build files separate from source
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Set PIC only when building shared libraries
+if(BUILD_SHARED_LIBS)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+else()
+    set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
+endif()
 
 # Enable vcpkg manifest mode (uses vcpkg.json)
 set(CMAKE_TOOLCHAIN_FILE $ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
@@ -42,14 +58,30 @@ find_package(ArrowAcero 19.0.1 CONFIG REQUIRED)
 find_package(Parquet 19.0.1 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
-add_library(epoch_frame STATIC "")
+# Create the library - type determined by BUILD_SHARED_LIBS
+add_library(epoch_frame "")
 add_library(epoch::frame ALIAS epoch_frame)
+
+# Configure version for shared libraries
+set_target_properties(epoch_frame PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
+# For shared libraries, export all symbols by default (Linux-friendly approach)
+if(BUILD_SHARED_LIBS)
+    set_target_properties(epoch_frame PROPERTIES
+        CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+    )
+endif()
+
 target_compile_definitions(epoch_frame PUBLIC -DSPDLOG_USE_STD_FORMAT)
 
 target_include_directories(epoch_frame
-        PUBLIC
+    PUBLIC
         ${PROJECT_SOURCE_DIR}/include
-        PRIVATE
+    PRIVATE
         ${PROJECT_SOURCE_DIR}/src
 )
 

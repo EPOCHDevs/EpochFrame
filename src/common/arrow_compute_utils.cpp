@@ -41,14 +41,14 @@ namespace epoch_frame::arrow_utils {
         return MakeNullScalar(arrow::null());
     }
 
-    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func) {
+    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func, bool merge_chunks) {
         std::vector<std::shared_ptr<arrow::ChunkedArray>> processed_columns(table->num_columns());
         arrow::FieldVector fields = table->schema()->fields();
 
         parallel_for(tbb::blocked_range<int64_t>(0, table->num_columns()), [&](const tbb::blocked_range<int64_t>& r) {
             for (int64_t i = r.begin(); i != r.end(); ++i) {
-                auto merged = AssertContiguousArrayResultIsOk(arrow::Concatenate(table->column(i)->chunks()));
-                auto result = func(arrow::Datum(merged), fields[i]->name());
+                auto merged = merge_chunks ? arrow::Datum(AssertContiguousArrayResultIsOk(arrow::Concatenate(table->column(i)->chunks()))) : arrow::Datum(table->column(i));
+                auto result = func(merged, fields[i]->name());
                 if (result.kind() == arrow::Datum::ARRAY) {
                     processed_columns[i] = std::make_shared<arrow::ChunkedArray>(result.make_array());
                     fields[i] = field(fields[i]->name(), processed_columns[i]->type());

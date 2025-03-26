@@ -224,7 +224,7 @@ namespace epoch_frame {
 
         // timezone handling
         Type assume_timezone(arrow::compute::AssumeTimezoneOptions const& options) const {
-            return to_type(arrow_utils::call_compute("assume_timezone", {m_data.value()}, &options));
+            return to_type(arrow_utils::call_compute( {m_data.value()}, "assume_timezone", &options));
         }
 
         std::string tz() const {
@@ -232,7 +232,7 @@ namespace epoch_frame {
         }
 
         [[nodiscard]] Type local_timestamp() const {
-            return to_type(arrow_utils::call_compute("local_timestamp", {m_data.value()}));
+            return to_type(arrow_utils::call_compute({m_data.value()}, "local_timestamp"));
         }
 
         Type to_type(arrow::Result<arrow::Datum> const& other) const {
@@ -274,6 +274,12 @@ namespace epoch_frame {
          * @throws std::invalid_argument If the timestamp doesn't have a timezone
          */
         Type tz_convert(const std::string& timezone) const;
+
+        Type replace_tz(const std::string& timezone) const;
+
+        Type normalize() const {
+            return to_type(arrow::compute::FloorTemporal(m_data.value(), arrow::compute::RoundTemporalOptions{}));
+        }
 
     private:
         Type m_data;

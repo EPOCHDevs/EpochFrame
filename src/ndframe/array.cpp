@@ -69,25 +69,40 @@ template Array Array::FromVector<float>(const std::vector<float>& values);
 template Array Array::FromVector<double>(const std::vector<double>& values);
 template Array Array::FromVector<bool>(const std::vector<bool>& values);
 
+uint64_t Array::resolve_index(int64_t idx) const {
+    if (!is_valid()) {
+        throw std::runtime_error("Cannot index a null array");
+    }
+
+    int64_t length = m_array->length();
+    int64_t resolved_idx = resolve_integer_index(idx, length);
+
+    // Check bounds
+    if (resolved_idx < 0 || resolved_idx >= length) {
+        throw std::out_of_range("Index out of bounds for array");
+    }
+    return resolved_idx;
+}
+
+
 // ------------------------------------------------------------------------
 // Operator overloads
 // ------------------------------------------------------------------------
 
-bool Array::operator==(const Array& other) const {
-    if (!m_array || !other.m_array) return false;
-    if (m_array == other.m_array) return true;
-
-    // Only do expensive comparison if necessary
-    std::vector<arrow::Datum> inputs = {m_array, other.m_array};
-    auto equal_result = arrow_utils::call_compute(inputs, "equal");
-    arrow::ScalarPtr all_result = arrow_utils::call_unary_agg_compute(equal_result, "all");
-    auto bool_result = std::dynamic_pointer_cast<arrow::BooleanScalar>(all_result);
-    AssertFromStream(bool_result, "Boolean scalar result is not valid");
-    return bool_result->value;
+Array Array::operator==(const Array& other) const {
+    return call_function(other, "equal");
 }
 
-bool Array::operator!=(const Array& other) const {
-    return !(*this == other);
+Array Array::operator==(const Scalar& other) const {
+    return call_function(other, "equal");
+}
+
+Array Array::operator!=(const Array& other) const {
+    return call_function(other, "not_equal");
+}
+
+Array Array::operator!=(const Scalar& other) const {
+    return call_function(other, "not_equal");
 }
 
 Array Array::operator<(const Array& other) const {
@@ -168,6 +183,28 @@ Array Array::operator^(const Array& other) const {
 
 Array Array::operator!() const {
     return call_function("invert");
+}
+
+Array Array::insert(int64_t loc, Scalar const &val) const {
+    loc = resolve_index(loc);
+    // Build a 1-element array from 'val'
+    auto single_val = AssertContiguousArrayResultIsOk(arrow::MakeArrayFromScalar(*val.value(), 1));
+
+    // slice(0..loc), single_val, slice(loc..end)
+    auto slice1 = m_array->Slice(0, loc);
+    auto slice2 = m_array->Slice(loc, length() - loc);
+
+    return Array(
+            factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, single_val, slice2}))));
+}
+
+Array Array::delete_(int64_t loc) const {
+    loc = resolve_index(loc);
+    // slice 0..loc, slice loc+1..end => arrow::Concatenate
+    auto slice1 = m_array->Slice(0, loc);
+    auto slice2 = m_array->Slice(loc + 1, length() - (loc + 1));
+
+    return Array(factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, slice2}))));
 }
 
 // ------------------------------------------------------------------------
@@ -397,19 +434,7 @@ std::ostream& operator<<(std::ostream& os, const Array& array) {
 // ------------------------------------------------------------------------
 
 Scalar Array::operator[](int64_t idx) const {
-    if (!is_valid()) {
-        throw std::runtime_error("Cannot index a null array");
-    }
-
-    // Handle negative indices (Python-style)
-    int64_t length = m_array->length();
-    int64_t resolved_idx = resolve_integer_index(idx, length);
-
-    // Check bounds
-    if (resolved_idx < 0 || resolved_idx >= length) {
-        throw std::out_of_range("Index out of bounds for array");
-    }
-    return Scalar(AssertResultIsOk(m_array->GetScalar(resolved_idx)));
+    return Scalar(AssertResultIsOk(m_array->GetScalar(resolve_index(idx))));
 }
 
 Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
@@ -520,7 +545,11 @@ Array Array::sqrt() const {
 }
 
 Array Array::where(const Array& mask, const Scalar& replacement) const {
-    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(m_array, mask.value(), replacement.value())));
+    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
+}
+
+Array Array::where(const Array& mask, const Array& replacement) const {
+    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
 }
 
 } // namespace epoch_frame

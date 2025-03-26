@@ -89,7 +89,7 @@ TEST_CASE("rolling window with different closed options", "[window]")
     SECTION("closed=Left")
     {
         auto result = df.rolling_agg({.window_size = 2, .min_periods = 1,
-                                     .closed = ::EpochFrameRollingWindowClosedType::Left}).sum();
+                                     .closed = ::epoch_core::RollingWindowClosedType::Left}).sum();
 
         INFO(result);
         REQUIRE(result.equals(efo::make_dataframe<double>(
@@ -99,7 +99,7 @@ TEST_CASE("rolling window with different closed options", "[window]")
     SECTION("closed=Right")
     {
         auto result = df.rolling_agg({.window_size = 2, .min_periods = 1,
-                                     .closed = ::EpochFrameRollingWindowClosedType::Right}).sum();
+                                     .closed = ::epoch_core::RollingWindowClosedType::Right}).sum();
 
         INFO(result);
         REQUIRE(result.equals(efo::make_dataframe<double>(
@@ -109,7 +109,7 @@ TEST_CASE("rolling window with different closed options", "[window]")
     SECTION("closed=Both")
     {
         auto result = df.rolling_agg({.window_size = 2, .min_periods = 1,
-                                     .closed = ::EpochFrameRollingWindowClosedType::Both}).sum();
+                                     .closed = ::epoch_core::RollingWindowClosedType::Both}).sum();
 
         INFO(result);
         REQUIRE(result.equals(efo::make_dataframe<double>(
@@ -119,7 +119,7 @@ TEST_CASE("rolling window with different closed options", "[window]")
     SECTION("closed=Neither")
     {
         auto result = df.rolling_agg({.window_size = 2, .min_periods = 1,
-                                     .closed = ::EpochFrameRollingWindowClosedType::Neither}).sum();
+                                     .closed = ::epoch_core::RollingWindowClosedType::Neither}).sum();
 
         INFO(result);
         REQUIRE(result.equals(efo::make_dataframe<double>(

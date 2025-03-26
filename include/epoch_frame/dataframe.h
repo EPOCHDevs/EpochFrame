@@ -83,7 +83,7 @@ namespace epoch_frame {
         Scalar iloc(int64_t row, std::string const &col) const;
         Series operator[](const std::string &column) const;
         DataFrame operator[](const StringVector &columns) const;
-        DataFrame operator[](const arrow::ArrayPtr &) const;
+        DataFrame operator[](const Array &array) const;
         DataFrame operator[](const StringVectorCallable &callable) const;
         Series loc(const Scalar &index_label) const;
         Scalar loc(const Scalar &index_label, const std::string &column) const;
@@ -115,6 +115,7 @@ namespace epoch_frame {
         // 9) Serialization
         //--------------------------------------------------------------------------
         friend std::ostream &operator<<(std::ostream &os, DataFrame const &);
+        std::string repr() const;
 
         //--------------------------------------------------------------------------
         // 12) Common Operations
@@ -166,13 +167,21 @@ namespace epoch_frame {
          * @return A new DataFrame with the results
          */
         DataFrame apply(const std::function<Series(const Series&)>& func, AxisType axis = AxisType::Row) const;
-
+        DataFrame apply(const std::function<Array(const Array&)>& func, AxisType axis = AxisType::Row) const;
         AggRollingWindowOperations<true> rolling_agg(window::RollingWindowOptions const& options) const;
         ApplyDataFrameRollingWindowOperations rolling_apply(window::RollingWindowOptions const& options) const;
 
         AggRollingWindowOperations<true> expanding_agg(window::ExpandingWindowOptions const& options) const;
         ApplyDataFrameRollingWindowOperations expanding_apply(window::ExpandingWindowOptions const& options) const;
 
+
+        // Assignments
+        DataFrame assign(std::string const&, Series const&) const;
+
+        DataFrame assign(IndexPtr const&, arrow::TablePtr const&) const;
+        DataFrame assign(DataFrame const& df) const{
+            return assign(df.m_index, df.m_table);
+        }
 
         // Inherit map method from NDFrame
         using NDFrame::map;

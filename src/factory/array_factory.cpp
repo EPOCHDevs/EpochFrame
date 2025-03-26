@@ -20,6 +20,20 @@ namespace epoch_frame::factory::array {
         return AssertContiguousArrayResultIsOk(builder->Finish());
     }
 
+    arrow::ArrayPtr make_array(const std::vector<Scalar> &scalarVector,
+                          std::shared_ptr<arrow::DataType> const &type) {
+        auto result = arrow::MakeBuilder(type);
+        AssertFromFormat(result.ok(), "Failed to create builder");
+        auto builder = result.MoveValueUnsafe();
+        AssertStatusIsOk(builder->Reserve(scalarVector.size()));
+
+        for (auto const& scalar: scalarVector) {
+            AssertStatusIsOk(builder->AppendScalar(*scalar.value()));
+        }
+
+        return AssertContiguousArrayResultIsOk(builder->Finish());
+    }
+
     arrow::ChunkedArrayPtr make_random_array(int64_t length, int64_t seed) {
         arrow::DoubleBuilder builder;
         AssertStatusIsOk(builder.Reserve(length));
@@ -48,6 +62,11 @@ namespace epoch_frame::factory::array {
     }
 
     arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector, std::shared_ptr<arrow::DataType> const &type) {
+        auto result = make_array(scalarVector, type);
+        return AssertArrayResultIsOk(arrow::ChunkedArray::Make(std::vector<arrow::ArrayPtr>{result}));
+    }
+
+    arrow::ChunkedArrayPtr make_chunked_array(const std::vector<Scalar> &scalarVector, std::shared_ptr<arrow::DataType> const &type) {
         auto result = make_array(scalarVector, type);
         return AssertArrayResultIsOk(arrow::ChunkedArray::Make(std::vector<arrow::ArrayPtr>{result}));
     }

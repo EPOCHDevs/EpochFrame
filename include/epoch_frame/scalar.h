@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <string>
 #include <arrow/scalar.h>
+#include <date_time/datetime.h>
 #include <flatbuffers/array.h>
 #include "date_time/day_of_week.h"
 
@@ -31,7 +32,13 @@ namespace epoch_frame {
 
         explicit Scalar(const arrow::TimestampScalar &other);
 
+        explicit Scalar(const arrow::DurationScalar &other);
+
+        explicit Scalar(const struct Date &other);
+
         explicit Scalar(const struct DateTime &other);
+
+        explicit Scalar(const struct TimeDelta &other);
 
         explicit Scalar(std::string const &other);
 
@@ -210,7 +217,7 @@ namespace epoch_frame {
         DateTime to_datetime(std::string const &format="%Y-%m-%d %H:%M:%S") const;
         DateTime to_date(std::string const &format="%Y-%m-%d") const;
 
-        [[nodiscard]] EpochDayOfWeek weekday() const;
+        [[nodiscard]] epoch_core::EpochDayOfWeek weekday() const;
 
         class Array to_array(int64_t lenght) const;
 

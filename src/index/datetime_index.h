@@ -10,8 +10,8 @@ namespace epoch_frame {
     class DateTimeIndex : public ArrowIndex<true> {
 
     public:
-        explicit DateTimeIndex(std::shared_ptr<arrow::TimestampArray> array, std::string const& name="");
-        explicit DateTimeIndex(std::shared_ptr<arrow::Array> array, std::string const& name="");
+        explicit DateTimeIndex(std::shared_ptr<arrow::TimestampArray> const& array, std::string const& name="");
+        explicit DateTimeIndex(std::shared_ptr<arrow::Array> const& array, std::string const& name="");
 
         IndexPtr Make(std::shared_ptr<arrow::Array> array) const final;
 

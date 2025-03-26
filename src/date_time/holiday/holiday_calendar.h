@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../holidays/holiday.h"
+#include "holiday.h"
 #include <string>
 #include <unordered_map>
 #include <functional>
@@ -97,7 +97,7 @@ namespace epoch_frame::calendar{
         mutable std::optional<std::tuple<DateTime, DateTime, DataFrame>> cache;
     public:
         // Constructor
-        AbstractHolidayCalendar(const AbstractHolidayCalendarData& data);
+        AbstractHolidayCalendar(const AbstractHolidayCalendarData& data, DateTime start_date={1970y, std::chrono::January, 1d}, DateTime end_date={2200y, std::chrono::December, 31d});
 
         // Virtual destructor
         virtual ~AbstractHolidayCalendar() = default;
@@ -205,4 +205,8 @@ return true; \
     }
 
     REGISTER_HOLIDAY_CALENDAR(USFederalHolidayCalendar);
+
+    inline AbstractHolidayCalendarPtr make_unnamed_calendar(const std::vector<HolidayData>& rules, DateTime start_date={1970y, std::chrono::January, 1d}, DateTime end_date={2200y, std::chrono::December, 31d}){
+        return std::make_shared<AbstractHolidayCalendar>(AbstractHolidayCalendarData{rules}, std::move(start_date), std::move(end_date));
+    }
 } // namespace epoch_frame

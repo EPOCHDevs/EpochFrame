@@ -35,7 +35,7 @@ namespace epoch_frame::factory::offset {
         return std::make_shared<DayHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> weeks(int64_t n, std::optional<EpochDayOfWeek> weekday = {}) {
+    inline std::shared_ptr<FixedOffsetHandler> weeks(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = {}) {
         return std::make_shared<WeekHandler>(n, weekday);
     }
 
@@ -83,21 +83,13 @@ namespace epoch_frame::factory::offset {
         return std::make_shared<EasterHandler>(n);
     }
 
-    // inline DateOffsetHandlerPtr bday(int64_t n=1, std::optional<TimeDelta> timedelta=std::nullopt) {
-    //     return std::make_shared<BusinessDay>(n, timedelta);
-    // }
+    inline DateOffsetHandlerPtr bday(int64_t n=1, std::optional<TimeDelta> timedelta=std::nullopt) {
+        return std::make_shared<BusinessDay>(n, timedelta);
+    }
 
-    // struct CustomBusinessDayParams {
-    //     int64_t n=1;
-    //     std::optional<TimeDelta> timedelta=std::nullopt;
-    //     np::WeekMask weekmask=np::WeekMask{true, true, true, true, true, false, false};
-    //     std::vector<DateTime> holidays{};
-    // };
-    // inline DateOffsetHandlerPtr cbday(CustomBusinessDayParams const& params, np::BusinessDayCalendarPtr const& calendar=np::DEFAULT_BUSDAYCAL) {
-    //     return std::make_shared<CustomBusinessDay>(params.n, params.weekmask, params.holidays, calendar, params.timedelta);
-    // }
-
-    // inline DateOffsetHandlerPtr cbday(calendar::AbstractHolidayCalendarPtr const& calendar, CustomBusinessDayParams const& params) {
-    //     return std::make_shared<CustomBusinessDay>(params.n, params.weekmask, params.holidays, calendar, params.timedelta);
-    // }
+    inline DateOffsetHandlerPtr cbday(BusinessMixinParams const& params,
+        int64_t n=1,
+        std::optional<TimeDelta> timedelta=std::nullopt) {
+        return std::make_shared<CustomBusinessDay>(params, n, timedelta);
+    }
 }

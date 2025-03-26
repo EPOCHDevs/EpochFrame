@@ -179,4 +179,8 @@ TimeDelta& TimeDelta::operator*=(double other) {
     return *this;
 }
 
+std::strong_ordering TimeDelta::operator<=>(const TimeDelta& other) const {
+    return to_microseconds() <=> other.to_microseconds();
+}
+
 } // namespace epoch_frame

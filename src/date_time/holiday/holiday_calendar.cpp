@@ -6,11 +6,10 @@
 namespace epoch_frame::calendar
 {
 
-    AbstractHolidayCalendar::AbstractHolidayCalendar(const AbstractHolidayCalendarData& data)
-        : name(data.name), rules(data.rules)
+    AbstractHolidayCalendar::AbstractHolidayCalendar(const AbstractHolidayCalendarData& data, DateTime start_date, DateTime end_date)
+        : name(data.name), rules(data.rules), start_date(std::move(start_date)), end_date(std::move(end_date))
     {
         AssertFromFormat(data.rules.size() > 0, "Rules must contain at least one holiday");
-        AssertFromFormat(!data.name.empty(), "Name must be non-empty");
     }
 
     // Find a rule by name

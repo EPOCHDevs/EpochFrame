@@ -8,10 +8,10 @@
 
 # Generated files
 cmake-build-*
-build
+build*
 
 # Python
 __pycache__
-dateutil
-pandas
-pandas_market_calendars
+/dateutil/
+/pandas/
+/pandas_market_calendars/

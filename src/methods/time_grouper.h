@@ -3,18 +3,18 @@
 #include "date_time/date_offsets.h"
 
 
-CREATE_ENUM(EpochTimeGrouperClosedType, Left, Right);
-CREATE_ENUM(EpochTimeGrouperLabelType, Left, Right);
-CREATE_ENUM(EpochTimeGrouperOrigin, Epoch, Start, StartDay, EndDay, End);
+CREATE_ENUM(GrouperClosedType, Left, Right);
+CREATE_ENUM(GrouperLabelType, Left, Right);
+CREATE_ENUM(GrouperOrigin, Epoch, Start, StartDay, EndDay, End);
 
 namespace epoch_frame {
-using OriginType = std::variant<DateTime, EpochTimeGrouperOrigin>;
+using OriginType = std::variant<DateTime, epoch_core::GrouperOrigin>;
 struct TimeGrouperOptions {
     DateOffsetHandlerPtr freq;
     std::optional<std::string> key;
-    EpochTimeGrouperClosedType closed{EpochTimeGrouperClosedType::Null};
-    EpochTimeGrouperLabelType label{EpochTimeGrouperLabelType::Null};
-    OriginType origin{EpochTimeGrouperOrigin::StartDay};
+    epoch_core::GrouperClosedType closed{epoch_core::GrouperClosedType::Null};
+    epoch_core::GrouperLabelType label{epoch_core::GrouperLabelType::Null};
+    OriginType origin{epoch_core::GrouperOrigin::StartDay};
     std::optional<TimeDelta> offset{std::nullopt};
 };
 
@@ -23,7 +23,7 @@ struct TimeBinsResult {
     IndexPtr labels;
 };
 
-std::vector<int64_t> generate_bins(Array const& ax_values, Array const& bin_edges, EpochTimeGrouperClosedType closed=EpochTimeGrouperClosedType::Left);
+std::vector<int64_t> generate_bins(Array const& ax_values, Array const& bin_edges, epoch_core::GrouperClosedType closed=epoch_core::GrouperClosedType::Left);
 
 // Resampler class
 class TimeGrouper {

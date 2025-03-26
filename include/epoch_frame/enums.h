@@ -6,7 +6,6 @@
 #include <epoch_core/enum_wrapper.h>
 
 
-CREATE_ENUM(EpochFrameTimezone, utc, est);
 CREATE_ENUM(TimeDeltaUnit, Years, Months, Days, Hours, Minutes, Seconds, Milliseconds, Microseconds, Nanoseconds);
 
 namespace epoch_frame {
@@ -53,6 +52,19 @@ namespace epoch_frame {
         Increasing, ///< Values are increasing
         Decreasing, ///< Values are decreasing
         NotMonotonic ///< No monotonicity
+    };
+
+    constexpr auto format_monotonic_direction = [](MonotonicDirection monotonic_direction) {
+        switch (monotonic_direction) {
+            case MonotonicDirection::Increasing:
+                return "Increasing";
+            case MonotonicDirection::Decreasing:
+                return "Decreasing";
+            case MonotonicDirection::NotMonotonic:
+                return "NotMonotonic";
+            default:
+                return "Unknown";
+        }
     };
 
 }
