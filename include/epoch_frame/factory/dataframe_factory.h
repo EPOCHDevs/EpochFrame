@@ -5,7 +5,7 @@
 #include <arrow/type_fwd.h>
 
 #include "epoch_frame/dataframe.h"
-#include "array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "index/arrow_index.h"
 
 namespace arrow {

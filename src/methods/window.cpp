@@ -8,8 +8,8 @@
 #include "epoch_frame/common.h"
 #include "epoch_frame/dataframe.h"
 #include <tbb/parallel_for.h>
-#include "factory/dataframe_factory.h"
-#include "factory/table_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/table_factory.h"
 #include "common/user_defined_compute_functions.h"
 
 namespace epoch_frame

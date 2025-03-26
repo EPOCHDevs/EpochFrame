@@ -4,7 +4,7 @@
 
 #include "object_index.h"
 #include "common/asserts.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 
 namespace epoch_frame {

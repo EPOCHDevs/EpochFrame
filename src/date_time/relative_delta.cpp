@@ -4,7 +4,7 @@
 #include "common/arrow_compute_utils.h"
 #include "epoch_frame/scalar.h"
 #include "methods/temporal.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "common/python_utils.h"
 
 namespace epoch_frame

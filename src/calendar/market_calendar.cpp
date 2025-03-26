@@ -10,7 +10,7 @@
 #include "calendar_utils.h"
 #include "epoch_frame/frame_or_series.h"
 #include "epoch_frame/index.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 namespace cal_utils = epoch_frame::calendar::utils;
 namespace epoch_frame::calendar

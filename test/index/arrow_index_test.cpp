@@ -10,9 +10,9 @@
 // Include your factories (and any needed headers)
 #include "common/asserts.h"  // For custom assert macros
 #include "common/arrow_compute_utils.h"
-#include "factory/array_factory.h"    // The provided factory::array::make_array<...>()
-#include "factory/index_factory.h"
-#include "factory/dataframe_factory.h"
+#include "epoch_frame/factory/array_factory.h"    // The provided factory::array::make_array<...>()
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
 
 #include <arrow/api.h>
 #include <arrow/compute/api.h>

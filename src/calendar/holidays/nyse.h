@@ -2,8 +2,8 @@
 #include "common/python_utils.h"
 #include "date_time/holiday/holiday.h"
 #include "epoch_frame/aliases.h"
-#include "factory/date_offset_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include <set>
 #include <vector>
 #include "epoch_frame/index.h"

@@ -1,6 +1,6 @@
-#include "factory/dataframe_factory.h"
-#include "factory/series_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "methods/window.h"
 #include <catch.hpp>
 #include <functional>

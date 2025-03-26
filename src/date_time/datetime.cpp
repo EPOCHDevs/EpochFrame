@@ -3,7 +3,7 @@
 #include <epoch_core/macros.h>
 #include <methods/temporal.h>
 
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "arrow/compute/api.h"
 #include "common/asserts.h"
 #include "epoch_frame/scalar.h"

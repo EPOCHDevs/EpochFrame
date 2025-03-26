@@ -2,9 +2,9 @@
 // Created by adesola on 2/13/25.
 //
 
-#include "series_factory.h"
+#include "epoch_frame/factory/series_factory.h"
 #include <arrow/api.h>
-#include "array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 
 namespace epoch_frame {

@@ -1,9 +1,9 @@
 #include "holiday.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "index/datetime_index.h"
-#include "factory/scalar_factory.h"
-#include "factory/date_offset_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/series.h"
 #include <iostream>
 

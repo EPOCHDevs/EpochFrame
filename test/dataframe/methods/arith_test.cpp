@@ -14,9 +14,9 @@
 #include "epoch_frame/frame_or_series.h"
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
-#include "factory/dataframe_factory.h" // make_dataframe(...)
-#include "factory/index_factory.h"     // from_range(...)
-#include "factory/series_factory.h"    // make_series(...)
+#include "epoch_frame/factory/dataframe_factory.h" // make_dataframe(...)
+#include "epoch_frame/factory/index_factory.h"     // from_range(...)
+#include "epoch_frame/factory/series_factory.h"    // make_series(...)
 
 using namespace epoch_frame;
 using namespace epoch_frame::factory::array;

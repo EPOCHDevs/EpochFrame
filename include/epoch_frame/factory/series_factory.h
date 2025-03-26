@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "epoch_frame/series.h"
 
 

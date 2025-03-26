@@ -1,16 +1,16 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "methods/groupby.h"
-#include "factory/array_factory.h"
-#include "factory/series_factory.h"
-#include "factory/index_factory.h"
-#include "factory/date_offset_factory.h"
-#include "factory/dataframe_factory.h"
+#include "epoch_frame/factory/array_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/index.h"
 #include "epoch_frame/enums.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include <chrono>
 #include <vector>
 #include <iostream>

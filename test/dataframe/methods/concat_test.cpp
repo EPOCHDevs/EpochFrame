@@ -7,9 +7,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/common.h"
-#include "factory/index_factory.h"
-#include "factory/dataframe_factory.h"
-#include "factory/series_factory.h"
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/series_factory.h"
 #include "epoch_frame/frame_or_series.h"
 #include <vector>
 #include <string>

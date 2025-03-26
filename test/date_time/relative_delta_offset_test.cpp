@@ -4,8 +4,8 @@
 #include "date_time/date_offsets.h"
 #include "date_time/relative_delta.h"
 #include <catch2/catch_test_macros.hpp>
-#include "factory/date_offset_factory.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "common/asserts.h"
 #include <iostream>
 

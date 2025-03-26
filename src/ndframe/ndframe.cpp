@@ -6,8 +6,8 @@
 #include "ndframe.h"
 #include "epoch_frame/scalar.h"
 #include "epoch_frame/series.h"
-#include "factory/index_factory.h"
-#include "factory/table_factory.h"
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/table_factory.h"
 #include <arrow/api.h>
 #include <common/methods_helper.h>
 #include <epoch_core/macros.h>

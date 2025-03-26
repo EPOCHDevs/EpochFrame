@@ -8,7 +8,7 @@
 #include <epoch_core/ranges_to.h> // For AssertFromFormat or any custom asserts
 #include "common/asserts.h"
 #include "common/arrow_agg.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "common/indexer.h"
 #include "methods/temporal.h"
 #include "epoch_frame/array.h"

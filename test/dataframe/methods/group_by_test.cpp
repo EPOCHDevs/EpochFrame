@@ -5,8 +5,8 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/scalar.h"
-#include "factory/dataframe_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 using namespace epoch_frame::factory::index;
 using namespace epoch_frame::factory;

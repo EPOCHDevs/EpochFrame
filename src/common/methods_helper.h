@@ -9,8 +9,8 @@
 #include <epoch_core/macros.h>
 #include "common/exceptions.h"
 #include <optional>
-#include "factory/array_factory.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/array_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "epoch_frame/dataframe.h"
 
 namespace epoch_frame {

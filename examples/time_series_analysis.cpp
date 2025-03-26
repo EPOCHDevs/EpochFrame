@@ -2,7 +2,7 @@
 #include <epoch_frame/series.h>
 #include <epoch_frame/scalar.h>
 #include "date_time/datetime.h"
-#include "factory/date_offset_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
 #include "index/datetime_index.h"
 #include <iostream>
 #include <vector>

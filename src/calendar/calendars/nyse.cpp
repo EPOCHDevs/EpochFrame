@@ -2,7 +2,7 @@
 #include "../holidays/us.h"
 #include "all.h"
 #include "epoch_frame/series.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 namespace epoch_frame::calendar
 {

@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <factory/array_factory.h>
-#include <methods/temporal.h>
-#include <methods/string.h>
+#include "epoch_frame/factory/array_factory.h"
+#include "methods/temporal.h"
+#include "methods/string.h"
 #include "ndframe/ndframe.h"
 #include "methods/groupby.h"
 #include "methods/window.h"

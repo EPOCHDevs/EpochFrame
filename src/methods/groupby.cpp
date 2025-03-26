@@ -11,14 +11,14 @@
 #include <arrow/acero/options.h>
 #include <common/arrow_agg.h>
 #include <common/asserts.h>
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
 
 #include "epoch_frame/dataframe.h"
 #include <utility>
 #include <common/methods_helper.h>
 #include <epoch_frame/common.h>
-#include <factory/array_factory.h>
+#include "epoch_frame/factory/array_factory.h"
 #include <index/arrow_index.h>
 #include <vector_functions/arrow_vector_functions.h>
 #include <regex>

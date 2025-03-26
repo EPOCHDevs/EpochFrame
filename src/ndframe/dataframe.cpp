@@ -12,11 +12,11 @@
 #include "common/methods_helper.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/common.h"
-#include "factory/index_factory.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include <tabulate/table.hpp>
 
-#include "../../cmake-build-debug/_deps/epochcore-src/epoch_core/ranges_to.h"
+#include <epoch_core/ranges_to.h>
 #include "methods/groupby.h"
 #include "common/arrow_compute_utils.h"
 

@@ -14,7 +14,7 @@
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
 #include <tbb/task_arena.h>
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 namespace epoch_frame::arrow_utils {
     IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end) {

@@ -2,7 +2,7 @@
 // Created by adesola on 2/13/25.
 //
 
-#include "dataframe_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
 #include <arrow/api.h>
 #include <epoch_core/macros.h>
 

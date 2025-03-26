@@ -1,5 +1,5 @@
 // index_factory.cpp
-#include "index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "index/range_index.h"
 #include "index/datetime_index.h"
 #include "index/object_index.h"

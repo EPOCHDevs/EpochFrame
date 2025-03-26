@@ -4,7 +4,7 @@
 
 #include "arrow_agg.h"
 #include "common/arrow_compute_utils.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 
 namespace epoch_frame::agg {

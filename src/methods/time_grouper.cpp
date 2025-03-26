@@ -1,7 +1,7 @@
 #include "time_grouper.h"
 #include "common/asserts.h"
 #include "common/python_utils.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
 #include <execution>
 

@@ -5,9 +5,9 @@
 
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/serialization.h"
-#include "factory/dataframe_factory.h"
-#include "factory/series_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 namespace {
     using namespace epoch_frame;

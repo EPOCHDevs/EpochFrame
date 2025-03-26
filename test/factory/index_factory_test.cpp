@@ -1,7 +1,7 @@
 //
 // Created by adesola on 1/20/25.
 //
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "index/range_index.h"
 #include <catch2/catch_test_macros.hpp>
 

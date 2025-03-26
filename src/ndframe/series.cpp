@@ -2,7 +2,7 @@
 // Created by adesola on 2/16/25.
 //
 #include "epoch_frame/series.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "common/asserts.h"
 #include "epoch_frame/index.h"
 #include <arrow/api.h>
@@ -10,8 +10,8 @@
 #include "epoch_frame/dataframe.h"
 #include "methods/arith.h"
 #include <arrow/chunked_array.h>
-#include <factory/array_factory.h>
-#include <vector_functions/arrow_vector_functions.h>
+#include "epoch_frame/factory/array_factory.h"
+#include "vector_functions/arrow_vector_functions.h"
 
 #include "epoch_frame/index.h"
 #include "common/table_or_array.h"

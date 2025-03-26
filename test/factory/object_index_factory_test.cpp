@@ -4,7 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 // Your includes:
-#include "factory/index_factory.h"  // Contains ObjectIndex and the make_object_index(...) declarations
+#include "epoch_frame/factory/index_factory.h"  // Contains ObjectIndex and the make_object_index(...) declarations
 #include "index/datetime_index.h"
 
 

@@ -7,7 +7,7 @@
 #include <arrow/compute/api.h>
 #include "epoch_frame/array.h"
 #include "epoch_frame/scalar.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "methods/temporal.h"
 
 using namespace epoch_frame;

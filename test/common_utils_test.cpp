@@ -5,7 +5,7 @@
 #include <arrow/compute/api.h>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include "common/arrow_compute_utils.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 
 using namespace epoch_frame::factory::array;

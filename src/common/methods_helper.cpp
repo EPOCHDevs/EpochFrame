@@ -10,10 +10,10 @@
 #include <tbb/parallel_for.h>
 #include <iostream>
 #include <arrow/compute/expression.h>
-#include "factory/array_factory.h"
-#include "factory/table_factory.h"
-#include "factory/dataframe_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/array_factory.h"
+#include "epoch_frame/factory/table_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "index/arrow_index.h"
 #include <unordered_set>
 #include <index/datetime_index.h>

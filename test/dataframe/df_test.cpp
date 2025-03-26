@@ -2,8 +2,8 @@
 // Created by adesola on 2/13/25.
 //
 #include <catch2/catch_test_macros.hpp>
-#include "factory/dataframe_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 #include <cassert>
 #include <iostream>

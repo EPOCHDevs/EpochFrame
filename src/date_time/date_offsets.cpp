@@ -5,7 +5,7 @@
 #include "date_offsets.h"
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "epoch_frame/scalar.h"
 #include "methods/temporal.h"
 #include "common/python_utils.h"

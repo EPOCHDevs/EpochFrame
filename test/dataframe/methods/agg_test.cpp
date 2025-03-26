@@ -8,10 +8,10 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
 #include "epoch_frame/scalar.h"
-#include "factory/index_factory.h"
-#include "factory/dataframe_factory.h"
-#include "factory/series_factory.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include <arrow/compute/api_aggregate.h>
 #include <arrow/api.h>
 #include <vector>

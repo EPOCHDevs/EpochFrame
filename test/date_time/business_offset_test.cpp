@@ -3,10 +3,10 @@
 //
 #include "date_time/date_offsets.h"
 #include <catch2/catch_test_macros.hpp>
-#include "factory/date_offset_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/date_offset_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/index.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "common/asserts.h"
 #include <iostream>
 #include <date_time/holiday/holiday_calendar.h>

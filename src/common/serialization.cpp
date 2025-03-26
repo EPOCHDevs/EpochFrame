@@ -1,5 +1,5 @@
 #include "epoch_frame/serialization.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "common/asserts.h"
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>

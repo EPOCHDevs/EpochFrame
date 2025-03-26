@@ -1,7 +1,7 @@
 //
 // Created by adesola on 2/15/25.
 //
-#include "scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "arrow/compute/api.h"
 #include "common/asserts.h"
 #include <chrono>

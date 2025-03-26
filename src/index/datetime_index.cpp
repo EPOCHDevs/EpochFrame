@@ -3,7 +3,7 @@
 //
 
 #include "datetime_index.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 
 namespace epoch_frame {

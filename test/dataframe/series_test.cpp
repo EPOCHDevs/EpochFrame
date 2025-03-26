@@ -5,8 +5,8 @@
 #include <arrow/api.h>
 #include <cmath> // For std::abs
 #include "index/arrow_index.h"
-#include "factory/series_factory.h"
-#include "factory/index_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/factory/index_factory.h"
 
 using namespace epoch_frame;
 

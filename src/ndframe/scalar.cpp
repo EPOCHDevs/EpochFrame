@@ -13,7 +13,7 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
 #include "date_time/time_delta.h"
-#include "factory/scalar_factory.h"
+#include "epoch_frame/factory/scalar_factory.h"
 #include "date_time/datetime.h"
 
 namespace epoch_frame {

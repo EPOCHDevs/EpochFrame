@@ -3,7 +3,7 @@
 //
 
 #include "range_index.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 namespace epoch_frame {
     RangeIndex::RangeIndex(std::shared_ptr<arrow::UInt64Array> const& array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name)

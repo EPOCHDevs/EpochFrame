@@ -9,7 +9,7 @@
 
 #include "vector_functions/arrow_vector_functions.h"
 #include "epoch_frame/scalar.h"
-#include "factory/array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 #include "visitors/search_sorted.h"
 #include "common/methods_helper.h"
 #include "epoch_frame/dataframe.h"

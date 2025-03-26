@@ -2,7 +2,7 @@
 // Created by adesola on 1/20/25.
 //
 
-#include "array_factory.h"
+#include "epoch_frame/factory/array_factory.h"
 
 #include <random>
 
