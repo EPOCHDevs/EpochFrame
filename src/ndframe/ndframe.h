@@ -1,8 +1,8 @@
 #pragma once
-#include "epochframe/aliases.h"
-#include "epochframe/enums.h"
-#include "epochframe/integer_slice.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/enums.h"
+#include "epoch_frame/integer_slice.h"
+#include "epoch_frame/scalar.h"
 #include <functional>
 #include <string>
 #include <vector>
@@ -11,7 +11,7 @@
 #include "methods/window.h"
 
 // Forward declarations and type aliases
-namespace epochframe {
+namespace epoch_frame {
     using IndexPtr = std::shared_ptr<class IIndex>;
 
     template<class ChildType, class ArrowType>
@@ -224,13 +224,13 @@ namespace epochframe {
 
         ChildType tail(uint64_t n = 10) const;
 
-        ChildType iloc(const arrow::ArrayPtr &indexes) const;
+        ChildType iloc(const Array &indexes) const;
 
         // ChildType iloc(const std::vector<int64_t> &indexes) const;
 
         ChildType iloc(const UnResolvedIntegerSliceBound &indexes) const;
 
-        ChildType loc(const arrow::ArrayPtr &labels) const;
+        ChildType loc(const Array &labels) const;
 
         ChildType loc(const Series &filter_or_labels) const;
 
@@ -245,7 +245,7 @@ namespace epochframe {
 
         ChildType where(const WhereConditionVariant &cond, WhereOtherVariant const &other) const;
 
-        ChildType isin(arrow::ArrayPtr const& values) const;
+        ChildType isin(const Array &values) const;
 
         //--------------------------------------------------------------------------
         // 10) Comparison ops
@@ -388,7 +388,8 @@ namespace epochframe {
         EWMWindowOperations<is_table> ewm_agg(const class EWMWindowOptions& options) const {
             return EWMWindowOperations<is_table>(options, dynamic_cast<const ChildType&>(*this));
         }
-        
+
+        // Assignments
 
     protected:
         IndexPtr m_index;
@@ -406,4 +407,4 @@ namespace epochframe {
     extern template class NDFrame<Series, arrow::ChunkedArray>;
     extern template class NDFrame<DataFrame, arrow::Table>;
 
-} // namespace epochframe
+} // namespace epoch_frame

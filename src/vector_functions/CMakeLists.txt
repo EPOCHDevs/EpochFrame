@@ -1,1 +1,1 @@
-target_sources(epochframe PRIVATE arrow_vector_functions.cpp)
+target_sources(epoch_frame PRIVATE arrow_vector_functions.cpp)

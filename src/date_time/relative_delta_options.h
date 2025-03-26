@@ -4,7 +4,7 @@
 #include <optional>
 #include "datetime.h"
 
-namespace epochframe {
+namespace epoch_frame {
     struct RelativeDeltaOption {
         std::optional<DateTime> dt1{std::nullopt};
         std::optional<DateTime> dt2{std::nullopt};

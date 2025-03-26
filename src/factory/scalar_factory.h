@@ -6,7 +6,7 @@
 #include <arrow/api.h>
 #include "date_time/datetime.h"
 
-namespace epochframe::factory::scalar {
+namespace epoch_frame::factory::scalar {
 
     DateTime to_datetime(const arrow::TimestampScalar &scalar);
 

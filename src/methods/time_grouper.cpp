@@ -5,10 +5,10 @@
 #include "index/datetime_index.h"
 #include <execution>
 
-namespace epochframe
+namespace epoch_frame
 {
     std::vector<int64_t> generate_bins(Array const& values, Array const& binner,
-                                       EpochTimeGrouperClosedType closed)
+                                       epoch_core::GrouperClosedType closed)
     {
         auto lenidx = values.length();
         auto lenbin = binner.length();
@@ -22,7 +22,7 @@ namespace epochframe
         int64_t              j  = 0;
         int64_t              bc = 0;
 
-        if (closed == EpochTimeGrouperClosedType::Right)
+        if (closed == epoch_core::GrouperClosedType::Right)
         {
             for (int64_t i = 0; i < lenbin - 1; ++i)
             {
@@ -53,44 +53,44 @@ namespace epochframe
 
         bool origin_is_value = std::holds_alternative<DateTime>(m_options.origin);
 
-        if (m_options.freq->is_end() || m_options.freq->type() == EpochOffsetType::Week)
+        if (m_options.freq->is_end() || m_options.freq->type() == epoch_core::EpochOffsetType::Week)
         {
-            if (m_options.closed == EpochTimeGrouperClosedType::Null)
+            if (m_options.closed == epoch_core::GrouperClosedType::Null)
             {
-                m_options.closed = EpochTimeGrouperClosedType::Right;
+                m_options.closed = epoch_core::GrouperClosedType::Right;
             }
-            if (m_options.label == EpochTimeGrouperLabelType::Null)
+            if (m_options.label == epoch_core::GrouperLabelType::Null)
             {
-                m_options.label = EpochTimeGrouperLabelType::Right;
+                m_options.label = epoch_core::GrouperLabelType::Right;
             }
         }
         else
         {
             if (!origin_is_value)
             {
-                auto origin = std::get<EpochTimeGrouperOrigin>(m_options.origin);
-                if (origin == EpochTimeGrouperOrigin::End ||
-                    origin == EpochTimeGrouperOrigin::EndDay)
+                auto origin = std::get<epoch_core::GrouperOrigin>(m_options.origin);
+                if (origin == epoch_core::GrouperOrigin::End ||
+                    origin == epoch_core::GrouperOrigin::EndDay)
                 {
-                    if (m_options.closed == EpochTimeGrouperClosedType::Null)
+                    if (m_options.closed == epoch_core::GrouperClosedType::Null)
                     {
-                        m_options.closed = EpochTimeGrouperClosedType::Right;
+                        m_options.closed = epoch_core::GrouperClosedType::Right;
                     }
-                    if (m_options.label == EpochTimeGrouperLabelType::Null)
+                    if (m_options.label == epoch_core::GrouperLabelType::Null)
                     {
-                        m_options.label = EpochTimeGrouperLabelType::Right;
+                        m_options.label = epoch_core::GrouperLabelType::Right;
                     }
                 }
             }
             else
             {
-                if (m_options.closed == EpochTimeGrouperClosedType::Null)
+                if (m_options.closed == epoch_core::GrouperClosedType::Null)
                 {
-                    m_options.closed = EpochTimeGrouperClosedType::Left;
+                    m_options.closed = epoch_core::GrouperClosedType::Left;
                 }
-                if (m_options.label == EpochTimeGrouperLabelType::Null)
+                if (m_options.label == epoch_core::GrouperLabelType::Null)
                 {
-                    m_options.label = EpochTimeGrouperLabelType::Left;
+                    m_options.label = epoch_core::GrouperLabelType::Left;
                 }
             }
         }
@@ -122,15 +122,15 @@ namespace epochframe
 
         auto bins = generate_bins(index.array(), bin_edges, m_options.closed);
 
-        if (m_options.closed == EpochTimeGrouperClosedType::Right)
+        if (m_options.closed == epoch_core::GrouperClosedType::Right)
         {
             labels = binner;
-            if (m_options.label == EpochTimeGrouperLabelType::Right)
+            if (m_options.label == epoch_core::GrouperLabelType::Right)
             {
                 labels = labels->iloc({1});
             }
         }
-        else if (m_options.label == EpochTimeGrouperLabelType::Right)
+        else if (m_options.label == epoch_core::GrouperLabelType::Right)
         {
             labels = binner->iloc({1});
         }
@@ -204,19 +204,19 @@ namespace epochframe
 
         auto    freq_value = freq.nanos();
         int64_t origin_timestamp{};
-        if (std::holds_alternative<EpochTimeGrouperOrigin>(origin))
+        if (std::holds_alternative<epoch_core::GrouperOrigin>(origin))
         {
-            switch (const auto origin_type = std::get<EpochTimeGrouperOrigin>(origin))
+            switch (const auto origin_type = std::get<epoch_core::GrouperOrigin>(origin))
             {
-                case EpochTimeGrouperOrigin::StartDay:
+                case epoch_core::GrouperOrigin::StartDay:
                     origin_timestamp = first_dt.normalize().timestamp().value;
                     break;
-                case EpochTimeGrouperOrigin::Start:
+                case epoch_core::GrouperOrigin::Start:
                     origin_timestamp = first_dt.timestamp().value;
                     break;
-                case EpochTimeGrouperOrigin::End:
-                case EpochTimeGrouperOrigin::EndDay: {
-                    auto origin_last    = origin_type == EpochTimeGrouperOrigin::End
+                case epoch_core::GrouperOrigin::End:
+                case epoch_core::GrouperOrigin::EndDay: {
+                    auto origin_last    = origin_type == epoch_core::GrouperOrigin::End
                              ? last
                              : Scalar{last_dt}
                     .dt()
@@ -225,7 +225,7 @@ namespace epochframe
                     .timestamp();
                     auto sub_freq_times = floor_div(origin_last.value - first.value, freq_value);
 
-                    if (m_options.closed == EpochTimeGrouperClosedType::Left)
+                    if (m_options.closed == epoch_core::GrouperClosedType::Left)
                     {
                         ++sub_freq_times;
                     }
@@ -259,7 +259,7 @@ namespace epochframe
         int64_t loffset     = pymod(last.value - origin_timestamp, freq_value);
         int64_t  fresult_int = 0;
         int64_t  lresult_int = 0;
-        if (m_options.closed == EpochTimeGrouperClosedType::Right)
+        if (m_options.closed == epoch_core::GrouperClosedType::Right)
         {
             if (foffset > loffset)
             {
@@ -335,8 +335,8 @@ namespace epochframe
                     "origin must have the same timezone as the index. origin: "
                         << origin_value.tz << "\tindex: " << index_tz);
             }
-            else if (std::get<EpochTimeGrouperOrigin>(origin) ==
-                     EpochTimeGrouperOrigin::Epoch)
+            else if (std::get<epoch_core::GrouperOrigin>(origin) ==
+                     epoch_core::GrouperOrigin::Epoch)
             {
                 AssertFromStream(index_tz.empty(),
                                           "index must have a timezone if origin is Epoch");
@@ -377,7 +377,7 @@ namespace epochframe
             auto _first = first.normalize().timestamp();
             auto _last  = last.normalize().timestamp();
 
-            if (m_options.closed == EpochTimeGrouperClosedType::Left)
+            if (m_options.closed == epoch_core::GrouperClosedType::Left)
             {
                 _first = m_options.freq->rollforward(_first);
             }
@@ -395,12 +395,11 @@ namespace epochframe
                                                              Array const& ax_values) const
     {
         Array bin_edges;
-        if (m_options.freq->is_end() || m_options.freq->type() == EpochOffsetType::Week)
+        if (m_options.freq->is_end() || m_options.freq->type() == epoch_core::EpochOffsetType::Week)
         {
-            if (m_options.closed == EpochTimeGrouperClosedType::Right)
+            if (m_options.closed == epoch_core::GrouperClosedType::Right)
             {
-                auto edges_dt1 = binner->dt().tz_localize("");
-                bin_edges      = edges_dt1.dt().tz_localize(ax_values.dt().tz());
+                bin_edges = binner->tz_localize("")->tz_localize(ax_values.dt().tz())->array();
             }
             else
             {
@@ -419,4 +418,4 @@ namespace epochframe
         }
         return {binner, bin_edges};
     }
-} // namespace epochframe
+} // namespace epoch_frame

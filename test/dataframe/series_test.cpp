@@ -8,7 +8,7 @@
 #include "factory/series_factory.h"
 #include "factory/index_factory.h"
 
-using namespace epochframe;
+using namespace epoch_frame;
 
 TEST_CASE("Series basic tests", "[series]")
 {

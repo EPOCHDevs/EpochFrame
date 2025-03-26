@@ -3,23 +3,25 @@
 // Created by adesola on 1/20/25.
 //
 
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 
 #include <unordered_set>
 
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "methods/arith.h"
 #include "common/methods_helper.h"
-#include "epochframe/series.h"
-#include "epochframe/common.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/common.h"
 #include "factory/index_factory.h"
 #include "factory/array_factory.h"
 #include <tabulate/table.hpp>
+
+#include "../../cmake-build-debug/_deps/epochcore-src/epoch_core/ranges_to.h"
 #include "methods/groupby.h"
 #include "common/arrow_compute_utils.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     // ------------------------------------------------------------------------
     // Constructors / Destructor / Assignment
     // ------------------------------------------------------------------------
@@ -27,14 +29,14 @@ namespace epochframe {
     DataFrame::DataFrame(arrow::TablePtr const &data) : NDFrame(data) {
         auto columnNames = m_table->schema()->field_names();
         AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
-        AssertStatusIsOk(m_table->Validate());
     }
 
     DataFrame::DataFrame(IndexPtr const &index, arrow::TablePtr const &data) : NDFrame<DataFrame, arrow::Table>(index, data) {
         auto columnNames = m_table->schema()->field_names();
         AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
-        AssertStatusIsOk(m_table->Validate());
     }
+
+
 
     // ------------------------------------------------------------------------
     // General Attributes
@@ -154,17 +156,37 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     /// 8) INDEXING OPS
     //////////////////////////////////////////////////////////////////////////
     Series DataFrame::iloc(int64_t row) const {
+        if (num_rows() == 0) {
+            throw std::runtime_error("iloc: index out of bounds");
+        }
+
         row = resolve_integer_index(row, m_table->num_rows());
         arrow::ScalarVector cols(m_table->num_columns());
         std::ranges::transform(m_table->columns(), cols.begin(),
                                [&](const arrow::ChunkedArrayPtr &array) {
                                    return AssertResultIsOk(array->GetScalar(row));
                                });
-        return Series(factory::index::make_object_index(m_table->ColumnNames()),
-                      factory::array::make_array(std::move(cols), arrow::utf8()));
+        auto front_field = m_table->schema()->field(0);
+        auto all_equal = std::ranges::all_of(m_table->schema()->fields() | std::views::take(1), [&](const arrow::FieldPtr &field) {
+            return field->type()->Equals(front_field->type());
+        });
+
+        auto index = factory::index::make_object_index(m_table->ColumnNames());
+        if (all_equal) {
+            return Series(index, factory::array::make_array(std::move(cols), front_field->type()), "");
+        }
+        std::vector<std::string> str_elements(cols.size());
+        std::ranges::transform(cols, str_elements.begin(), [](arrow::ScalarPtr const &scalar) {
+            return scalar->ToString();
+        });
+        return Series(index, factory::array::make_array(str_elements));
     }
 
     Scalar DataFrame::iloc(int64_t row, std::string const &col) const {
+        if (num_rows() == 0) {
+            throw std::runtime_error("iloc: index out of bounds");
+        }
+
         row = resolve_integer_index(row, m_table->num_rows());
         auto column = get_column_by_name(*m_table, col);
         return Scalar(AssertResultIsOk(column->GetScalar(row)));
@@ -194,11 +216,18 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     }
 
     Series DataFrame::loc(const Scalar &index_label) const {
-        return iloc(m_index->get_loc(index_label));
+        auto integer_index = m_index->get_loc(index_label);
+        if (integer_index == -1) {
+            throw std::runtime_error("loc: index not found");
+        }
+        return iloc(integer_index);
     }
 
     Scalar DataFrame::loc(const Scalar &index_label, const std::string &column) const {
         auto integer_index = m_index->get_loc(index_label);
+        if (integer_index == -1) {
+            throw std::runtime_error("loc: index not found");
+        }
         return Scalar(AssertResultIsOk(get_column_by_name(*m_table, column)->GetScalar(integer_index)));
     }
 
@@ -221,8 +250,8 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         return get_variant_row(column_series, locRowArgumentVariant);
     }
 
-    DataFrame DataFrame::operator[](const arrow::ArrayPtr& array) const {
-        auto string_array = std::dynamic_pointer_cast<arrow::StringArray>(array);
+    DataFrame DataFrame::operator[](const Array &array) const {
+        auto string_array = std::dynamic_pointer_cast<arrow::StringArray>(array.value());
         AssertFromStream(string_array, "NDFrame::operator[]: Array is not a string array");
         StringVector column_names;
         column_names.reserve(string_array->length());
@@ -282,6 +311,12 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         return os;
     }
 
+    std::string DataFrame::repr() const {
+        std::stringstream ss;
+        ss << *this;
+        return ss.str();
+    }
+
     DataFrame DataFrame::from_base(IndexPtr const &index, arrow::TablePtr const &table) const  {
         return DataFrame(index, table);
     }
@@ -310,18 +345,43 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         if (axis == AxisType::Row) {
             std::vector<FrameOrSeries> rows;
             for (int64_t i = 0; i < m_table->num_rows(); ++i) {
-                rows.emplace_back(func(iloc(i)).transpose());
+                rows.emplace_back(func(iloc(i)).transpose(m_index->iat(i)));
             }
             return concat(ConcatOptions{.frames = rows, .axis = AxisType::Row, .ignore_index = true}).reindex(m_index);
         }
-        else {
-            std::vector<FrameOrSeries> columns(num_cols());
-            std::ranges::transform(column_names(), columns.begin(), [&](const std::string &name) {
-                auto column = get_column_by_name(*m_table, name);
-                return FrameOrSeries(func(Series(m_index, column, name)));
-            });
-            return concat(ConcatOptions{.frames = columns, .axis = AxisType::Column, .ignore_index = true}).reindex(m_index);
+
+        std::vector<FrameOrSeries> columns(num_cols());
+        std::ranges::transform(column_names(), columns.begin(), [&](const std::string &name) {
+            auto column = get_column_by_name(*m_table, name);
+            return FrameOrSeries(func(Series(m_index, column, name)));
+        });
+        return concat(ConcatOptions{.frames = columns, .axis = AxisType::Column, .ignore_index = true}).reindex(m_index);
+    }
+
+    DataFrame DataFrame::apply(const std::function<Array(const Array&)>& func, AxisType axis) const {
+        if (axis == AxisType::Row) {
+            std::vector<std::vector<Scalar>> table(m_table->num_columns());
+            for (int64_t i = 0; i < m_table->num_rows(); ++i) {
+                auto result = func(iloc(i).contiguous_array());
+                AssertFromFormat(result.length() == num_cols(), "result of apply must have the same number of columns as the original dataframe");
+                for (int64_t j = 0; j < result->length(); ++j) {
+                    table[j].emplace_back(result->GetScalar(j).MoveValueUnsafe());
+                }
+            }
+            auto columns = std::views::zip_transform( [](arrow::FieldPtr const& field, std::vector<Scalar> const& values) {
+                return factory::array::make_chunked_array(values, field->type());
+            }, m_table->fields(), table) | epoch_core::ranges::to_vector_v;
+            return DataFrame(m_index, arrow::Table::Make(arrow::schema(m_table->schema()->fields()), columns));
         }
+
+        std::vector<arrow::ChunkedArrayPtr> columns(num_cols());
+        std::ranges::transform(column_names(), columns.begin(), [&](const std::string &name) {
+            auto column = get_column_by_name(*m_table, name);
+            auto result = func(Array(factory::array::make_contiguous_array(column))).value();
+            AssertFromFormat(result->length() == num_rows(), "result of apply must have the same number of rows as the original dataframe");
+            return std::make_shared<arrow::ChunkedArray>(result);
+        });
+        return DataFrame(m_index, arrow::Table::Make(arrow::schema(m_table->schema()->fields()), columns));
     }
 
     GroupByAgg<DataFrame> DataFrame::resample_by_agg(const TimeGrouperOptions &options) const {
@@ -347,4 +407,37 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
     ApplyDataFrameRollingWindowOperations DataFrame::expanding_apply(window::ExpandingWindowOptions const& options) const {
         return {std::make_unique<window::ExpandingWindow>(options), *this};
     }
-} // namespace epochframe
+
+    DataFrame DataFrame::assign(std::string const& column, Series const& s) const{
+        if (s.index()->equals(m_index)) {
+            return { m_index, add_column(m_table, column, s.array()) };
+        }
+        if (size() == 0) {
+            return s.to_frame(column);
+        }
+        throw std::runtime_error("DataFrame::assign: index of Series must match index of DataFrame");
+    }
+
+     DataFrame DataFrame::assign(IndexPtr const& indices, arrow::TablePtr const& arr) const{
+        AssertFromFormat(indices, "Indices must be a valid index");
+        AssertFromFormat(arr, "Array must be a valid array");
+        if (indices->empty() || arr->num_rows() == 0) {
+            return *this;
+        }
+
+        if (m_index->equals(indices)) {
+            return DataFrame(indices, arr);
+        }
+
+        auto arr_columns = arr->ColumnNames();
+        const std::unordered_set<std::string> arr_column_set(arr_columns.begin(), arr_columns.end());
+        auto new_table = arrow_utils::apply_function_to_table(m_table, [&](arrow::Datum const& datum, std::string const& name) {
+            if (!arr_column_set.contains(name)) {
+                return datum;
+            }
+            return arrow::Datum(Series(m_index, datum.chunked_array(), name).assign(indices, arr->GetColumnByName(name)).array());
+        }, false);
+
+        return DataFrame(m_index, new_table);
+     }
+} // namespace epoch_frame

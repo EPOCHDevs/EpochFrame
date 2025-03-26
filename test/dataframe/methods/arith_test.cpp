@@ -11,16 +11,16 @@
 #include <optional>
 #include <variant>
 
-#include "epochframe/frame_or_series.h"
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/frame_or_series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include "factory/dataframe_factory.h" // make_dataframe(...)
 #include "factory/index_factory.h"     // from_range(...)
 #include "factory/series_factory.h"    // make_series(...)
 
-using namespace epochframe;
-using namespace epochframe::factory::array;
-using namespace epochframe::factory::index;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::array;
+using namespace epoch_frame::factory::index;
 
 // Define a null scalar for testing
 

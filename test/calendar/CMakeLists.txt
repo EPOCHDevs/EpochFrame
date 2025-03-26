@@ -1,7 +1,1 @@
-target_sources(epochframe_test PRIVATE
-    date_offsets_test.cpp
-    day_of_week_test.cpp
-    relative_delta_test.cpp
-    time_delta_test.cpp
-    relative_delta_offset_test.cpp
-)
+target_sources(epochframe_test PRIVATE market_calendar_test.cpp nyse_calendar_test.cpp)

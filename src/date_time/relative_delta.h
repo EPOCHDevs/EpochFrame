@@ -1,7 +1,7 @@
 #pragma once
 #include "relative_delta_options.h"
 
-namespace epochframe {
+namespace epoch_frame {
         class RelativeDelta {
             public:
                 // Default constructor for testing

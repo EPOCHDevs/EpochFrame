@@ -9,8 +9,8 @@
 #include <memory>
 #include <string>
 
-using namespace epochframe::factory::index;
-using namespace epochframe;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame;
 
 TEST_CASE("RangeIndex: from_range(start, stop, step)", "[RangeIndex]")
 {

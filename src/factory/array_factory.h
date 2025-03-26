@@ -9,41 +9,65 @@
 #include "common/asserts.h"
 #include <set>
 #include <cmath>
+#include <date_time/datetime.h>
 
-namespace epochframe::factory::array {
+namespace epoch_frame::factory::array {
     arrow::ArrayPtr make_array(const arrow::ScalarVector &scalarVector,
                               std::shared_ptr<arrow::DataType> const &type);
-
+    arrow::ArrayPtr make_array(const std::vector<Scalar> &scalarVector,
+                              std::shared_ptr<arrow::DataType> const &type);
     inline arrow::ChunkedArrayPtr make_array(const arrow::ArrayPtr &arrowPtr) {
+        AssertFromStream(arrowPtr, "arrowPtr is null");
         return AssertArrayResultIsOk(arrow::ChunkedArray::Make({arrowPtr}));
     }
 
     arrow::ChunkedArrayPtr make_random_array(int64_t length, int64_t seed=0);
 
+    arrow::ChunkedArrayPtr make_dt_array(const auto &begin_, const auto &end_) {
+        if (begin_ == end_) {
+            return std::make_shared<arrow::ChunkedArray>(std::vector<arrow::ArrayPtr>{}, arrow::timestamp(arrow::TimeUnit::NANO));
+        }
+
+        arrow::TimestampBuilder builder{
+            arrow::timestamp(arrow::TimeUnit::NANO, begin_->tz),
+            arrow::default_memory_pool()
+        };
+
+        AssertStatusIsOk(builder.Reserve(std::distance(begin_, end_)));
+        for (auto const& item: std::span{begin_, end_}) {
+            AssertStatusIsOk(builder.Append(item.timestamp().value));
+        }
+        return make_array(AssertResultIsOk(builder.Finish()));
+    }
+
     template<class T>
     arrow::ChunkedArrayPtr make_array(const auto &begin_, const auto &end_) {
+        if constexpr (std::same_as<T, DateTime>) {
+            return make_dt_array(begin_, end_);
+        }
+        else {
+            typename arrow::CTypeTraits<T>::BuilderType builder;
+            AssertStatusIsOk(builder.Reserve(std::distance(begin_, end_)));
 
-        typename arrow::CTypeTraits<T>::BuilderType builder;
-        AssertStatusIsOk(builder.Reserve(std::distance(begin_, end_)));
-
-        if constexpr (std::is_floating_point_v<T>) {
-            auto flagsView =
-                    std::span<const T>(begin_, end_) | std::views::transform([](auto &&x) { return !std::isnan(x); });
-            AssertStatusIsOk(builder.AppendValues(begin_, end_, flagsView.begin()));
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            for (auto it = begin_; it != end_; ++it) {
-                if constexpr (std::numeric_limits<T>::has_quiet_NaN) {
-                    if (std::isnan(*it)) {
-                        AssertStatusIsOk(builder.AppendNull());
-                        continue;
+            if constexpr (std::is_floating_point_v<T>) {
+                auto flagsView =
+                        std::span<const T>(begin_, end_) | std::views::transform([](auto &&x) { return !std::isnan(x); });
+                AssertStatusIsOk(builder.AppendValues(begin_, end_, flagsView.begin()));
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                for (auto it = begin_; it != end_; ++it) {
+                    if constexpr (std::numeric_limits<T>::has_quiet_NaN) {
+                        if (std::isnan(*it)) {
+                            AssertStatusIsOk(builder.AppendNull());
+                            continue;
+                        }
                     }
+                    AssertStatusIsOk(builder.Append(*it));
                 }
-                AssertStatusIsOk(builder.Append(*it));
-            }
-        } else {
-            AssertStatusIsOk(builder.AppendValues(begin_, end_));
-        };
-        return make_array(AssertResultIsOk(builder.Finish()));
+            } else {
+                AssertStatusIsOk(builder.AppendValues(begin_, end_));
+            };
+            return make_array(AssertResultIsOk(builder.Finish()));
+        }
     }
 
     template<class CType>
@@ -62,6 +86,7 @@ namespace epochframe::factory::array {
     }
 
     arrow::ChunkedArrayPtr make_chunked_array(const arrow::ScalarVector &scalarVector, std::shared_ptr<arrow::DataType> const &type);
+    arrow::ChunkedArrayPtr make_chunked_array(const std::vector<Scalar> &scalarVector, std::shared_ptr<arrow::DataType> const &type);
 
     inline arrow::ArrayPtr make_null_array(size_t length, std::shared_ptr<arrow::DataType> const &type) {
         return AssertContiguousArrayResultIsOk(arrow::MakeArrayOfNull(type, length));
@@ -81,7 +106,7 @@ namespace epochframe::factory::array {
 
     arrow::ArrayPtr make_contiguous_array(const std::vector<Scalar> &set_array,
                                         std::shared_ptr<arrow::DataType> const &type);
-    
+
     arrow::ArrayPtr make_timestamp_array(const std::vector<arrow::TimestampScalar> &set_array, arrow::TimeUnit::type unit=arrow::TimeUnit::NANO, std::string const &timezone="");
 
 

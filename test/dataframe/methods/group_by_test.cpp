@@ -2,15 +2,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/scalar.h"
 #include "factory/dataframe_factory.h"
 #include "factory/index_factory.h"
 
-using namespace epochframe::factory::index;
-using namespace epochframe::factory;
-using namespace epochframe;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory;
+using namespace epoch_frame;
 
 TEST_CASE("GroupBy", "[groupby]") {
     auto idx = from_range(10);

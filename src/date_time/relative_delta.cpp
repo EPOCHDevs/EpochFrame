@@ -2,12 +2,12 @@
 
 #include "time_delta.h"
 #include "common/arrow_compute_utils.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "methods/temporal.h"
 #include "factory/scalar_factory.h"
 #include "common/python_utils.h"
 
-namespace epochframe
+namespace epoch_frame
 {
     void RelativeDelta::set_months(int64_t months)
     {
@@ -529,4 +529,4 @@ namespace epochframe
         return Date{chrono_year{static_cast<int32_t>(y)}, chrono_month{static_cast<uint32_t>(m)}, chrono_day{static_cast<uint32_t>(d)}};
     }
 
-} // namespace epochframe
+} // namespace epoch_frame

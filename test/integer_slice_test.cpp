@@ -3,10 +3,10 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/integer_slice.h"
+#include "epoch_frame/integer_slice.h"
 #include <stdexcept>
 
-using namespace epochframe;
+using namespace epoch_frame;
 
 TEST_CASE("Default slice with positive step", "[IntegerSlice]") {
     // No start, stop, or step specified.

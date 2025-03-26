@@ -1,12 +1,12 @@
 #pragma once
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 
 #include "arrow/api.h"
 
 #include <epoch_core/macros.h>
 
 
-namespace epochframe {
+namespace epoch_frame {
 class TableOrArray {
     public:
         explicit TableOrArray(arrow::Datum const& datum) : m_impl(datum) {

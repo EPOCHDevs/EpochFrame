@@ -6,7 +6,189 @@
 #include "common/arrow_compute_utils.h"
 #include <fmt/format.h>
 
-namespace epochframe {
+namespace epoch_frame {
+
+    // Helper namespace for internal implementation
+    namespace detail {
+        /**
+         * Configure timezone options for ambiguous and nonexistent times
+         */
+        inline void configure_timezone_options(arrow::compute::AssumeTimezoneOptions& options,
+                                              AmbiguousTimeHandling ambiguous,
+                                              NonexistentTimeHandling nonexistent) {
+            // Handle ambiguous times
+            switch (ambiguous) {
+                case AmbiguousTimeHandling::RAISE:
+                    options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_RAISE;
+                    break;
+                case AmbiguousTimeHandling::EARLIEST:
+                    options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
+                    break;
+                case AmbiguousTimeHandling::LATEST:
+                    options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_LATEST;
+                    break;
+                case AmbiguousTimeHandling::NAT:
+                    // Arrow doesn't have a NAT option, use EARLIEST as a fallback
+                    options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
+                    // TODO: Add custom handling for NAT values for ambiguous times
+                    break;
+            }
+
+            // Handle nonexistent times
+            switch (nonexistent) {
+                case NonexistentTimeHandling::RAISE:
+                    options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_RAISE;
+                    break;
+                case NonexistentTimeHandling::SHIFT_FORWARD:
+                    options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_LATEST;
+                    break;
+                case NonexistentTimeHandling::SHIFT_BACKWARD:
+                    options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
+                    break;
+                case NonexistentTimeHandling::NAT:
+                    // Arrow doesn't have a NAT option, use EARLIEST as a fallback
+                    options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
+                    // TODO: Add custom handling for NAT values for nonexistent times
+                    break;
+            }
+        }
+
+        /**
+         * Get timezone from a TimestampType
+         */
+        inline std::string get_timezone_from_type(const std::shared_ptr<arrow::DataType>& type) {
+            auto ts_type = std::static_pointer_cast<arrow::TimestampType>(type);
+            return ts_type->timezone();
+        }
+
+        /**
+         * Create a scalar or array from a timestamp datum
+         */
+        inline arrow::Result<arrow::Datum> make_timestamp_object(
+                arrow::TimeUnit::type unit,
+                const std::string& timezone) {
+            // Create the appropriate type
+            auto type = arrow::timestamp(unit, timezone);
+
+            if (timezone.empty()) {
+                // Naive timestamp (no timezone)
+                auto result = arrow::MakeEmptyArray(arrow::timestamp(unit));
+                if (!result.ok()) {
+                    return result.status();
+                }
+                return arrow::Datum(result.ValueOrDie());
+            } else {
+                // Timestamp with timezone
+                auto result = arrow::MakeEmptyArray(arrow::timestamp(unit, timezone));
+                if (!result.ok()) {
+                    return result.status();
+                }
+                return arrow::Datum(result.ValueOrDie());
+            }
+        }
+
+        /**
+         * Shared implementation for tz_localize with an arrow datum
+         */
+        inline arrow::Result<arrow::Datum> tz_localize_impl(
+                const arrow::Datum& data,
+                const std::string& timezone,
+                AmbiguousTimeHandling ambiguous,
+                NonexistentTimeHandling nonexistent) {
+
+            if (data.is_array() && (data.array()->length == 0 || data.array()->null_count == data.array()->length) ||
+                data.is_scalar() && !data.scalar()->is_valid) {
+                // Handle null/empty cases
+                auto unit = arrow::TimeUnit::NANO;
+                if (data.type()->id() == arrow::Type::TIMESTAMP) {
+                    unit = std::static_pointer_cast<arrow::TimestampType>(data.type())->unit();
+                }
+                return make_timestamp_object(unit, timezone);
+            }
+
+            // Check if timestamp already has a timezone
+            std::string current_tz;
+            if (data.type()->id() == arrow::Type::TIMESTAMP) {
+                current_tz = get_timezone_from_type(data.type());
+            }
+
+            const bool making_naive = timezone.empty();
+
+            // If we're trying to make it naive
+            if (making_naive) {
+                if (current_tz.empty()) {
+                    // Already timezone-naive, return as is
+                    return data;
+                }
+                // Making timezone-aware timestamp naive (preserving local time)
+                return arrow::compute::LocalTimestamp(data);
+            }
+
+            // We're trying to make it timezone-aware
+            if (!current_tz.empty()) {
+                return arrow::Status::Invalid(std::format(
+                    "Cannot localize timestamp with timezone '{}' to '{}'. "
+                    "Use tz_convert instead to convert between timezones.",
+                    current_tz, timezone));
+            }
+
+            // Set up options
+            arrow::compute::AssumeTimezoneOptions options(timezone);
+            configure_timezone_options(options, ambiguous, nonexistent);
+
+            return arrow::compute::AssumeTimezone(data, options);
+        }
+
+        /**
+         * Shared implementation for tz_convert with an arrow datum
+         */
+        inline arrow::Result<arrow::Datum> tz_convert_impl(
+                const arrow::Datum& data,
+                const std::string& timezone_) {
+
+            if (data.is_array() && (data.array()->length == 0 || data.array()->null_count == data.array()->length) ||
+                data.is_scalar() && !data.scalar()->is_valid) {
+                // Handle null/empty cases
+                auto unit = arrow::TimeUnit::NANO;
+                if (data.type()->id() == arrow::Type::TIMESTAMP) {
+                    unit = std::static_pointer_cast<arrow::TimestampType>(data.type())->unit();
+                }
+                return make_timestamp_object(unit, timezone_);
+            }
+
+            // Check if timestamp has a timezone
+            std::string current_tz;
+            if (data.type()->id() == arrow::Type::TIMESTAMP) {
+                current_tz = get_timezone_from_type(data.type());
+            }
+
+            if (current_tz.empty()) {
+                return arrow::Status::Invalid(
+                    "Cannot convert timezone for naive timestamp. "
+                    "Use tz_localize first to localize the timestamp.");
+            }
+
+            // Empty timezone means convert to naive timestamp
+            if (timezone_.empty()) {
+                return arrow::compute::LocalTimestamp(data);
+            }
+
+            // For timezone conversion, preserve the absolute time by directly changing
+            // the timezone without going through a naive timestamp
+
+            // Get the type with the same unit but different timezone
+            auto ts_type = std::static_pointer_cast<arrow::TimestampType>(data.type());
+            auto target_type = arrow::timestamp(ts_type->unit(), timezone_);
+
+            // Create and configure cast options
+            auto cast_options = arrow::compute::CastOptions::Safe(target_type);
+
+            // Cast to the target timezone
+            return arrow::compute::Cast(data, cast_options);
+        }
+    } // namespace detail
+
+    // Constructor implementations
     template<>
     TemporalOperation<true>::TemporalOperation(Array const &array) : m_data(array) {
         arrow::ArrayPtr ptr = array.value();
@@ -21,6 +203,115 @@ namespace epochframe {
         AssertFromStream(ptr->type->id() == arrow::Type::TIMESTAMP, "scalar is not a timestamp");
     }
 
+    // Array version of tz_localize
+    template<>
+    Array TemporalOperation<true>::tz_localize(const std::string& timezone,
+                                             AmbiguousTimeHandling ambiguous,
+                                             NonexistentTimeHandling nonexistent) const {
+        try {
+            auto result = detail::tz_localize_impl(
+                m_data.value(), timezone, ambiguous, nonexistent);
+
+            if (!result.ok()) {
+                throw std::runtime_error(
+                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
+            }
+
+            return Array(result.ValueOrDie().make_array());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone localization: {}", e.what()));
+        }
+    }
+
+    // Scalar version of tz_localize
+    template<>
+    Scalar TemporalOperation<false>::tz_localize(const std::string& timezone,
+                                               AmbiguousTimeHandling ambiguous,
+                                               NonexistentTimeHandling nonexistent) const {
+        try {
+            auto result = detail::tz_localize_impl(
+                m_data.value(), timezone, ambiguous, nonexistent);
+
+            if (!result.ok()) {
+                throw std::runtime_error(
+                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
+            }
+
+            return Scalar(result.ValueOrDie().scalar());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone localization: {}", e.what()));
+        }
+    }
+
+    // Array version of tz_convert
+    template<>
+    Array TemporalOperation<true>::tz_convert(const std::string& timezone) const {
+        try {
+            auto result = detail::tz_convert_impl(m_data.value(), timezone);
+
+            if (!result.ok()) {
+                throw std::runtime_error(
+                    std::format("Failed to convert timezone: {}", result.status().ToString()));
+            }
+
+            return Array(result.ValueOrDie().make_array());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone conversion: {}", e.what()));
+        }
+    }
+
+    // Scalar version of tz_convert
+    template<>
+    Scalar TemporalOperation<false>::tz_convert(const std::string& timezone) const {
+        try {
+            auto result = detail::tz_convert_impl(m_data.value(), timezone);
+
+            if (!result.ok()) {
+                throw std::runtime_error(
+                    std::format("Failed to convert timezone: {}", result.status().ToString()));
+            }
+
+            return Scalar(result.ValueOrDie().scalar());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone conversion: {}", e.what()));
+        }
+    }
+
+    // Array version of tz_convert
+    template<>
+    Array TemporalOperation<true>::replace_tz(const std::string& timezone) const {
+        try {
+            auto new_type = timestamp(arrow::TimeUnit::NANO, timezone);
+            return Array{
+                std::make_shared<arrow::TimestampArray>(new_type, m_data->length(), m_data->data()->buffers[0], m_data->data()->buffers[1], m_data->offset())
+            };
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone replacement: {}", e.what()));
+        }
+    }
+
+    // Scalar version of tz_convert
+    template<>
+    Scalar TemporalOperation<false>::replace_tz(const std::string& timezone) const {
+        try {
+            auto new_type = timestamp(arrow::TimeUnit::NANO, timezone);
+            auto ts = std::dynamic_pointer_cast<arrow::TimestampScalar>(m_data.value());
+            AssertFromStream(ts != nullptr, "scalar is not a timestamp");
+
+            arrow::ScalarPtr scalar = std::make_shared<arrow::TimestampScalar>(ts->value, new_type);
+            return Scalar(scalar);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(
+                std::format("Error during timezone conversion: {}", e.what()));
+        }
+    }
+
+    // IsoCalendar implementations
     template<>
     IsoCalendarArray TemporalOperation<true>::iso_calendar() const {
         auto result = AssertResultIsOk(arrow::compute::ISOCalendar(m_data.value())).array_as<arrow::StructArray>();
@@ -88,327 +379,4 @@ namespace epochframe {
         };
     }
 
-    template<>
-    Array TemporalOperation<true>::tz_localize(const std::string& timezone,
-                                             AmbiguousTimeHandling ambiguous,
-                                             NonexistentTimeHandling nonexistent) const {
-        const auto timestamp_array = std::static_pointer_cast<arrow::TimestampArray>(m_data.value());
-
-        // Check if array is valid
-        if (!timestamp_array || timestamp_array->length() == 0) {
-            auto result = arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::MICRO, timezone));
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to create empty array: {}", result.status().ToString()));
-            }
-            return Array(result.ValueOrDie());
-        }
-
-        // Check if timestamp already has a timezone
-        auto type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
-        std::string current_tz = type->timezone();
-
-        const bool localize = timezone.empty();
-        if (!current_tz.empty() && !localize) {
-            throw std::invalid_argument(std::format(
-                "Cannot localize timestamp with timezone '{}' to '{}'. "
-                "Use tz_convert instead to convert between timezones.",
-                current_tz, timezone));
-        }
-
-        // Create options for assume_timezone
-        arrow::compute::AssumeTimezoneOptions options(timezone);
-
-        // Handle ambiguous times
-        switch (ambiguous) {
-            case AmbiguousTimeHandling::RAISE:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_RAISE;
-                break;
-            case AmbiguousTimeHandling::EARLIEST:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
-                break;
-            case AmbiguousTimeHandling::LATEST:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_LATEST;
-                break;
-            case AmbiguousTimeHandling::NAT:
-                // Arrow doesn't have a NAT option, use EARLIEST as a fallback
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
-                // TODO: Add custom handling for NAT values for ambiguous times
-                break;
-        }
-
-        // Handle nonexistent times
-        switch (nonexistent) {
-            case NonexistentTimeHandling::RAISE:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_RAISE;
-                break;
-            case NonexistentTimeHandling::SHIFT_FORWARD:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_LATEST;
-                break;
-            case NonexistentTimeHandling::SHIFT_BACKWARD:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
-                break;
-            case NonexistentTimeHandling::NAT:
-                // Arrow doesn't have a NAT option, use EARLIEST as a fallback
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
-                // TODO: Add custom handling for NAT values for nonexistent times
-                break;
-        }
-
-        try {
-            auto result =
-                localize ? arrow::compute::LocalTimestamp(timestamp_array) : arrow::compute::AssumeTimezone(timestamp_array, options);
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
-            }
-
-            return Array(result.ValueOrDie().make_array());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(
-                std::format("Error during timezone localization: {}", e.what()));
-        }
-    }
-
-    template<>
-    Array TemporalOperation<true>::tz_convert(const std::string& timezone_) const {
-        auto timestamp_array = std::static_pointer_cast<arrow::TimestampArray>(m_data.value());
-        auto timezone = timezone_.empty() ? "UTC" : timezone_;
-        // Check if array is valid
-        if (!timestamp_array || timestamp_array->length() == 0) {
-            auto result = arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::MICRO, timezone));
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to create empty array: {}", result.status().ToString()));
-            }
-            return Array(result.ValueOrDie());
-        }
-
-        // Check if timestamp has a timezone
-        auto type = std::static_pointer_cast<arrow::TimestampType>(timestamp_array->type());
-        std::string current_tz = type->timezone();
-
-        if (current_tz.empty()) {
-            throw std::invalid_argument(
-                "Cannot convert timezone for naive timestamp. "
-                "Use tz_localize first to localize the timestamp.");
-        }
-
-        // For timezone conversion, we use a two-step process:
-        // 1. Strip the timezone (cast to a timestamp without timezone)
-        // 2. Add the new timezone
-
-        try {
-            // First create a timestamp type without timezone but with the same unit
-            auto naive_type = arrow::timestamp(type->unit());
-            auto cast_options = arrow::compute::CastOptions::Safe(naive_type);
-
-            // Remove the timezone
-            auto naive_array = AssertContiguousArrayResultIsOk(
-                arrow::compute::Cast(timestamp_array, cast_options));
-
-            // Then add the new timezone
-            arrow::compute::AssumeTimezoneOptions options(timezone);
-            options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_RAISE;
-            options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_RAISE;
-
-            auto result = arrow::compute::CallFunction("assume_timezone", {naive_array}, &options);
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to convert timezone: {}", result.status().ToString()));
-            }
-
-            return Array(result.ValueOrDie().make_array());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(
-                std::format("Error during timezone conversion: {}", e.what()));
-        }
-    }
-
-    template<>
-    Scalar TemporalOperation<false>::tz_localize(const std::string& timezone,
-                                               AmbiguousTimeHandling ambiguous,
-                                               NonexistentTimeHandling nonexistent) const {
-        // Get the timestamp scalar from the data
-        if (!m_data.value() || !m_data.value()->is_valid) {
-            return Scalar(arrow::MakeNullScalar(arrow::timestamp(arrow::TimeUnit::MICRO, timezone)));
-        }
-
-        auto timestamp_scalar = std::static_pointer_cast<arrow::TimestampScalar>(m_data.value());
-        if (!timestamp_scalar) {
-            throw std::runtime_error("Expected a timestamp scalar");
-        }
-
-        auto type = std::static_pointer_cast<arrow::TimestampType>(timestamp_scalar->type);
-        if (!type) {
-            throw std::runtime_error("Invalid timestamp type");
-        }
-
-        // Get the current timezone if it exists
-        std::string current_tz = type->timezone();
-        const bool localize = timezone.empty();
-        // Check if the timestamp already has a timezone
-        if (!current_tz.empty() && !localize) {
-            throw std::invalid_argument(std::format(
-                "Cannot localize timestamp with timezone '{}' to '{}'. "
-                "Use tz_convert instead to convert between timezones.",
-                current_tz, timezone));
-        }
-
-        // Create options for assume_timezone
-        arrow::compute::AssumeTimezoneOptions options(timezone);
-
-        // Handle ambiguous times
-        switch (ambiguous) {
-            case AmbiguousTimeHandling::RAISE:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_RAISE;
-                break;
-            case AmbiguousTimeHandling::EARLIEST:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
-                break;
-            case AmbiguousTimeHandling::LATEST:
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_LATEST;
-                break;
-            case AmbiguousTimeHandling::NAT:
-                // Arrow doesn't have a NAT option, use EARLIEST as a fallback
-                options.ambiguous = arrow::compute::AssumeTimezoneOptions::AMBIGUOUS_EARLIEST;
-                // TODO: Add custom handling for NAT values for ambiguous times
-                break;
-        }
-
-        // Handle nonexistent times
-        switch (nonexistent) {
-            case NonexistentTimeHandling::RAISE:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_RAISE;
-                break;
-            case NonexistentTimeHandling::SHIFT_FORWARD:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_LATEST;
-                break;
-            case NonexistentTimeHandling::SHIFT_BACKWARD:
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
-                break;
-            case NonexistentTimeHandling::NAT:
-                // Arrow doesn't have a NAT option, use EARLIEST as a fallback
-                options.nonexistent = arrow::compute::AssumeTimezoneOptions::NONEXISTENT_EARLIEST;
-                // TODO: Add custom handling for NAT values for nonexistent times
-                break;
-        }
-
-        // First, we need to create an array from the scalar to use with the function
-        std::shared_ptr<arrow::Array> array;
-        try {
-            arrow::TimestampBuilder builder(type, arrow::default_memory_pool());
-            auto status = builder.Append(timestamp_scalar->value);
-            if (!status.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to append value to builder: {}", status.ToString()));
-            }
-
-            status = builder.Finish(&array);
-            if (!status.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to finish builder: {}", status.ToString()));
-            }
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::format("Failed to create array from scalar: {}", e.what()));
-        }
-
-        // Apply timezone to the timestamp
-        try {
-            auto result =
-                localize ? arrow::compute::LocalTimestamp(array) : arrow::compute::AssumeTimezone(array, options);
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to localize timestamp: {}", result.status().ToString()));
-            }
-
-            // Extract first element as scalar
-            auto scalar_result = result.ValueOrDie().make_array()->GetScalar(0);
-            if (!scalar_result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
-            }
-
-            return Scalar(scalar_result.ValueOrDie());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(
-                std::format("Error during timezone localization: {}", e.what()));
-        }
-    }
-
-    template<>
-    Scalar TemporalOperation<false>::tz_convert(const std::string& timezone_) const {
-        const auto timezone = timezone_.empty() ? "UTC" : timezone_;
-        // Get the timestamp scalar from the data
-        if (!m_data.value() || !m_data.value()->is_valid) {
-            return Scalar(arrow::MakeNullScalar(arrow::timestamp(arrow::TimeUnit::MICRO, timezone)));
-        }
-
-        auto timestamp_scalar = std::static_pointer_cast<arrow::TimestampScalar>(m_data.value());
-        if (!timestamp_scalar) {
-            throw std::runtime_error("Expected a timestamp scalar");
-        }
-
-        auto type = std::static_pointer_cast<arrow::TimestampType>(timestamp_scalar->type);
-        if (!type) {
-            throw std::runtime_error("Invalid timestamp type");
-        }
-
-        // Get the current timezone if it exists
-        std::string current_tz = type->timezone();
-
-        // Check if the timestamp has a timezone
-        if (current_tz.empty()) {
-            throw std::invalid_argument(
-                "Cannot convert timezone for naive timestamp. "
-                "Use tz_localize first to localize the timestamp.");
-        }
-
-        // For timezone conversion, we use a two-step process:
-        // 1. Strip the timezone (cast to a timestamp without timezone)
-        // 2. Add the new timezone
-
-        try {
-            // First create a timestamp type without timezone but with the same unit
-            auto naive_type = arrow::timestamp(type->unit());
-
-            // Create a naive scalar with the same value
-            auto naive_scalar = std::make_shared<arrow::TimestampScalar>(timestamp_scalar->value, naive_type);
-
-            // Create an array from the scalar (needed for assume_timezone function)
-            arrow::TimestampBuilder builder(naive_type, arrow::default_memory_pool());
-            auto status = builder.Append(naive_scalar->value);
-            if (!status.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to append value to builder: {}", status.ToString()));
-            }
-
-            std::shared_ptr<arrow::Array> array;
-            status = builder.Finish(&array);
-            if (!status.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to finish builder: {}", status.ToString()));
-            }
-
-            // Add the new timezone
-            arrow::compute::AssumeTimezoneOptions options(timezone);
-            auto result = arrow::compute::CallFunction("assume_timezone", {array}, &options);
-            if (!result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to convert timezone: {}", result.status().ToString()));
-            }
-
-            // Extract first element as scalar
-            auto scalar_result = result.ValueOrDie().make_array()->GetScalar(0);
-            if (!scalar_result.ok()) {
-                throw std::runtime_error(
-                    std::format("Failed to extract scalar from result: {}", scalar_result.status().ToString()));
-            }
-
-            return Scalar(scalar_result.ValueOrDie());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(
-                std::format("Error during timezone conversion: {}", e.what()));
-        }
-    }
-} // namespace epochframe
+} // namespace epoch_frame

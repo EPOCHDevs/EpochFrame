@@ -10,7 +10,7 @@
 #include "methods/temporal.h"
 
 
-namespace epochframe::factory::scalar {
+namespace epoch_frame::factory::scalar {
 
     DateTime to_datetime(const arrow::TimestampScalar &scalar) {
         Scalar other(scalar);

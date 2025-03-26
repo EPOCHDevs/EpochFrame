@@ -7,7 +7,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace epochframe {
+namespace epoch_frame {
     std::pair<double, double> modf(double value);
 
     // Python-style divmod for integers (handles negative numbers like Python does)
@@ -16,17 +16,17 @@ namespace epochframe {
 
 /**
  * @brief TimeDelta class represents a duration as a combination of days, seconds, and microseconds.
- * 
+ *
  * This class is inspired by Python's datetime.timedelta and provides a way to represent
  * time durations with accurate handling of large ranges.
- * 
+ *
  * Supported operations:
  * - Addition and subtraction with other TimeDelta objects
  * - Unary plus, minus, abs
  * - Comparison with other TimeDelta objects
  * - Multiplication and division by integers
  * - Get total seconds, days, hours, etc.
- * 
+ *
  * Internal representation: days, seconds (0-86399), microseconds (0-999999)
  */
 class TimeDelta {
@@ -77,6 +77,8 @@ public:
     friend TimeDelta operator*(double other, const TimeDelta& self) { return self * other; }
     TimeDelta& operator*=(double other);
 
+    std::strong_ordering operator<=>(const TimeDelta& other) const;
+
 private:
     // Core attributes matching Python's timedelta internal representation
     int64_t days_;
@@ -84,4 +86,4 @@ private:
     int64_t microseconds_; // 0 <= microseconds < 1000000
 };
 
-} // namespace epochframe 
+} // namespace epoch_frame

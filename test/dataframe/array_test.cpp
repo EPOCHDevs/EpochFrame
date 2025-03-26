@@ -5,12 +5,12 @@
 #include <catch2/catch_approx.hpp>
 #include <arrow/array/builder_primitive.h>
 #include <arrow/compute/api.h>
-#include "epochframe/array.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/array.h"
+#include "epoch_frame/scalar.h"
 #include "factory/array_factory.h"
 #include "methods/temporal.h"
 
-using namespace epochframe;
+using namespace epoch_frame;
 using Catch::Approx;
 
 TEST_CASE("Array - Constructors", "[array][constructors]")
@@ -85,8 +85,11 @@ TEST_CASE("Array - Operators", "[array][operators]")
 
     SECTION("Comparison operators")
     {
-        REQUIRE(arr1 == arr3);
-        REQUIRE(arr1 != arr2);
+        REQUIRE( (arr1 == arr3).sum() == 3_scalar );
+        REQUIRE( (arr1 != arr2).sum() == 3_scalar );
+
+        REQUIRE( arr1.is_equal(arr3) );
+        REQUIRE( !arr1.is_equal(arr2) );
     }
 
     SECTION("Arithmetic operators with arrays")
@@ -716,7 +719,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         Array utc_array = ts_array.dt().tz_localize("UTC");
 
         // Try to localize again - should throw
-        REQUIRE_THROWS_AS(utc_array.dt().tz_localize("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(utc_array.dt().tz_localize("America/New_York"), std::runtime_error);
     }
 
     SECTION("tz_convert - Basic functionality") {
@@ -739,28 +742,28 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
 
     SECTION("tz_convert - Error cases") {
         // Try to convert a naive timestamp - should throw
-        REQUIRE_THROWS_AS(ts_array.dt().tz_convert("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(ts_array.dt().tz_convert("America/New_York"), std::runtime_error);
     }
 
     SECTION("tz_localize - Special cases") {
         // Test various ambiguous time handling options
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::EARLIEST));
+                                                epoch_frame::AmbiguousTimeHandling::EARLIEST));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::LATEST));
+                                                epoch_frame::AmbiguousTimeHandling::LATEST));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::NAT));
+                                                epoch_frame::AmbiguousTimeHandling::NAT));
 
         // Test various nonexistent time handling options
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::SHIFT_FORWARD));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::SHIFT_FORWARD));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::SHIFT_BACKWARD));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::SHIFT_BACKWARD));
         REQUIRE_NOTHROW(ts_array.dt().tz_localize("America/New_York",
-                                                epochframe::AmbiguousTimeHandling::RAISE,
-                                                epochframe::NonexistentTimeHandling::NAT));
+                                                epoch_frame::AmbiguousTimeHandling::RAISE,
+                                                epoch_frame::NonexistentTimeHandling::NAT));
     }
 
     SECTION("tz_localize and tz_convert - Scalar case") {
@@ -782,7 +785,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         REQUIRE(ts_type->timezone() == "UTC");
 
         // Try to localize again - should throw
-        REQUIRE_THROWS_AS(utc_scalar.dt().tz_localize("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(utc_scalar.dt().tz_localize("America/New_York"), std::runtime_error);
 
         // Use tz_convert to change timezone
         REQUIRE_NOTHROW(utc_scalar.dt().tz_convert("America/New_York"));
@@ -794,7 +797,7 @@ TEST_CASE("Array - Datetime accessor", "[array][datetime]")
         REQUIRE(ts_type->timezone() == "America/New_York");
 
         // Try to convert a naive timestamp - should throw
-        REQUIRE_THROWS_AS(ts_scalar.dt().tz_convert("America/New_York"), std::invalid_argument);
+        REQUIRE_THROWS_AS(ts_scalar.dt().tz_convert("America/New_York"), std::runtime_error);
     }
 }
 

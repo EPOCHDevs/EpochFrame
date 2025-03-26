@@ -8,9 +8,9 @@
 #include <cassert>
 #include <iostream>
 
-namespace ef = epochframe;
-namespace eff = epochframe::factory::array;
-namespace effi = epochframe::factory::index;
+namespace ef = epoch_frame;
+namespace eff = epoch_frame::factory::array;
+namespace effi = epoch_frame::factory::index;
 
 namespace cp = ::arrow::compute;
 

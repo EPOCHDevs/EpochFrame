@@ -1,4 +1,4 @@
-#include "epochframe/serialization.h"
+#include "epoch_frame/serialization.h"
 #include "factory/index_factory.h"
 #include "common/asserts.h"
 #include <spdlog/spdlog.h>
@@ -11,7 +11,7 @@
 #include "s3_manager.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
 // Global S3 manager class for handling initialization/finalization
 
     // Initialize S3 if not already initialized
@@ -864,4 +864,4 @@ void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buf
     }
 
 
-} // namespace epochframe
+} // namespace epoch_frame

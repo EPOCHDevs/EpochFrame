@@ -3,14 +3,14 @@
 //
 
 #pragma once
-#include <epochframe/enums.h>
+#include <epoch_frame/enums.h>
 #include "method_base.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "common/series_or_scalar.h"
 #include <string>
 
 
-namespace epochframe {
+namespace epoch_frame {
     class Aggregator : public MethodBase {
     public:
         explicit Aggregator(const TableComponent&  data);

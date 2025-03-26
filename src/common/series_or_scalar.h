@@ -1,10 +1,10 @@
 #pragma once
 
-#include "epochframe/series.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/scalar.h"
 #include <variant>
 
-namespace epochframe {
+namespace epoch_frame {
     class SeriesOrScalar {
     public:
         explicit SeriesOrScalar(Series series) : series_or_scalar_(std::move(series)) {}

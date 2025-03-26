@@ -1,8 +1,8 @@
-// 
+//
 // Created by adesola on 3/08/25.
 //
 
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 #include "common/arrow_compute_utils.h"
 #include "common/methods_helper.h"
 #include "common/asserts.h"
@@ -10,12 +10,12 @@
 #include <arrow/array/builder_primitive.h>
 #include <arrow/util/formatting.h>
 #include <fmt/format.h>
-#include "epochframe/integer_slice.h"
+#include "epoch_frame/integer_slice.h"
 #include "methods/temporal.h"
 
-using namespace epochframe::arrow_utils;
+using namespace epoch_frame::arrow_utils;
 
-namespace epochframe {
+namespace epoch_frame {
 
 // ------------------------------------------------------------------------
 // Constructors
@@ -49,16 +49,16 @@ template<typename T>
 Array Array::FromVector(const std::vector<T>& values) {
     using BuilderType = typename arrow::CTypeTraits<T>::BuilderType;
     BuilderType builder;
-    
+
     AssertStatusIsOk(builder.Reserve(values.size()));
-    
+
     for (const auto& value : values) {
         AssertStatusIsOk(builder.Append(value));
     }
-    
+
     std::shared_ptr<arrow::Array> array;
     AssertStatusIsOk(builder.Finish(&array));
-    
+
     return Array(array);
 }
 
@@ -69,25 +69,40 @@ template Array Array::FromVector<float>(const std::vector<float>& values);
 template Array Array::FromVector<double>(const std::vector<double>& values);
 template Array Array::FromVector<bool>(const std::vector<bool>& values);
 
+uint64_t Array::resolve_index(int64_t idx) const {
+    if (!is_valid()) {
+        throw std::runtime_error("Cannot index a null array");
+    }
+
+    int64_t length = m_array->length();
+    int64_t resolved_idx = resolve_integer_index(idx, length);
+
+    // Check bounds
+    if (resolved_idx < 0 || resolved_idx >= length) {
+        throw std::out_of_range("Index out of bounds for array");
+    }
+    return resolved_idx;
+}
+
+
 // ------------------------------------------------------------------------
 // Operator overloads
 // ------------------------------------------------------------------------
 
-bool Array::operator==(const Array& other) const {
-    if (!m_array || !other.m_array) return false;
-    if (m_array == other.m_array) return true;
-    
-    // Only do expensive comparison if necessary
-    std::vector<arrow::Datum> inputs = {m_array, other.m_array};
-    auto equal_result = arrow_utils::call_compute(inputs, "equal");
-    arrow::ScalarPtr all_result = arrow_utils::call_unary_agg_compute(equal_result, "all");
-    auto bool_result = std::dynamic_pointer_cast<arrow::BooleanScalar>(all_result);
-    AssertFromStream(bool_result, "Boolean scalar result is not valid");
-    return bool_result->value;
+Array Array::operator==(const Array& other) const {
+    return call_function(other, "equal");
 }
 
-bool Array::operator!=(const Array& other) const {
-    return !(*this == other);
+Array Array::operator==(const Scalar& other) const {
+    return call_function(other, "equal");
+}
+
+Array Array::operator!=(const Array& other) const {
+    return call_function(other, "not_equal");
+}
+
+Array Array::operator!=(const Scalar& other) const {
+    return call_function(other, "not_equal");
 }
 
 Array Array::operator<(const Array& other) const {
@@ -170,6 +185,28 @@ Array Array::operator!() const {
     return call_function("invert");
 }
 
+Array Array::insert(int64_t loc, Scalar const &val) const {
+    loc = resolve_index(loc);
+    // Build a 1-element array from 'val'
+    auto single_val = AssertContiguousArrayResultIsOk(arrow::MakeArrayFromScalar(*val.value(), 1));
+
+    // slice(0..loc), single_val, slice(loc..end)
+    auto slice1 = m_array->Slice(0, loc);
+    auto slice2 = m_array->Slice(loc, length() - loc);
+
+    return Array(
+            factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, single_val, slice2}))));
+}
+
+Array Array::delete_(int64_t loc) const {
+    loc = resolve_index(loc);
+    // slice 0..loc, slice loc+1..end => arrow::Concatenate
+    auto slice1 = m_array->Slice(0, loc);
+    auto slice2 = m_array->Slice(loc + 1, length() - (loc + 1));
+
+    return Array(factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, slice2}))));
+}
+
 // ------------------------------------------------------------------------
 // Template methods
 // ------------------------------------------------------------------------
@@ -225,19 +262,19 @@ template Array Array::cast<arrow::StringType>() const;
 // Arrow computation methods
 // ------------------------------------------------------------------------
 
-Array Array::call_function(const std::string& function_name, 
+Array Array::call_function(const std::string& function_name,
                           const arrow::compute::FunctionOptions* options) const {
     return Array(arrow_utils::call_unary_compute_contiguous_array(m_array, function_name, options));
 }
 
-Array Array::call_function(const Array& other, 
+Array Array::call_function(const Array& other,
                           const std::string& function_name,
                           const arrow::compute::FunctionOptions* options) const {
     std::vector<arrow::Datum> inputs = {m_array, other.m_array};
     return Array(arrow_utils::call_compute(inputs, function_name, options).make_array());
 }
 
-Array Array::call_function(const Scalar& scalar, 
+Array Array::call_function(const Scalar& scalar,
                           const std::string& function_name,
                           const arrow::compute::FunctionOptions* options) const {
     std::vector<arrow::Datum> inputs = {m_array, scalar.value()};
@@ -301,7 +338,7 @@ Array Array::filter(const Array& mask) const {
 Array Array::sort(bool ascending) const {
     arrow::compute::ArraySortOptions options;
     options.order = ascending ? arrow::compute::SortOrder::Ascending : arrow::compute::SortOrder::Descending;
-    
+
     auto indices_datum = arrow_utils::call_unary_compute(m_array, "array_sort_indices", &options);
     std::vector<arrow::Datum> take_inputs = {m_array, indices_datum};
     return Array(arrow_utils::call_compute(take_inputs, "take").make_array());
@@ -313,13 +350,13 @@ Array Array::unique() const {
 
 std::pair<Array, Array> Array::value_counts() const {
     // Use existing helper
-    auto result = epochframe::value_counts(m_array);
+    auto result = epoch_frame::value_counts(m_array);
     return {Array(result.values), Array(result.counts)};
 }
 
 std::pair<Array, Array> Array::dictionary_encode() const {
     // Use existing helper
-    auto result = epochframe::dictionary_encode(m_array);
+    auto result = epoch_frame::dictionary_encode(m_array);
     return {Array(result.indices), Array(result.array)};
 }
 
@@ -397,19 +434,7 @@ std::ostream& operator<<(std::ostream& os, const Array& array) {
 // ------------------------------------------------------------------------
 
 Scalar Array::operator[](int64_t idx) const {
-    if (!is_valid()) {
-        throw std::runtime_error("Cannot index a null array");
-    }
-
-    // Handle negative indices (Python-style)
-    int64_t length = m_array->length();
-    int64_t resolved_idx = resolve_integer_index(idx, length);
-
-    // Check bounds
-    if (resolved_idx < 0 || resolved_idx >= length) {
-        throw std::out_of_range("Index out of bounds for array");
-    }
-    return Scalar(AssertResultIsOk(m_array->GetScalar(resolved_idx)));
+    return Scalar(AssertResultIsOk(m_array->GetScalar(resolve_index(idx))));
 }
 
 Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
@@ -418,7 +443,7 @@ Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
     }
 
     auto [start, stop, step] = resolve_integer_slice(slice, length());
-    
+
     if (step == 1) {
         return this->slice(start, stop - start);
     } else {
@@ -428,7 +453,7 @@ Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
         for (size_t i = start; i < stop; i += step) {
             index_builder.UnsafeAppend(i);
         }
-        
+
         auto index_array = AssertResultIsOk(index_builder.Finish());
         return this->take(Array(index_array));
     }
@@ -446,12 +471,12 @@ Array Array::operator[](const Array& indices) const {
     // Check if indices is a boolean mask or integer indices
     if (indices.type()->id() == arrow::Type::BOOL) {
         return this->filter(indices);
-    } else if (indices.type()->id() >= arrow::Type::INT8 && 
+    } else if (indices.type()->id() >= arrow::Type::INT8 &&
                indices.type()->id() <= arrow::Type::UINT64) {
         return this->take(indices);
     } else {
         throw std::invalid_argument(
-            std::format("Index array must be boolean or integer type, got {}", 
+            std::format("Index array must be boolean or integer type, got {}",
                         indices.type()->ToString()));
     }
 }
@@ -467,7 +492,7 @@ TemporalOperation<true> Array::dt() const {
 
     if (m_array->type()->id() != arrow::Type::TIMESTAMP) {
         throw std::runtime_error(
-            std::format("dt accessor is only valid for timestamp arrays, got {}", 
+            std::format("dt accessor is only valid for timestamp arrays, got {}",
                         m_array->type()->ToString()));
     }
 
@@ -520,7 +545,11 @@ Array Array::sqrt() const {
 }
 
 Array Array::where(const Array& mask, const Scalar& replacement) const {
-    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(m_array, mask.value(), replacement.value())));
+    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
 }
 
-} // namespace epochframe 
+Array Array::where(const Array& mask, const Array& replacement) const {
+    return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
+}
+
+} // namespace epoch_frame

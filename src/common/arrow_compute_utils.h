@@ -2,15 +2,15 @@
 
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <epochframe/enums.h>
-#include <epochframe/scalar.h>
+#include <epoch_frame/enums.h>
+#include <epoch_frame/scalar.h>
 #include <fmt/format.h>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "common/asserts.h"
 #include "common/table_or_array.h"
 
 
-namespace epochframe::arrow_utils {
+namespace epoch_frame::arrow_utils {
 
 /**
  * @brief Call a simple unary compute function by name, e.g. "any", "all", "count".
@@ -212,12 +212,12 @@ namespace epochframe::arrow_utils {
     TableOrArray shift(const TableOrArray &array, int64_t periods);
     TableOrArray pct_change(const TableOrArray &array, int64_t periods);
 
-    arrow::ScalarPtr cov(const arrow::ChunkedArrayPtr &array, 
+    arrow::ScalarPtr cov(const arrow::ChunkedArrayPtr &array,
                         const arrow::ChunkedArrayPtr &other,
                         std::optional<int64_t> min_periods = std::nullopt,
                         int64_t ddof = 1);
 
-    arrow::ScalarPtr corr(const arrow::ChunkedArrayPtr &array, 
+    arrow::ScalarPtr corr(const arrow::ChunkedArrayPtr &array,
                         const arrow::ChunkedArrayPtr &other,
                         std::optional<int64_t> min_periods = std::nullopt,
                         int64_t ddof = 1);
@@ -247,7 +247,7 @@ namespace epochframe::arrow_utils {
         }
     }
 
-    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func);
+    arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func, bool merge_chunks=true);
 
     inline arrow::Datum call_compute_replace_with_mask(
         const arrow::Datum &input,
@@ -381,4 +381,4 @@ namespace epochframe::arrow_utils {
     // TODO: MISSING
     // binary_join
     // binary_join_element_wise
-} // namespace epochframe::arrow_utils
+} // namespace epoch_frame::arrow_utils

@@ -5,10 +5,10 @@
 #pragma once
 #include <arrow/api.h>
 #include <epoch_core/macros.h>
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     template<typename U, typename T>
     requires (!std::is_same_v<U, arrow::Array>)
     std::shared_ptr<U> PtrCast(const std::shared_ptr<T> &datum) {

@@ -3,7 +3,7 @@
 //
 
 #include "agg.h"
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 #include "common/arrow_compute_utils.h"
 #include "index/arrow_index.h"
 #include "common/table_or_array.h"
@@ -12,8 +12,9 @@
 #include <string>
 #include <memory>
 #include <stdexcept>
+#include <index/object_index.h>
 
-namespace epochframe {
+namespace epoch_frame {
     Aggregator::Aggregator(const TableComponent& data) : MethodBase(data) {}
 
     SeriesOrScalar Aggregator::agg(AxisType axis, std::string const& agg, bool skip_null, arrow::compute::FunctionOptions const & options) const {
@@ -49,7 +50,7 @@ namespace epochframe {
             auto index = factory::array::make_contiguous_array(concat_table->GetColumnByName("index"));
             auto value = concat_table->GetColumnByName("value");
             AssertFromStream(index != nullptr && value != nullptr, "IIndex or value column not found");
-            return SeriesOrScalar{Series(m_data.first->Make(index), value)};
+            return SeriesOrScalar{Series(std::make_shared<ObjectIndex>(index), value)};
         }
         if (agg == "min" || agg == "max") {
             const arrow::ChunkedArrayVector columns = table->columns();

@@ -4,12 +4,12 @@
 
 CREATE_ENUM(EpochDayOfWeek, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);
 
-namespace epochframe
+namespace epoch_frame
 {
     class Weekday
     {
       public:
-        Weekday(EpochDayOfWeek day_of_week, std::optional<int> n = std::nullopt)
+        Weekday(epoch_core::EpochDayOfWeek day_of_week, std::optional<int> n = std::nullopt)
             : day_of_week(day_of_week), m_n(n)
         {
         }
@@ -46,7 +46,7 @@ namespace epochframe
             return os << weekday.repr();
         }
 
-        EpochDayOfWeek weekday() const
+        epoch_core::EpochDayOfWeek weekday() const
         {
             return day_of_week;
         }
@@ -57,16 +57,16 @@ namespace epochframe
         }
 
       private:
-        EpochDayOfWeek     day_of_week;
+        epoch_core::EpochDayOfWeek     day_of_week;
         std::optional<int> m_n;
     };
 
     // Define weekday constants for testing
-    static const Weekday MO(EpochDayOfWeek::Monday);
-    static const Weekday TU(EpochDayOfWeek::Tuesday);
-    static const Weekday WE(EpochDayOfWeek::Wednesday);
-    static const Weekday TH(EpochDayOfWeek::Thursday);
-    static const Weekday FR(EpochDayOfWeek::Friday);
-    static const Weekday SA(EpochDayOfWeek::Saturday);
-    static const Weekday SU(EpochDayOfWeek::Sunday);
-} // namespace epochframe
+    static const Weekday MO(epoch_core::EpochDayOfWeek::Monday);
+    static const Weekday TU(epoch_core::EpochDayOfWeek::Tuesday);
+    static const Weekday WE(epoch_core::EpochDayOfWeek::Wednesday);
+    static const Weekday TH(epoch_core::EpochDayOfWeek::Thursday);
+    static const Weekday FR(epoch_core::EpochDayOfWeek::Friday);
+    static const Weekday SA(epoch_core::EpochDayOfWeek::Saturday);
+    static const Weekday SU(epoch_core::EpochDayOfWeek::Sunday);
+} // namespace epoch_frame

@@ -7,7 +7,7 @@
 #include "common/table_or_array.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     class Arithmetic : public MethodBase {
     public:
         Arithmetic(const TableComponent& data)

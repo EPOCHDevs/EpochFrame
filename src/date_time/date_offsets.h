@@ -4,18 +4,20 @@
 
 #pragma once
 #include "day_of_week.h"
-#include "epochframe/aliases.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/enums.h"
 #include "relative_delta.h"
 #include <arrow/compute/api.h>
 #include <arrow/scalar.h>
 #include <fmt/format.h>
 #include <memory>
+#include "business/np_busdaycal.h"
+
 
 CREATE_ENUM(EpochOffsetType, RelativeDelta, Day, Hour, Minute, Second, Milli, Micro, Nano, Week,
             Month, MonthStart, MonthEnd, Quarter, QuarterStart, QuarterEnd, Year, YearStart,
-            YearEnd);
-namespace epochframe
+            YearEnd, BusinessDay, CustomBusinessDay);
+namespace epoch_frame
 {
     struct IDateOffsetHandler
     {
@@ -28,7 +30,7 @@ namespace epochframe
 
         virtual bool is_fixed() const = 0;
         virtual bool is_end() const   = 0;
-        virtual EpochOffsetType type() const = 0;
+        virtual epoch_core::EpochOffsetType type() const = 0;
 
 
         virtual arrow::TimestampScalar              add(arrow::TimestampScalar const&) const  = 0;
@@ -134,9 +136,9 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::RelativeDelta;
+            return epoch_core::EpochOffsetType::RelativeDelta;
         }
 
         std::string code() const override
@@ -191,8 +193,8 @@ namespace epochframe
         {
             return false;
         }
-        
-        EpochOffsetType type() const override = 0;
+
+        epoch_core::EpochOffsetType type() const override = 0;
     };
 
     constexpr size_t ONE_BILLION = 1'000'000'000;
@@ -221,16 +223,16 @@ namespace epochframe
         {
             return std::make_shared<DayHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Day;
+            return epoch_core::EpochOffsetType::Day;
         }
     };
 
     struct HourHandler : TickHandler
     {
-        HourHandler(int64_t n, std::optional<EpochFrameTimezone> timezone = {}) : TickHandler(n) {}
+        HourHandler(int64_t n, std::optional<std::string> timezone = {}) : TickHandler(n) {}
 
         std::string code() const override
         {
@@ -251,10 +253,10 @@ namespace epochframe
         {
             return std::make_shared<HourHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Hour;
+            return epoch_core::EpochOffsetType::Hour;
         }
     };
 
@@ -281,10 +283,10 @@ namespace epochframe
         {
             return std::make_shared<MinuteHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Minute;
+            return epoch_core::EpochOffsetType::Minute;
         }
     };
 
@@ -311,10 +313,10 @@ namespace epochframe
         {
             return std::make_shared<SecondHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Second;
+            return epoch_core::EpochOffsetType::Second;
         }
     };
 
@@ -341,10 +343,10 @@ namespace epochframe
         {
             return std::make_shared<MilliHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Milli;
+            return epoch_core::EpochOffsetType::Milli;
         }
     };
 
@@ -371,10 +373,10 @@ namespace epochframe
         {
             return std::make_shared<MicroHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Micro;
+            return epoch_core::EpochOffsetType::Micro;
         }
     };
 
@@ -401,10 +403,10 @@ namespace epochframe
         {
             return std::make_shared<NanoHandler>(n);
         }
-        
-        EpochOffsetType type() const override
+
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Nano;
+            return epoch_core::EpochOffsetType::Nano;
         }
     };
 
@@ -430,7 +432,7 @@ namespace epochframe
     class WeekHandler : public FixedOffsetHandler
     {
       public:
-        WeekHandler(int64_t n, std::optional<EpochDayOfWeek> weekday = {});
+        WeekHandler(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = {});
 
         int64_t diff(const arrow::TimestampScalar& start,
                      const arrow::TimestampScalar& end) const override;
@@ -448,7 +450,7 @@ namespace epochframe
         {
             return std::format(
                 "W{}",
-                m_weekday ? std::format("-{}", EpochDayOfWeekWrapper::ToString(*m_weekday)) : "");
+                m_weekday ? std::format("-{}", epoch_core::EpochDayOfWeekWrapper::ToString(*m_weekday)) : "");
         }
 
         std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
@@ -461,13 +463,13 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Week;
+            return epoch_core::EpochOffsetType::Week;
         }
 
       private:
-        std::optional<EpochDayOfWeek> m_weekday;
+        std::optional<epoch_core::EpochDayOfWeek> m_weekday;
     };
 
     // TODO: WeekOfMonthOffsetHandler
@@ -508,9 +510,9 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Month;
+            return epoch_core::EpochOffsetType::Month;
         }
 
       protected:
@@ -532,9 +534,9 @@ namespace epochframe
             return std::make_shared<MonthStartHandler>(n);
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::MonthStart;
+            return epoch_core::EpochOffsetType::MonthStart;
         }
     };
 
@@ -558,9 +560,9 @@ namespace epochframe
             return true;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::MonthEnd;
+            return epoch_core::EpochOffsetType::MonthEnd;
         }
     };
 
@@ -597,9 +599,9 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Quarter;
+            return epoch_core::EpochOffsetType::Quarter;
         }
 
       protected:
@@ -626,9 +628,9 @@ namespace epochframe
             return std::make_shared<QuarterStartHandler>(n, m_starting_month, m_day_opt);
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::QuarterStart;
+            return epoch_core::EpochOffsetType::QuarterStart;
         }
     };
 
@@ -656,9 +658,9 @@ namespace epochframe
             return true;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::QuarterEnd;
+            return epoch_core::EpochOffsetType::QuarterEnd;
         }
     };
 
@@ -699,9 +701,9 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::Year;
+            return epoch_core::EpochOffsetType::Year;
         }
 
       protected:
@@ -727,9 +729,9 @@ namespace epochframe
             return std::make_shared<YearStartHandler>(n, m_month);
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::YearStart;
+            return epoch_core::EpochOffsetType::YearStart;
         }
     };
 
@@ -756,9 +758,9 @@ namespace epochframe
             return true;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
-            return EpochOffsetType::YearEnd;
+            return epoch_core::EpochOffsetType::YearEnd;
         }
     };
 
@@ -799,14 +801,101 @@ namespace epochframe
             return false;
         }
 
-        EpochOffsetType type() const override
+        epoch_core::EpochOffsetType type() const override
         {
             // Easter isn't in the enum, we could add it or use something else
             // For now let's use RelativeDelta as it's also not fixed
-            return EpochOffsetType::RelativeDelta;
+            return epoch_core::EpochOffsetType::RelativeDelta;
         }
+    };
+
+    struct BusinessMixinParams {
+        np::WeekMask weekmask{true, true, true, true, true, false, false};
+        std::vector<DateTime> holidays{};
+        std::optional<std::variant<np::BusinessDayCalendarPtr, calendar::AbstractHolidayCalendarPtr>> calendar{std::nullopt};
+    };
+
+    class BusinessMixin : public OffsetHandler {
+        public:
+            BusinessMixin(np::BusinessDayCalendarPtr  calendar, int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
+            BusinessMixin(BusinessMixinParams , int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
+        protected:
+            np::BusinessDayCalendarPtr m_calendar{nullptr};
+            std::optional<TimeDelta> m_offset;
+    };
+
+    class BusinessDay : public OffsetHandler {
+        public:
+            BusinessDay(int64_t n, std::optional<TimeDelta> timedelta=std::nullopt);
+
+            int64_t diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const override;
+
+            arrow::TimestampScalar add(const arrow::TimestampScalar &other) const override;
+
+            bool is_on_offset(const arrow::TimestampScalar &other) const override;
+
+            bool is_fixed() const override {
+                return false;
+            }
+
+            std::string code() const override { return "B"; }
+
+            std::string name() const override { return "BusinessDay"; }
+
+            std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override {
+                return std::make_shared<BusinessDay>(n, m_offset);
+            }
+
+            epoch_core::EpochOffsetType type() const override {
+                return epoch_core::EpochOffsetType::BusinessDay;
+            }
+
+            bool is_end() const override {
+                return false;
+            }
+
+            private:
+                std::optional<TimeDelta> m_offset;
+
+                int64_t adjust_ndays(int8_t wday, int64_t weeks) const;
+    };
+
+    class CustomBusinessDay : public BusinessMixin {
+        public:
+            CustomBusinessDay(BusinessMixinParams, int64_t n=1, std::optional<TimeDelta> timedelta=std::nullopt);
+            CustomBusinessDay(np::BusinessDayCalendarPtr  calendar, int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
+
+            int64_t diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const override;
+
+            arrow::TimestampScalar add(const arrow::TimestampScalar &other) const override;
+
+            bool is_on_offset(const arrow::TimestampScalar &other) const override;
+
+            bool is_fixed() const override {
+                return false;
+            }
+
+            std::string code() const override { return "C"; }
+
+            std::string name() const override { return "CustomBusinessDay"; }
+
+            std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override {
+                return std::make_shared<CustomBusinessDay>(m_calendar, n, m_offset);
+            }
+
+            epoch_core::EpochOffsetType type() const override {
+                return epoch_core::EpochOffsetType::CustomBusinessDay;
+            }
+
+            bool is_end() const override {
+                return false;
+            }
+
+            auto holidays() const {
+                return m_calendar->holidays();
+            }
     };
 
     using DateOffsetHandlerPtr  = std::shared_ptr<IDateOffsetHandler>;
     using DateOffsetHandlerPtrs = std::vector<DateOffsetHandlerPtr>;
-} // namespace epochframe
+} // namespace epoch_frame

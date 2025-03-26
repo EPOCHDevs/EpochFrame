@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     using MonotonicIndexer = std::map<Scalar, int64_t>;
     using NonMonotonicIndexer = std::unordered_map<Scalar, int64_t, ScalarHash>;
 }

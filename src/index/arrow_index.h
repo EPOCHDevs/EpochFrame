@@ -1,6 +1,6 @@
 #pragma once
 
-#include "index.h"
+#include "epoch_frame/index.h"
 #include "common/arrow_compute_utils.h"  // your arrow_utils::... wrappers
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
@@ -11,9 +11,9 @@
 #include "factory/array_factory.h"
 #include "common/indexer.h"
 #include "methods/temporal.h"
-#include "epochframe/array.h"
+#include "epoch_frame/array.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
 
     /**
@@ -25,12 +25,11 @@ namespace epochframe {
     template<bool IsMonotonic>
     class ArrowIndex : public IIndex {
     public:
-    using IndexerType = std::conditional_t<IsMonotonic, MonotonicIndexer, NonMonotonicIndexer>;
         //--------------------------------------------------------------------------
         // Constructor
-        explicit ArrowIndex(arrow::ArrayPtr array, std::string name = "", std::optional<MonotonicDirection> monotonic_direction = std::nullopt);
+        explicit ArrowIndex(arrow::ArrayPtr array, std::string name = "");
 
-        explicit ArrowIndex(arrow::ChunkedArrayPtr const &array, std::string name = "", std::optional<MonotonicDirection> monotonic_direction = std::nullopt);
+        explicit ArrowIndex(arrow::ChunkedArrayPtr const &array, std::string name = "");
 
         virtual ~ArrowIndex() = default;
 
@@ -40,6 +39,8 @@ namespace epochframe {
         [[nodiscard]] Array array() const final {
             return Array(m_array);
         }
+
+        std::string repr() const override;
 
         [[nodiscard]] std::shared_ptr<arrow::DataType> dtype() const final {
             return m_array->type();
@@ -111,20 +112,23 @@ namespace epochframe {
             return where(!isin(labels), arrow::compute::FilterOptions::NullSelectionBehavior::DROP);
         }
 
-        IndexPtr delete_(IndexType loc) const final;
+        IndexPtr delete_(int64_t loc) const final;
 
-        IndexPtr insert(IndexType loc, Scalar const &value) const final;
+        IndexPtr insert(int64_t loc, Scalar const &value) const final;
 
         //--------------------------------------------------------------------------
         // Searching / Slicing
 
         IndexPtr iloc(UnResolvedIntegerSliceBound const&) const final;
 
-        Scalar at(IndexType loc) const final{
-            return Scalar(AssertResultIsOk(m_array->GetScalar(loc)));
+        Scalar at(int64_t loc) const final{
+            return m_array[loc];
         }
 
+        bool contains(Scalar const &label) const final;
+
         IndexType get_loc(Scalar const &label) const final;
+        std::vector<int64_t> get_loc(IndexPtr const & other) const final;
 
         ResolvedIntegerSliceBound
         slice_locs(Scalar const &start, Scalar const &end = {}) const final;
@@ -175,12 +179,12 @@ namespace epochframe {
             return m_array.is_in(labels);
         }
 
-        IndexerType indexer() const {
+        ScalarMapping<int64_t> indexer() const {
             return m_indexer;
         }
 
         std::vector<Scalar> index_list() const {
-            return m_indexer | std::views::keys | epochlab::ranges::to_vector_v;
+            return m_index_list;
         }
 
         constexpr bool is_monotonic() const {
@@ -203,15 +207,21 @@ namespace epochframe {
         }
 
     private:
-        const Array m_array;
-        const std::string m_name;
-        IndexerType m_indexer;
 
         int64_t get_lower_bound_index(Scalar const &value) const;
+
     protected:
+        const Array m_array;
+        const std::string m_name;
+        ScalarMapping<int64_t> m_indexer;
+        std::vector<Scalar> m_index_list;
         MonotonicDirection m_monotonic_direction;
+
+        void validate_monotonic_nature(std::optional<MonotonicDirection> const& expected);
+
+        void validate_uniqueness() const;
     };
 
     extern template class ArrowIndex<true>;
     extern template class ArrowIndex<false>;
-} // namespace epochframe
+} // namespace epoch_frame

@@ -8,8 +8,8 @@
 #include "factory/array_factory.h"
 
 
-using namespace epochframe::factory::array;
-using namespace epochframe::arrow_utils;
+using namespace epoch_frame::factory::array;
+using namespace epoch_frame::arrow_utils;
 
 TEST_CASE("arrow_utils::call_unary_compute - valid kernel (sum on double array)", "[arrow][compute]") {
     auto arr = make_array<double>(std::vector<double>{1., 2., 3., 4., std::numeric_limits<double>::quiet_NaN()});

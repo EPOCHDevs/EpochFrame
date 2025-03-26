@@ -9,7 +9,7 @@
 #include "common/table_or_array.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     DataFrame make_dataframe(arrow::TablePtr const &data) {
         return DataFrame(data);
     }

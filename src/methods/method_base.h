@@ -4,12 +4,12 @@
 
 #pragma once
 #include "common/table_or_array.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include <arrow/compute/api.h>
 #include <utility>
 
 
-namespace epochframe {
+namespace epoch_frame {
     class MethodBase {
 
     public:

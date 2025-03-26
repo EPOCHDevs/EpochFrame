@@ -5,9 +5,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/scalar.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include "factory/series_factory.h"
@@ -17,11 +17,11 @@
 #include <vector>
 #include <string>
 #include <cmath>
-#include <epochframe/common.h>
+#include <epoch_frame/common.h>
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 // Helper for checking if two scalars are equal
 bool scalars_equal(const Scalar& a, const Scalar& b) {
@@ -43,8 +43,8 @@ TEST_CASE("Aggregation Functions - Basic Tests", "[agg][basic]") {
     Series s2 = make_series<double>(idx, {10.0, 20.0, 30.0, 40.0, 50.0}, "B");
     Series s3 = make_series<double>(idx, {5.0, 30.0, 30.0, 0.0, 25.0}, "C");
 
-    DataFrame df = epochframe::concat({.frames = {s1, s2}, .axis = AxisType::Column});
-    DataFrame df_full = epochframe::concat({.frames = {df, s3}, .axis = AxisType::Column});
+    DataFrame df = epoch_frame::concat({.frames = {s1, s2}, .axis = AxisType::Column});
+    DataFrame df_full = epoch_frame::concat({.frames = {df, s3}, .axis = AxisType::Column});
 
     // Create DataFrame with nulls
     auto null_val = Scalar(arrow::MakeNullScalar(arrow::float64()));

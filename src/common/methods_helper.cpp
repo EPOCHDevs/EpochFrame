@@ -16,15 +16,17 @@
 #include "factory/index_factory.h"
 #include "index/arrow_index.h"
 #include <unordered_set>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
-#include "epochframe/common.h"
-#include "epochframe/frame_or_series.h"
+#include <index/datetime_index.h>
+
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
+#include "epoch_frame/common.h"
+#include "epoch_frame/frame_or_series.h"
 
 namespace ac = arrow::acero;
 namespace cp = arrow::compute;
 
-namespace epochframe {
+namespace epoch_frame {
     arrow::TablePtr add_column(const arrow::TablePtr &table, const std::string &name,
                                const arrow::ChunkedArrayPtr &array) {
         auto result = table->AddColumn(table->num_columns(), arrow::field(name, array->type()), array);
@@ -337,10 +339,23 @@ namespace epochframe {
                     merged
             };
         }
+
         auto indexField = merged->schema()->GetFieldIndex(indexName);
         AssertFromStream(indexField != -1, "Failed to find index");
-
         auto index = merged->column(indexField);
+
+        if (index->type()->id() == arrow::Type::TIMESTAMP) {
+            const auto sorted_index = AssertResultIsOk(SortIndices(merged, arrow::SortOptions{
+                {
+                    arrow::compute::SortKey{indexName}
+                }
+            }));
+            merged = AssertTableResultIsOk(arrow::compute::Take(merged, sorted_index));
+            auto dt_index = factory::array::make_contiguous_array(merged->column(indexField));
+            return DataFrame(std::make_shared<DateTimeIndex>(dt_index, ""),
+                        AssertResultIsOk(merged->RemoveColumn(indexField)));
+        }
+
         return DataFrame(factory::index::make_index(index, std::nullopt, ""),
                          AssertResultIsOk(merged->RemoveColumn(indexField)));
     }

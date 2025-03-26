@@ -4,18 +4,18 @@
 
 #include "select.h"
 #include "arrow/api.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "common/methods_helper.h"
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 
-namespace epochframe {
+namespace epoch_frame {
 
     TableComponent
     Selections::filter(arrow::ChunkedArrayPtr const &_filter, arrow::compute::FilterOptions const & option) const {
         return TableComponent{m_data.first->filter(Array(AssertContiguousArrayResultIsOk(_filter))),
             arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{_filter}},
-            std::format("{}filter", m_data.second.is_table() ? "" : "array_"), &option)};
+                "filter", &option)};
     }
 
     TableComponent
@@ -29,11 +29,20 @@ namespace epochframe {
         arrow::compute::TakeOptions const &option) const {
         return TableComponent{m_data.first->take(Array(integer_indexes)),
         arrow_utils::call_compute_table_or_array(m_data.second, std::vector<arrow::Datum>{arrow::Datum{integer_indexes}},
-        std::format("{}take", m_data.second.is_table() ? "" : "array_"), &option)};
+        "take", &option)};
     }
 
-    TableComponent Selections::drop_null(epochframe::DropMethod how,
-                                        epochframe::AxisType axis,
+    TableComponent
+    Selections::take(IndexPtr const &new_index,
+    arrow::compute::TakeOptions const &option) const {
+        auto locations = m_data.first->get_loc(new_index);
+        return TableComponent{new_index,
+        arrow_utils::call_compute_table_or_array(m_data.second, std::vector{arrow::Datum{factory::array::make_contiguous_array(locations)}},
+        "take", &option)};
+    }
+
+    TableComponent Selections::drop_null(epoch_frame::DropMethod how,
+                                        epoch_frame::AxisType axis,
                                         const std::vector<std::string> &subset,
                                         bool ignore_index) const {
        AssertFromStream(how == DropMethod::Any, "drop_null only support any");
@@ -94,9 +103,9 @@ namespace epochframe {
                     else if constexpr (std::is_same_v<T, Scalar>) {
                         return arrow::Datum(_variant.value());
                     }
-                    else if constexpr (std::is_same_v<T, arrow::ArrayPtr>) {
-                        AssertFromStream(m_data.first->size() == _variant->length(), "ArrayLengthMismatch: validation failed.");
-                        return arrow::Datum(_variant);
+                    else if constexpr (std::is_same_v<T, Array>) {
+                        AssertFromStream(m_data.first->size() == _variant.length(), "ArrayLengthMismatch: validation failed.");
+                        return arrow::Datum(_variant.value());
                     }
                     else if constexpr (std::is_same_v<T, arrow::TablePtr>) {
                         AssertFromStream(m_data.second.is_table(), "TableExpected: validation failed.");
@@ -113,7 +122,7 @@ namespace epochframe {
                 arrow::Datum condition = std::visit(variant_visitor, cond);
 
                 if (m_data.second.is_table()) {
-                    return TableOrArray{epochframe::arrow_utils::apply_function_to_table(m_data.second.table(), [&](const arrow::Datum &column, std::string const& column_name) {
+                    return TableOrArray{epoch_frame::arrow_utils::apply_function_to_table(m_data.second.table(), [&](const arrow::Datum &column, std::string const& column_name) {
                            arrow::Datum _condition, _other;
                            if (condition.kind() == arrow::Datum::TABLE) {
                                _condition = get_array(*condition.table(), column_name, *arrow::MakeScalar(false));

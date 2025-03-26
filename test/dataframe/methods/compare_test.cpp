@@ -4,16 +4,16 @@
 // test_DataFrame_comparison_and_logical.cpp
 
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include <cmath>    // possibly for std::isnan, etc.
-#include "epochframe/series.h"
+#include "epoch_frame/series.h"
 #include "factory/series_factory.h"
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 TEST_CASE("DataFrame comparison and logical ops", "[DataFrame][Comparison][Logical]")
 {
@@ -402,7 +402,7 @@ TEST_CASE("DataFrame isin method", "[DataFrame][Isin]") {
     };
     DataFrame df = make_dataframe<int64_t>(idx, data, {"A", "B", "C"});
     // Allowed values for column A: {2, 4}
-    auto allowed = make_contiguous_array(std::vector<int64_t>{2, 4});
+    Array allowed{make_contiguous_array(std::vector<int64_t>{2, 4})};
     DataFrame bool_df = df.isin(allowed);
     // Expected: In column A, row0: 1 -> false; row1: 2 -> true; row2: 3 -> false; row3: 4 -> true; row4: 5 -> false
     REQUIRE(bool_df.iloc(0, "A") == Scalar(false));

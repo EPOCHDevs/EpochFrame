@@ -3,14 +3,14 @@
 //
 
 #pragma once
-#include "epochframe/aliases.h"
-#include "epochframe/array.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/aliases.h"
+#include "epoch_frame/array.h"
+#include "epoch_frame/scalar.h"
 #include <arrow/compute/api.h>
 #include <common/asserts.h>
 #include "common/arrow_compute_utils.h"
 
-namespace epochframe {
+namespace epoch_frame {
     struct IsoCalendarArray {
         Array year, week, day_of_week;
     };
@@ -224,7 +224,7 @@ namespace epochframe {
 
         // timezone handling
         Type assume_timezone(arrow::compute::AssumeTimezoneOptions const& options) const {
-            return to_type(arrow_utils::call_compute("assume_timezone", {m_data.value()}, &options));
+            return to_type(arrow_utils::call_compute( {m_data.value()}, "assume_timezone", &options));
         }
 
         std::string tz() const {
@@ -232,7 +232,7 @@ namespace epochframe {
         }
 
         [[nodiscard]] Type local_timestamp() const {
-            return to_type(arrow_utils::call_compute("local_timestamp", {m_data.value()}));
+            return to_type(arrow_utils::call_compute({m_data.value()}, "local_timestamp"));
         }
 
         Type to_type(arrow::Result<arrow::Datum> const& other) const {
@@ -274,6 +274,12 @@ namespace epochframe {
          * @throws std::invalid_argument If the timestamp doesn't have a timezone
          */
         Type tz_convert(const std::string& timezone) const;
+
+        Type replace_tz(const std::string& timezone) const;
+
+        Type normalize() const {
+            return to_type(arrow::compute::FloorTemporal(m_data.value(), arrow::compute::RoundTemporalOptions{}));
+        }
 
     private:
         Type m_data;

@@ -3,16 +3,16 @@
 #include <iostream>
 
 #include "common/python_utils.h"
-#include "index/index.h"
+#include "epoch_frame/index.h"
 #include "index/datetime_index.h"
-#include "epochframe/common.h"
-#include "epochframe/dataframe.h"
+#include "epoch_frame/common.h"
+#include "epoch_frame/dataframe.h"
 #include <tbb/parallel_for.h>
 #include "factory/dataframe_factory.h"
 #include "factory/table_factory.h"
 #include "common/user_defined_compute_functions.h"
 
-namespace epochframe
+namespace epoch_frame
 {
 
     namespace window
@@ -22,7 +22,7 @@ namespace epochframe
               m_min_periods(options.min_periods.value_or(m_window_size)), m_center(options.center),
               m_closed(options.closed), m_step(options.step)
         {
-            AssertFromStream(m_step == 1, "epochframe only supports step == 1");
+            AssertFromStream(m_step == 1, "epoch_frame only supports step == 1");
         }
 
         WindowBounds RollingWindow::get_window_bounds(uint64_t n) const
@@ -40,14 +40,14 @@ namespace epochframe
             {
                 auto start = end - m_window_size;
                 start = std::clamp<int64_t>(
-                        (m_closed == EpochFrameRollingWindowClosedType::Both ||
-                         m_closed == EpochFrameRollingWindowClosedType::Left)
+                        (m_closed == epoch_core::RollingWindowClosedType::Both ||
+                         m_closed == epoch_core::RollingWindowClosedType::Left)
                             ? start - 1
                             : start,
                         0, num_values);
                 end = std::clamp<int64_t>(
-                        (m_closed == EpochFrameRollingWindowClosedType::Neither ||
-                         m_closed == EpochFrameRollingWindowClosedType::Left)
+                        (m_closed == epoch_core::RollingWindowClosedType::Neither ||
+                         m_closed == epoch_core::RollingWindowClosedType::Left)
                             ? end - 1
                             : end,
                         0, num_values);
@@ -114,7 +114,7 @@ namespace epochframe
                 auto window = m_data.iloc({bound.start, bound.end});
                 auto result = window.agg(AxisType::Row, agg_name, skip_null, options );
                 if constexpr (is_dataframe) {
-                    auto s = result.transpose();
+                    auto s = result.transpose(nullptr);
                     results[i] = s.table();
                 } else {
                     results[i] = result.value();
@@ -398,4 +398,4 @@ namespace epochframe
 
     template class EWMWindowOperations<true>;
     template class EWMWindowOperations<false>;
-} // namespace epochframe
+} // namespace epoch_frame

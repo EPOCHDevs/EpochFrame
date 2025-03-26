@@ -14,16 +14,16 @@
 #include "factory/index_factory.h"
 #include "index/datetime_index.h"
 
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 #include <utility>
 #include <common/methods_helper.h>
-#include <epochframe/common.h>
+#include <epoch_frame/common.h>
 #include <factory/array_factory.h>
 #include <index/arrow_index.h>
 #include <vector_functions/arrow_vector_functions.h>
 #include <regex>
 
-namespace epochframe {
+namespace epoch_frame {
     namespace cp = arrow::compute;
     namespace ac = arrow::acero;
 
@@ -317,7 +317,7 @@ namespace epochframe {
         arrow::ScalarVector values(groups.size());
 
         std::transform(groups.begin(), groups.end(), values.begin(), index.begin(), [&](auto const& group, arrow::ScalarPtr& value) {
-            const DataFrame df = m_data.iloc(group.second);
+            const DataFrame df = m_data.iloc(Array{group.second});
             value = fn(df).value();
             return group.first;
         });
@@ -328,11 +328,11 @@ namespace epochframe {
     }
 
     Series ApplyOperations::apply(std::function<Series(DataFrame const &)> const& fn) const {
-        const auto groups =  m_grouper->groups();
+        const Groups groups =  m_grouper->groups();
         std::vector<FrameOrSeries> values(groups.size());
 
         std::ranges::transform(groups, values.begin(), [&](auto const& group) {
-            const DataFrame df = m_data.iloc(group.second);
+            const DataFrame df = m_data.iloc(Array(group.second));
             const Series valueSeries = fn(df);
             return Series(make_apply_index(valueSeries.index(), group.first.value()), valueSeries.array());
         });
@@ -348,7 +348,7 @@ namespace epochframe {
         const auto groups =  m_grouper->groups();
         std::vector<FrameOrSeries> values(groups.size());
         std::transform(groups.begin(), groups.end(), values.begin(), [&](auto const& group) {
-            const DataFrame df = m_data.iloc(group.second);
+            const DataFrame df = m_data.iloc(Array(group.second));
             const auto valueDataFrame = fn(df);
             return DataFrame(make_apply_index(valueDataFrame.index(), group.first.value()), valueDataFrame.table());
         });

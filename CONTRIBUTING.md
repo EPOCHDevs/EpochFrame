@@ -38,11 +38,11 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ```bash
 # Clone your fork
-git clone https://github.com/yourusername/epochframe.git
-cd epochframe
+git clone https://github.com/yourusername/epoch_frame.git
+cd epoch_frame
 
 # Add the upstream remote
-git remote add upstream https://github.com/originalowner/epochframe.git
+git remote add upstream https://github.com/originalowner/epoch_frame.git
 
 # Create a branch for your feature
 git checkout -b feature/your-feature-name
@@ -122,4 +122,4 @@ By contributing, you agree that your contributions will be licensed under the pr
 
 ## Questions?
 
-If you have any questions, please open an issue or reach out to the maintainers. We appreciate your contributions! 
+If you have any questions, please open an issue or reach out to the maintainers. We appreciate your contributions!

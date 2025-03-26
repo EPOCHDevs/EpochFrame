@@ -4,12 +4,12 @@
 
 #pragma once
 #include "method_base.h"
-#include "epochframe/enums.h"
+#include "epoch_frame/enums.h"
 #include "common/arrow_compute_utils.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include "common/table_or_array.h"
 
-namespace epochframe {
+namespace epoch_frame {
     class Selections : public MethodBase {
     public:
         explicit Selections(TableComponent const & table): MethodBase(table) {}
@@ -35,6 +35,9 @@ namespace epochframe {
         itake(arrow::ArrayPtr const &indices,
             arrow::compute::TakeOptions const &option) const;
 
+        TableComponent
+        take(IndexPtr const &new_index,
+            arrow::compute::TakeOptions const &option) const;
         // containment
         TableOrArray index_in(arrow::ArrayPtr const &values) const {
             return arrow_utils::call_compute_index_in(m_data.second, values);

@@ -1,31 +1,19 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.19)
 
 # Add benchmark executable
-add_executable(epochframe_benchmark
-    benchmark_main.cpp
-    benchmark_dataframe.cpp
-    benchmark_series.cpp
-    benchmark_string_ops.cpp
+add_executable(simple_benchmark
+    simple_benchmark.cpp
 )
 
-# Link libraries
-target_link_libraries(epochframe_benchmark
+# Link libraries for simple benchmark
+target_link_libraries(simple_benchmark
     PRIVATE
-    epochframe
-    Catch2::Catch2WithMain
+    epoch_frame
 )
 
-# Add include directories
-target_include_directories(epochframe_benchmark
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# Set C++ standard
-set_target_properties(epochframe_benchmark PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-)
-
-# Register benchmark as a test so it can be run with CTest
-add_test(NAME epochframe_benchmark COMMAND epochframe_benchmark) 
+# Add a custom target to run the simple benchmark
+add_custom_target(run_simple_benchmark
+    COMMAND $<TARGET_FILE:simple_benchmark>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Running simple benchmark"
+) 

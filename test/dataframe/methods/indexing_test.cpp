@@ -3,18 +3,18 @@
 //
 // test_DataFrame.cpp
 #include <catch2/catch_test_macros.hpp>
-#include "epochframe/dataframe.h"
-#include "epochframe/series.h"
+#include "epoch_frame/dataframe.h"
+#include "epoch_frame/series.h"
 #include "factory/index_factory.h"
 #include "factory/dataframe_factory.h"
 #include "factory/series_factory.h"
 #include <cmath>    // possibly for std::isnan, etc.
-#include "epochframe/frame_or_series.h"
+#include "epoch_frame/frame_or_series.h"
 
 
-using namespace epochframe;
-using namespace epochframe::factory::index;
-using namespace epochframe::factory::array;
+using namespace epoch_frame;
+using namespace epoch_frame::factory::index;
+using namespace epoch_frame::factory::array;
 
 //--------------------------------------------------------------------------
 // Tests for DataFrame indexing operations
@@ -256,7 +256,7 @@ TEST_CASE("Indexing Test") {
         struct TestCase{
             std::string title;
             DataFrame frame;
-            std::variant<std::string, StringVector, StringVectorCallable, arrow::ArrayPtr > input;
+            std::variant<std::string, StringVector, StringVectorCallable, Array > input;
             std::variant<DataFrame, Series, std::monostate> output;
         };
 
@@ -327,7 +327,7 @@ TEST_CASE("Indexing Test") {
         params.push_back({
             .title = "Filter columns using Arrow array",
             .frame = default_frame,
-            .input = make_contiguous_array(StringVector{"A", "C"}),
+            .input = Array{make_contiguous_array(StringVector{"A", "C"})},
             .output = make_dataframe(
                 default_frame.index(),
                 std::vector{
@@ -383,7 +383,7 @@ TEST_CASE("Indexing Test") {
 
         SECTION("loc - Selecting Multiple Rows") {
             SECTION("Selecting multiple rows [1, 3, 4]") {
-                auto input = make_contiguous_array(std::vector{1, 3, 4});
+                auto input = Array{make_contiguous_array(std::vector{1, 3, 4})};
                 DataFrame expected = make_dataframe(
                     make_range({1, 3, 4}, MonotonicDirection::Increasing),
                     std::vector{
@@ -399,7 +399,7 @@ TEST_CASE("Indexing Test") {
             }
 
             SECTION("Selecting a non-existent row should return an empty DataFrame") {
-                auto input = make_contiguous_array(std::vector{10});
+                auto input = Array{make_contiguous_array(std::vector{10})};
                 REQUIRE_THROWS(default_frame.loc(input));
             }
         }
@@ -697,7 +697,7 @@ TEST_CASE("Indexing Test") {
 
         SECTION("where - Condition as Arrow array, Other as Scalar") {
             // Create a boolean Arrow array to be broadcast as the row mask.
-            auto bool_arrow = make_contiguous_array(std::vector<bool>{true, false, true, false, true});
+            auto bool_arrow = Array{ make_contiguous_array(std::vector<bool>{true, false, true, false, true})};
             DataFrame result = default_frame.where(bool_arrow, 123_scalar);
             // For each row: if condition is true then keep row, else fill with 123.
             auto expected = make_dataframe(

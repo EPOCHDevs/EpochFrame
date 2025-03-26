@@ -3,19 +3,19 @@
 //
 
 #pragma once
-#include <epochframe/enums.h>
-#include "epochframe/aliases.h"
+#include <epoch_frame/enums.h>
+#include "epoch_frame/aliases.h"
 #include <string>
 #include <unordered_set>
 #include <arrow/compute/api.h>
 #include <common/asserts.h>
-#include <epochframe/scalar.h>
+#include <epoch_frame/scalar.h>
 #include <memory>
 #include <functional>
 #include "time_grouper.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     using Groups = std::vector<std::pair<Scalar, std::shared_ptr<arrow::UInt64Array>>>;
 
     // Forward declarations

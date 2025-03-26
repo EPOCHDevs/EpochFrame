@@ -1,18 +1,18 @@
 #pragma once
 #include "date_time/time_delta.h"
-#include "epochframe/aliases.h"
+#include "epoch_frame/aliases.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <epoch_core/enum_wrapper.h>
 #include <optional>
 #include <vector>
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 
 
-CREATE_ENUM(EpochFrameEWMWindowType, Alpha, HalfLife, Span, CenterOfMass);
-CREATE_ENUM(EpochFrameRollingWindowClosedType, Left, Right, Both, Neither);
+CREATE_ENUM(EWMWindowType, Alpha, HalfLife, Span, CenterOfMass);
+CREATE_ENUM(RollingWindowClosedType, Left, Right, Both, Neither);
 
-namespace epochframe
+namespace epoch_frame
 {
 
     namespace window
@@ -36,7 +36,7 @@ namespace epochframe
             int64_t                           window_size;
             std::optional<int64_t>            min_periods{};
             bool                              center{false};
-            EpochFrameRollingWindowClosedType closed{EpochFrameRollingWindowClosedType::Null};
+            epoch_core::RollingWindowClosedType closed{epoch_core::RollingWindowClosedType::Null};
             int64_t                           step{1};
         };
 
@@ -53,7 +53,7 @@ namespace epochframe
             int64_t                           m_window_size;
             int64_t                           m_min_periods{};
             bool                              m_center{false};
-            EpochFrameRollingWindowClosedType m_closed{EpochFrameRollingWindowClosedType::Null};
+            epoch_core::RollingWindowClosedType m_closed{epoch_core::RollingWindowClosedType::Null};
             int64_t                           m_step{1};
         };
 
@@ -222,4 +222,4 @@ namespace epochframe
 
     extern template class EWMWindowOperations<true>;
     extern template class EWMWindowOperations<false>;
-} // namespace epochframe
+} // namespace epoch_frame

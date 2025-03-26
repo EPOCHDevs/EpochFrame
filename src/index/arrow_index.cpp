@@ -4,29 +4,70 @@
 
 #include <fmt/format.h>
 #include "arrow_index.h"
+
+#include <epoch_core/common_utils.h>
+
 #include "vector_functions/arrow_vector_functions.h"
-#include "epochframe/scalar.h"
+#include "epoch_frame/scalar.h"
 #include "factory/array_factory.h"
 #include "visitors/search_sorted.h"
 #include "common/methods_helper.h"
-#include "epochframe/dataframe.h"
+#include "epoch_frame/dataframe.h"
 
 
-namespace epochframe {
+namespace epoch_frame {
     template<bool IsMonotonic>
-    ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ArrayPtr array, std::string name, std::optional<MonotonicDirection> monotonic_direction) :
-            m_name(std::move(name)), m_array(Array(std::move(array))) {
-        if (m_array.length() == 0) {
-            return;
+    std::string ArrowIndex<IsMonotonic>::repr() const {
+        std::stringstream ss;
+        ss << "ArrowIndex(name=" << name() << ", type=" << dtype()->ToString() << ", length=" << m_array->length()
+        << ", monotonic="<< format_monotonic_direction(m_monotonic_direction) << ")\n";
+        ss << m_array->ToString();
+        return ss.str();
+    }
+
+    template<bool IsMonotonic>
+    void ArrowIndex<IsMonotonic>::validate_monotonic_nature(std::optional<MonotonicDirection> const& expected) {
+        if (m_indexer.empty()) {
+            m_index_list.reserve(m_array.length());
+            for (int i = 0; i < m_array.length(); ++i) {
+                Scalar s = m_array[i];
+                m_indexer.emplace(s, i);
+                m_index_list.push_back(std::move(s));
+            }
         }
-        AssertFromStream(m_array.null_count() == 0, "ArrowIndex constructed with null values");
 
         if constexpr (IsMonotonic) {
-            const auto &[counts, values] = epochframe::value_counts(m_array.value());
 
-            auto all_unique = arrow_utils::call_unary_compute_scalar_as<arrow::BooleanScalar>(
-                    arrow_utils::call_compute({counts, arrow::MakeScalar(1)}, "equal"), "all");
-            if (!all_unique.value) {
+            if (m_array.length() == 0) {
+                m_monotonic_direction = expected.value_or(MonotonicDirection::Increasing);
+                return;
+            }
+
+            // infer monotonic direction from the data
+            if (std::ranges::is_sorted(m_index_list, std::less{})) {
+                m_monotonic_direction = MonotonicDirection::Increasing;
+            } else if (std::ranges::is_sorted(m_index_list, std::greater{})) {
+                m_monotonic_direction = MonotonicDirection::Decreasing;
+            } else {
+                m_monotonic_direction = MonotonicDirection::NotMonotonic;
+            }
+
+            if (expected) {
+                AssertFromFormat(m_monotonic_direction == *expected, "ArrowIndex constructed with mismatched monotonic direction. expected: {}, got: {}", format_monotonic_direction(*expected), format_monotonic_direction(m_monotonic_direction));
+            }
+        }
+    }
+
+    template<bool IsMonotonic>
+    void ArrowIndex<IsMonotonic>::validate_uniqueness() const {
+        if constexpr (IsMonotonic) {
+            if (m_array.is_equal(m_array.unique())) {
+                return;
+            }
+
+            const auto &[counts, values] = epoch_frame::value_counts(m_array.value());
+            auto all_unique = values->Equals(m_array.value());
+            if (!all_unique) {
                 std::stringstream non_unique_values;
                 non_unique_values << "ArrowIndex constructed with non-unique values: ";
                 for (int i = 0; i < counts->length(); ++i) {
@@ -39,42 +80,27 @@ namespace epochframe {
                 throw std::runtime_error(non_unique_values.str());
             }
         }
-        else {
+    }
+
+    template<bool IsMonotonic>
+    ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ArrayPtr array, std::string name) :
+            m_name(std::move(name)), m_array(Array(std::move(array))) {
+        if (m_array.length() == 0) {
+            return;
+        }
+        AssertFromStream(m_array.null_count() == 0, "ArrowIndex constructed with null values");
+
+        if constexpr (!IsMonotonic) {
             m_monotonic_direction = MonotonicDirection::NotMonotonic;
         }
-
-        for (int i = 0; i < m_array->length(); ++i) {
-            Scalar s(m_array->GetScalar(i).MoveValueUnsafe());
-            m_indexer.emplace(std::move(s), i);
+        else {
+            validate_uniqueness();
         }
-
-        if constexpr (IsMonotonic) {
-            if (monotonic_direction) {
-                m_monotonic_direction = *monotonic_direction;
-            }
-            else {
-                std::vector<Scalar> sort_values;
-                sort_values.reserve(m_array->length());
-                for (int i = 0; i < m_array->length(); ++i) {
-                    Scalar s(m_array->GetScalar(i).MoveValueUnsafe());
-                    sort_values.push_back(std::move(s));
-                }
-                // infer monotonic direction from the data
-                if (std::ranges::is_sorted(sort_values)) {
-                    m_monotonic_direction = MonotonicDirection::Increasing;
-                } else if (std::ranges::is_sorted(sort_values, std::greater{})) {
-                    m_monotonic_direction = MonotonicDirection::Decreasing;
-                } else {
-                    m_monotonic_direction = MonotonicDirection::NotMonotonic;
-                }
-            }
-        }
-
     }
 
 
     template<bool IsMonotonic>
-    ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ChunkedArrayPtr const &array, std::string name, std::optional<MonotonicDirection> monotonic_direction)
+    ArrowIndex<IsMonotonic>::ArrowIndex(arrow::ChunkedArrayPtr const &array, std::string name)
             : ArrowIndex([&]() {
         AssertFromFormat(
                 array != nullptr,
@@ -86,7 +112,7 @@ namespace epochframe {
             return chunks[0];
         }
         return AssertContiguousArrayResultIsOk(arrow::MakeEmptyArray(array->type()));
-            }(), name, monotonic_direction) {}
+            }(), name) {}
 
 /** nbytes() - sum buffer sizes */
     template<bool IsMonotonic>
@@ -115,47 +141,15 @@ namespace epochframe {
 /** delete_(loc) */
     template<bool IsMonotonic>
     IndexPtr
-    ArrowIndex<IsMonotonic>::delete_(IndexType loc) const {
-        // Remove the element at 'loc'
-        // 0 <= loc < length
-        auto length = static_cast<int64_t>(m_array->length());
-        if (loc < 0) {
-            loc += length; // handle negative indexing
-        }
-        if (loc < 0 || loc >= length) {
-            throw std::runtime_error(
-                    std::format("delete_() out-of-bounds loc={}", loc)
-            );
-        }
-        // slice 0..loc, slice loc+1..end => arrow::Concatenate
-        auto slice1 = m_array->Slice(0, loc);
-        auto slice2 = m_array->Slice(loc + 1, length - (loc + 1));
-
-        return Make(factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, slice2}))));
+    ArrowIndex<IsMonotonic>::delete_(int64_t loc) const {
+        return Make(m_array.delete_(loc).value());
     }
 
 /** insert(loc, value) */
     template<bool IsMonotonic>
     IndexPtr
-    ArrowIndex<IsMonotonic>::insert(IndexType loc, Scalar const &val) const {
-        auto length = static_cast<int64_t>(m_array->length());
-        if (loc < 0) {
-            loc += length;
-        }
-        if (loc < 0 || loc > length) {
-            throw std::runtime_error(
-                    std::format("insert() out-of-bounds loc={}", loc)
-            );
-        }
-        // Build a 1-element array from 'val'
-        auto single_val = AssertContiguousArrayResultIsOk(arrow::MakeArrayFromScalar(*val.value(), 1));
-
-        // slice(0..loc), single_val, slice(loc..end)
-        auto slice1 = m_array->Slice(0, loc);
-        auto slice2 = m_array->Slice(loc, length - loc);
-
-        return Make(
-                factory::array::make_contiguous_array(AssertResultIsOk(arrow::ChunkedArray::Make({slice1, single_val, slice2}))));
+    ArrowIndex<IsMonotonic>::insert(int64_t loc, Scalar const &val) const {
+        return Make(m_array.insert(loc, val).value());
     }
 
     template<bool IsMonotonic>
@@ -169,29 +163,43 @@ namespace epochframe {
         if (label.is_null()) {
             throw std::runtime_error("get_loc: label is null");
         }
-        try {
-            return m_indexer.at(label);
+        auto casted = label.cast(m_array->type());
+        if (auto it = m_indexer.find(casted); it != m_indexer.end()) {
+            return it->second;
         }
-        catch (std::out_of_range const &) {
-            throw std::runtime_error(std::format("get_loc: label {} not found", label.repr()));
-        }
+
+        SPDLOG_WARN("get_loc: label {} not found", label.repr());
+        return -1;
     }
 
-/** slice_locs(start, end) */
+    template<bool IsMonotonic>
+    std::vector<int64_t> ArrowIndex<IsMonotonic>::get_loc(IndexPtr const &other) const {
+        AssertFromStream(other, "Index is null");
+
+        std::vector<int64_t> newIndexArray;
+        newIndexArray.reserve(other->size());
+        for (auto const& scalar : other->index_list()) {
+            auto pos = get_loc(scalar);
+            AssertFromStream(pos != -1, "Index not found");
+            newIndexArray.push_back(pos);
+        }
+        return newIndexArray;
+    }
+
+    template<bool IsMonotonic>
+    bool ArrowIndex<IsMonotonic>::contains(Scalar const &label) const {
+        if (label.is_null()) {
+            return false;
+        }
+        return m_indexer.contains(label);
+    }
+
     template<bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::loc(Array const & labels) const {
-        std::vector<uint64_t> indices(labels.length());
-        for (size_t i = 0; i < indices.size(); i++) {
-            auto label = labels[i];
-            try {
-                indices[i] = m_indexer.at(label);
-            }catch (std::out_of_range const &) {
-                throw std::runtime_error(std::format("Label not found: {}", label.repr()));
-            }
-        }
-        return Make(factory::array::make_contiguous_array(indices));
+        return Make(m_array[labels].value());
     }
 
+    /** slice_locs(start, end) */
     template<bool IsMonotonic>
     ResolvedIntegerSliceBound
     ArrowIndex<IsMonotonic>::slice_locs(Scalar const &start, Scalar const &end) const {
@@ -199,30 +207,38 @@ namespace epochframe {
             return ResolvedIntegerSliceBound();
         }
         // We'll just do get_loc for each
-        uint64_t start_pos, end_pos;
-        try {
-            start_pos = start.is_valid() ? get_loc(start) : 0;
-        } catch (std::runtime_error const &) {
+        auto _start_pos = start.is_valid() ? get_loc(start) : 0L;
+        if (_start_pos == -1) {
             if constexpr (!IsMonotonic) {
-                throw;
+                throw std::runtime_error("slice_locs: start not found");
             }
-            start_pos = searchsorted(start, SearchSortedSide::Left);
-            if (start_pos == -1) {
-                start_pos = 0;
+            _start_pos = searchsorted(start, SearchSortedSide::Left);
+            if (_start_pos == -1) {
+                _start_pos = 0;
             }
         }
+        uint64_t start_pos = static_cast<uint64_t>(_start_pos);
 
-        try {
-            end_pos = start.is_valid() ? get_loc(end) + 1 : m_array->length();
-        } catch (std::runtime_error const &) {
-            if constexpr (!IsMonotonic) {
-                throw;
-            }
-            end_pos = searchsorted(end, SearchSortedSide::Right);
-            if (end_pos == -1) {
-                end_pos = m_array->length();
+        int64_t _end_pos{};
+        if (end.is_valid()) {
+            _end_pos = get_loc(end);
+            if (_end_pos != -1) {
+                ++_end_pos;
             }
         }
+        else {
+            _end_pos = m_array->length();
+        }
+        if (_end_pos == -1) {
+            if constexpr (!IsMonotonic) {
+                throw std::runtime_error("slice_locs: end not found");
+            }
+            _end_pos = searchsorted(end, SearchSortedSide::Right);
+            if (_end_pos == -1) {
+                _end_pos = m_array->length();
+            }
+        }
+        uint64_t end_pos = static_cast<uint64_t>(_end_pos);
 
         return {start_pos, end_pos, 1};
     }
@@ -245,38 +261,38 @@ namespace epochframe {
     IndexPtr ArrowIndex<IsMonotonic>::union_(IndexPtr const &other) const {
         std::vector<Scalar> union_array;
         std::ranges::set_union(index_list(), other->index_list(),
-                               std::inserter(union_array, union_array.end()));
+                               std::back_inserter(union_array));
         return Make(factory::array::make_contiguous_array(union_array, m_array->type()));
     }
 
 /** intersection => elements in both (like a set intersection) */
     template<bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::intersection(IndexPtr const &other) const {
-        std::vector<Scalar> union_array;
+        std::vector<Scalar> intersection_array;
         std::ranges::set_intersection(index_list(), other->index_list(),
-                                      std::inserter(union_array, union_array.end()));
+        std::back_inserter(intersection_array));
 
-        return Make(factory::array::make_contiguous_array(union_array, m_array->type()));
+        return Make(factory::array::make_contiguous_array(intersection_array, m_array->type()));
     }
 
 /** difference => elements in this but not in other */
     template<bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::difference(IndexPtr const &other) const {
-        std::vector<Scalar> union_array;
+        std::vector<Scalar> diff_array;
         std::ranges::set_difference(index_list(), other->index_list(),
-                                    std::inserter(union_array, union_array.end()));
+                                    std::back_inserter(diff_array));
 
-        return Make(factory::array::make_contiguous_array(union_array, m_array->type()));
+        return Make(factory::array::make_contiguous_array(diff_array, m_array->type()));
     }
 
 /** symmetric_difference => union_ - intersection */
     template<bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::symmetric_difference(IndexPtr const &other) const {
-        std::vector<Scalar> union_array;
+        std::vector<Scalar> sym_diff_array;
         std::ranges::set_symmetric_difference(index_list(), other->index_list(),
-                                              std::inserter(union_array, union_array.end()));
+                                              std::back_inserter(sym_diff_array));
 
-        return Make(factory::array::make_contiguous_array(union_array, m_array->type()));
+        return Make(factory::array::make_contiguous_array(sym_diff_array, m_array->type()));
     }
 
     template<bool IsMonotonic>
@@ -285,7 +301,7 @@ namespace epochframe {
         if constexpr (!IsMonotonic) {
             throw std::runtime_error("searchsorted: not implemented for non-monotonic index");
         }
-        // 1) Check that the scalar’s type matches the array’s type or is compatible
+        // 1) Check that the scalar's type matches the array's type or is compatible
         if (value.is_null()) {
             throw std::runtime_error("searchsorted: scalar is null");
         }
@@ -328,4 +344,4 @@ namespace epochframe {
 
     template class ArrowIndex<true>;
     template class ArrowIndex<false>;
-} // namespace epochframe
+} // namespace epoch_frame
