@@ -37,11 +37,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Find Catch2 for both tests and benchmarks
-find_package(Catch2 3 REQUIRED)
-find_package(trompeloeil 47 REQUIRED)
-
 if (BUILD_TEST)
+  # Find Catch2 for both tests and benchmarks
+  find_package(Catch2 3 REQUIRED)
+  find_package(trompeloeil 47 REQUIRED)
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
   enable_testing()
 endif()
