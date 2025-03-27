@@ -180,7 +180,7 @@ namespace epoch_frame
         comp_ids.reserve(index.size());
 
         // Build the grouping indices that correspond to each value in the index
-        for (int64_t i = 0; i < bins.size(); ++i)
+        for (size_t i = 0; i < bins.size(); ++i)
         {
             int64_t count = rep[i];
             for (int64_t j = 0; j < count; ++j) {

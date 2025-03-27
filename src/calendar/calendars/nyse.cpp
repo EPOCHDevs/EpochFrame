@@ -4,12 +4,14 @@
 #include "epoch_frame/series.h"
 #include "epoch_frame/factory/index_factory.h"
 
+
+#define us   USHolidays::Instance()
+#define nyse NYSEHolidays::Instance()
+
 namespace epoch_frame::calendar
 {
     struct NYSEOptions
     {
-        const USHolidays&   us   = USHolidays::Instance();
-        const NYSEHolidays& nyse = NYSEHolidays::Instance();
 
         const DateTime START_DATE     = DateTime{1885y, January, 1d};
         const Time     SATURDAY_CLOSE = Time{12h};

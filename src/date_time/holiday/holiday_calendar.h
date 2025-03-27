@@ -21,8 +21,8 @@ namespace epoch_frame::calendar{
 
     using CalendarRules = std::vector<HolidayData>;
     struct AbstractHolidayCalendarData {
-        CalendarRules rules;
-        std::string name;
+        CalendarRules rules{};
+        std::string name{};
     };
 
     /**

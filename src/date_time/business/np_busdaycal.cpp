@@ -302,7 +302,7 @@ namespace epoch_frame::np
         return result;
     }
 
-    bool apply_is_business_day(DateTime const& date, WeekMask const& weekmask, uint8_t busdays_in_weekmask, HolidayList const& holidays)
+    bool apply_is_business_day(DateTime const& date, WeekMask const& weekmask, HolidayList const& holidays)
     {
         auto day_of_week = get_day_of_week(date);
         return weekmask[day_of_week] && !is_holiday(date, holidays.begin(), holidays.end());
@@ -314,7 +314,7 @@ namespace epoch_frame::np
 
         std::vector<bool> result(dates.size());
         std::transform(dates.begin(), dates.end(), result.begin(), [&](DateTime const& date) {
-            return apply_is_business_day(date, weekmask, busdays_in_weekmask, holidays);
+            return apply_is_business_day(date, weekmask, holidays);
         });
 
         return result;
@@ -349,7 +349,7 @@ namespace epoch_frame::np
     }
 
     bool BusinessDayCalendar::is_busday(DateTime const& date) {
-        return apply_is_business_day(date, m_weekmask, m_busdays_in_weekmask, m_holidays);
+        return apply_is_business_day(date, m_weekmask, m_holidays);
     }
 
     WeekMask to_weekmask(WeekSet const& weekmask) {

@@ -195,15 +195,15 @@ namespace epoch_frame {
         return other.rpower(*this);
     }
 
-    Series Scalar::logb(Series const &other) const {
-        // return other.rlogb(*this);
-        return Series();
-    }
+    // Series Scalar::logb(Series const &other) const {
+    //     // return other.rlogb(*this);
+    //     return Series();
+    // }
 
-    DataFrame Scalar::logb(DataFrame const &other) const {
-        // return other.rlogb(*this);
-        return DataFrame();
-    }
+    // DataFrame Scalar::logb(DataFrame const &other) const {
+    //     // return other.rlogb(*this);
+    //     return DataFrame();
+    // }
 
     //--------------------------------------------------------------------------
     // 10) Comparison ops

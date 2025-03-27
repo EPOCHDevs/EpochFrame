@@ -121,7 +121,7 @@ namespace epoch_frame
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
-        bool is_on_offset(const arrow::TimestampScalar& other) const override
+        bool is_on_offset(const arrow::TimestampScalar&) const override
         {
             return true;
         }
@@ -184,7 +184,7 @@ namespace epoch_frame
                                           other.type);
         }
 
-        bool is_on_offset(const arrow::TimestampScalar& other) const override
+        bool is_on_offset(const arrow::TimestampScalar&) const override
         {
             return true;
         }
@@ -232,7 +232,7 @@ namespace epoch_frame
 
     struct HourHandler : TickHandler
     {
-        HourHandler(int64_t n, std::optional<std::string> timezone = {}) : TickHandler(n) {}
+        HourHandler(int64_t n) : TickHandler(n) {}
 
         std::string code() const override
         {

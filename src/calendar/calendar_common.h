@@ -47,21 +47,21 @@ namespace epoch_frame::calendar {
     // MarketTime structure with optional cutoff date
     struct MarketTime
     {
-        std::optional<Time>    time;
-        std::optional<int64_t> day_offset;
-        std::optional<Date>    date;
+        std::optional<Time>    time{std::nullopt};
+        std::optional<int64_t> day_offset{std::nullopt};
+        std::optional<Date>    date{std::nullopt};
     };
 
     struct MarketTimeWithTZ
     {
         Time    time;
-        std::optional<int64_t> day_offset;
-        std::optional<Date>    date;
+        std::optional<int64_t> day_offset{std::nullopt};
+        std::optional<Date>    date{std::nullopt};
     };
 
     struct MarketTimeDelta
     {
-        std::optional<Date> date;
+        std::optional<Date> date{std::nullopt};
         TimeDelta           time_delta;
     };
 
@@ -107,20 +107,20 @@ namespace epoch_frame::calendar {
     struct MarketCalendarOptions {
         std::string        name;
         RegularMarketTimes regular_market_times;
-        OpenCloseMap       open_close_map;
-        std::string        tz;
+        OpenCloseMap       open_close_map{};
+        std::string        tz{"UTC"};
 
         AbstractHolidayCalendarPtr regular_holidays;
-        np::HolidayList            adhoc_holidays;
-        std::vector<std::string>   aliases;
+        np::HolidayList            adhoc_holidays{};
+        std::vector<std::string>   aliases{};
         np::WeekSet                weekmask{epoch_core::EpochDayOfWeek::Monday, epoch_core::EpochDayOfWeek::Tuesday,
             epoch_core::EpochDayOfWeek::Wednesday, epoch_core::EpochDayOfWeek::Thursday,
             epoch_core::EpochDayOfWeek::Friday};
-        SpecialTimes               special_opens;
-        SpecialTimesAdHoc          special_opens_adhoc;
-        SpecialTimes               special_closes;
-        SpecialTimesAdHoc          special_closes_adhoc;
-        Interruptions              interruptions;
+        SpecialTimes               special_opens{};
+        SpecialTimesAdHoc          special_opens_adhoc{};
+        SpecialTimes               special_closes{};
+        SpecialTimesAdHoc          special_closes_adhoc{};
+        Interruptions              interruptions{};
     };
 
 }

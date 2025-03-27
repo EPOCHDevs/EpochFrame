@@ -159,7 +159,7 @@ namespace epoch_frame {
 
 /** get_loc(label) */
     template<bool IsMonotonic>
-    IndexType ArrowIndex<IsMonotonic>::get_loc(Scalar const &label) const {
+    int64_t ArrowIndex<IsMonotonic>::get_loc(Scalar const &label) const {
         if (label.is_null()) {
             throw std::runtime_error("get_loc: label is null");
         }

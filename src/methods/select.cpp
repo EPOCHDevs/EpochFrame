@@ -104,7 +104,7 @@ namespace epoch_frame {
                         return arrow::Datum(_variant.value());
                     }
                     else if constexpr (std::is_same_v<T, Array>) {
-                        AssertFromStream(m_data.first->size() == _variant.length(), "ArrayLengthMismatch: validation failed.");
+                        AssertFromStream((m_data.first->size() == static_cast<size_t>(_variant.length())), "ArrayLengthMismatch: validation failed.");
                         return arrow::Datum(_variant.value());
                     }
                     else if constexpr (std::is_same_v<T, arrow::TablePtr>) {

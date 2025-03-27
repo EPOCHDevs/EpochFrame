@@ -96,8 +96,8 @@ namespace epoch_frame {
                 AmbiguousTimeHandling ambiguous,
                 NonexistentTimeHandling nonexistent) {
 
-            if (data.is_array() && (data.array()->length == 0 || data.array()->null_count == data.array()->length) ||
-                data.is_scalar() && !data.scalar()->is_valid) {
+            if ((data.is_array() && ((data.array()->length == 0) || (data.array()->null_count == data.array()->length))) ||
+                (data.is_scalar() && !data.scalar()->is_valid)) {
                 // Handle null/empty cases
                 auto unit = arrow::TimeUnit::NANO;
                 if (data.type()->id() == arrow::Type::TIMESTAMP) {
@@ -146,8 +146,8 @@ namespace epoch_frame {
                 const arrow::Datum& data,
                 const std::string& timezone_) {
 
-            if (data.is_array() && (data.array()->length == 0 || data.array()->null_count == data.array()->length) ||
-                data.is_scalar() && !data.scalar()->is_valid) {
+            if ((data.is_array() && ((data.array()->length == 0) || (data.array()->null_count == data.array()->length))) ||
+                (data.is_scalar() && !data.scalar()->is_valid)) {
                 // Handle null/empty cases
                 auto unit = arrow::TimeUnit::NANO;
                 if (data.type()->id() == arrow::Type::TIMESTAMP) {

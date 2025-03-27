@@ -28,12 +28,12 @@ namespace epoch_frame {
 
     DataFrame::DataFrame(arrow::TablePtr const &data) : NDFrame(data) {
         auto columnNames = m_table->schema()->field_names();
-        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == static_cast<size_t>(m_table->num_columns()), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
     }
 
     DataFrame::DataFrame(IndexPtr const &index, arrow::TablePtr const &data) : NDFrame<DataFrame, arrow::Table>(index, data) {
         auto columnNames = m_table->schema()->field_names();
-        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == m_table->num_columns(), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
+        AssertFromStream(std::unordered_set(columnNames.begin(), columnNames.end()).size() == static_cast<size_t>(m_table->num_columns()), "duplicate columns are not permitted for dataframe: " << m_table->schema()->ToString());
     }
 
 
@@ -291,7 +291,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
             }
 
             table.add_row(header);
-            for (int64_t i = 0; i < df.m_index->size(); ++i) {
+            for (int64_t i = 0; i < static_cast<int64_t>(df.m_index->size()); ++i) {
                 auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();
                 tabulate::Table::Row_t row{index};
                 for (auto const &col : df.m_table->ColumnNames()) {
@@ -363,7 +363,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
             std::vector<std::vector<Scalar>> table(m_table->num_columns());
             for (int64_t i = 0; i < m_table->num_rows(); ++i) {
                 auto result = func(iloc(i).contiguous_array());
-                AssertFromFormat(result.length() == num_cols(), "result of apply must have the same number of columns as the original dataframe");
+                AssertFromFormat(static_cast<size_t>(result.length()) == num_cols(), "result of apply must have the same number of columns as the original dataframe");
                 for (int64_t j = 0; j < result->length(); ++j) {
                     table[j].emplace_back(result->GetScalar(j).MoveValueUnsafe());
                 }
@@ -378,7 +378,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         std::ranges::transform(column_names(), columns.begin(), [&](const std::string &name) {
             auto column = get_column_by_name(*m_table, name);
             auto result = func(Array(factory::array::make_contiguous_array(column))).value();
-            AssertFromFormat(result->length() == num_rows(), "result of apply must have the same number of rows as the original dataframe");
+            AssertFromFormat(static_cast<size_t>(result->length()) == num_rows(), "result of apply must have the same number of rows as the original dataframe");
             return std::make_shared<arrow::ChunkedArray>(result);
         });
         return DataFrame(m_index, arrow::Table::Make(arrow::schema(m_table->schema()->fields()), columns));

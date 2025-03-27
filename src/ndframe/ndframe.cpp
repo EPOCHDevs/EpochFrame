@@ -37,11 +37,11 @@ namespace epoch_frame {
         AssertFromStream(index != nullptr, "IIndex cannot be null");
         if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
             AssertFromStream(data != nullptr, "Table cannot be null");
-            AssertFromStream(data->num_rows() == 0 || data->num_rows() == index->size(),
+            AssertFromStream(data->num_rows() == 0 || data->num_rows() == static_cast<int64_t>(index->size()),
                                   "Number of rows in RecordBatch must match index size." << data->num_rows() << " != " << index->size());
         } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
             AssertFromStream(data != nullptr, "Array cannot be null");
-            AssertFromStream(data->length() == 0 || data->length() == index->size(),
+            AssertFromStream(data->length() == 0 || data->length() == static_cast<int64_t>(index->size()),
                                   "Array length must match index size." << data->length() << " != " << index->size());
         }
 
@@ -511,7 +511,7 @@ namespace epoch_frame {
     template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::loc(const Array &filter_or_labels) const {
         if (filter_or_labels.type()->id() == arrow::Type::BOOL) {
-            AssertFromFormat(filter_or_labels.length() == size(), "Length of labels must match length of index");
+            AssertFromFormat(filter_or_labels.length() == static_cast<int64_t>(size()), "Length of labels must match length of index");
             const auto chunked = std::make_shared<arrow::ChunkedArray>(filter_or_labels.value());
             return from_base(m_select->filter(chunked, arrow::compute::FilterOptions{}));
         }

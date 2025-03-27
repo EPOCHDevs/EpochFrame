@@ -39,7 +39,7 @@ namespace epoch_frame {
             return TableOrArray{arrow_utils::call_unary_compute_array(data.datum(), op, options)};
         }
 
-        return TableOrArray{arrow_utils::apply_function_to_table(data.table(), [&](const arrow::Datum &column, std::string const& _) {
+        return TableOrArray{arrow_utils::apply_function_to_table(data.table(), [&](const arrow::Datum &column, std::string const& ) {
             return arrow_utils::call_unary_compute_array(column, op, options);
         })};
     }

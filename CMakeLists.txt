@@ -85,6 +85,8 @@ target_include_directories(epoch_frame
         ${PROJECT_SOURCE_DIR}/src
 )
 
+target_compile_options(epoch_frame PRIVATE -Wall -Wextra -Werror)
+
 add_subdirectory(src)
 
 if (BUILD_TEST)

@@ -51,7 +51,7 @@ namespace epoch_frame {
         arrow::ArrayVector columns;
         fields.reserve(m_index->size());
         columns.reserve(m_index->size());
-        for (int64_t i = 0; i < m_index->size(); ++i) {
+        for (size_t i = 0; i < m_index->size(); ++i) {
             fields.push_back(arrow::field(m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString(), type));
             columns.push_back(AssertResultIsOk(arrow::MakeArrayFromScalar(*iloc(i).value(), 1)));
         }
@@ -154,7 +154,7 @@ namespace epoch_frame {
         tabulate::Table::Row_t header{std::format("index({})", df.m_index->dtype()->ToString())};
         header.push_back(std::format("{}({})", df.m_name.value_or(""), df.m_table->type()->ToString()));
         table.add_row(header);
-        for (int64_t i = 0; i < df.m_index->size(); ++i) {
+        for (size_t i = 0; i < df.m_index->size(); ++i) {
             auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();
             tabulate::Table::Row_t row{index};
             row.push_back(df.m_table->GetScalar(i).MoveValueUnsafe()->ToString());
@@ -241,8 +241,8 @@ namespace epoch_frame {
 
         std::vector<arrow::ScalarPtr> scalars;
         scalars.reserve(size());
-        int64_t inserts{0};
-        for (int64_t i = 0; i < size(); ++i) {
+        size_t inserts{0};
+        for (size_t i = 0; i < size(); ++i) {
             auto index_scalar = m_index->at(i);
             if (indices->contains(index_scalar)) {
                 auto loc = indices->get_loc(index_scalar);

@@ -121,7 +121,7 @@ namespace epoch_frame {
 
         /// Return the integer location of 'label' in the index (like Pandas .get_loc())
         /// Could throw if not found
-        virtual IndexType get_loc(Scalar const &label) const = 0;
+        virtual int64_t get_loc(Scalar const &label) const = 0;
         virtual std::vector<int64_t> get_loc(IndexPtr const & other) const = 0;
 
         /// Return integer locations for start/end labels (like Pandas .slice_locs)

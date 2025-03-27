@@ -166,18 +166,17 @@ TimeDelta& TimeDelta::operator*=(int64_t other) {
     return *this;
 }
 
-TimeDelta TimeDelta::operator*(double other) const {
-    throw std::runtime_error("TimeDelta::operator*(double other)  Not implemented");
+// TimeDelta TimeDelta::operator*(double) const {
     // auto usec = to_microseconds();
 
     // auto [a, b] = integer_ratio(other);
     // return TimeDelta{{ .microseconds = divide_and_round(usec*a, b)}};
-}
+// }
 
-TimeDelta& TimeDelta::operator*=(double other) {
-    *this = *this * other;
-    return *this;
-}
+// TimeDelta& TimeDelta::operator*=(double other) {
+//     *this = *this * other;
+//     return *this;
+// }
 
 std::strong_ordering TimeDelta::operator<=>(const TimeDelta& other) const {
     return to_microseconds() <=> other.to_microseconds();

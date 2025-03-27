@@ -80,7 +80,7 @@ namespace epoch_frame {
         std::vector<std::pair<Scalar, std::vector<uint64_t>>> groups;
 
         groups.reserve(key->length());
-        for (size_t i = 0; i < key->length(); ++i) {
+        for (size_t i = 0; i < static_cast<size_t>(key->length()); ++i) {
             Scalar scalar{key->GetScalar(i).MoveValueUnsafe()};
             if (!indexer.contains(scalar)) {
                 indexer[scalar] = groups.size();
@@ -248,7 +248,7 @@ namespace epoch_frame {
         aggregates.reserve(agg_names.size() * m_grouper->fields().size());
         for (auto const& [i, agg_name] : std::views::enumerate(agg_names)) {
             for (auto const& field : m_grouper->fields()) {
-                aggregates.emplace_back(std::format("hash_{}", agg_name), i < options.size() ? options[i] : nullptr, field, std::format("{}_{}", *field.name(), agg_name));
+                aggregates.emplace_back(std::format("hash_{}", agg_name), static_cast<size_t>(i) < options.size() ? options[i] : nullptr, field, std::format("{}_{}", *field.name(), agg_name));
             }
         }
 
@@ -430,14 +430,14 @@ namespace epoch_frame {
     namespace factory::group_by {
         template<typename OutputType>
         GroupByAgg<OutputType> make_agg_by_key(arrow::TablePtr table, std::vector<std::string> const &by, std::optional<TimeGrouperOptions> options) {
-            auto grouper = std::make_shared<KeyGrouper>(std::move(table), by);
+            auto grouper = std::make_shared<KeyGrouper>(std::move(table), by, options);
             auto operations = std::make_shared<AggOperations>(grouper);
             return GroupByAgg<OutputType>(grouper, operations);
         }
 
         template<typename OutputType>
         GroupByAgg<OutputType> make_agg_by_array(arrow::TablePtr table, arrow::ChunkedArrayVector const &by, std::optional<TimeGrouperOptions> options) {
-            auto grouper = std::make_shared<ArrayGrouper>(std::move(table), by);
+            auto grouper = std::make_shared<ArrayGrouper>(std::move(table), by, options);
             auto operations = std::make_shared<AggOperations>(grouper);
             return GroupByAgg<OutputType>(grouper, operations);
         }
@@ -452,13 +452,13 @@ namespace epoch_frame {
         }
 
         GroupByApply make_apply_by_key(DataFrame const& table, std::vector<std::string> const &by, bool groupKeys, std::optional<TimeGrouperOptions> options) {
-            auto grouper = std::make_shared<KeyGrouper>(table.table(), by);
+            auto grouper = std::make_shared<KeyGrouper>(table.table(), by, options);
             const auto operations = std::make_shared<ApplyOperations>(table, grouper, groupKeys);
             return GroupByApply(grouper, operations);
         }
 
         GroupByApply make_apply_by_array(DataFrame const&  table, arrow::ChunkedArrayVector const &by, bool groupKeys, std::optional<TimeGrouperOptions> options) {
-            auto grouper = std::make_shared<ArrayGrouper>(table.table(), by);
+            auto grouper = std::make_shared<ArrayGrouper>(table.table(), by, options);
             const auto operations = std::make_shared<ApplyOperations>(table, grouper, groupKeys);
             return GroupByApply(grouper, operations);
         }

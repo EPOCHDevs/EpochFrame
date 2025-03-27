@@ -197,7 +197,7 @@ namespace epoch_frame::arrow_utils {
             length = array->length();
         }
 
-        if (start > end || start >= length) {
+        if (start > end || start >= static_cast<size_t>(length)) {
             return array->Slice(start, 0);
         }
 

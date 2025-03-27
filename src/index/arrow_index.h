@@ -127,7 +127,7 @@ namespace epoch_frame {
 
         bool contains(Scalar const &label) const final;
 
-        IndexType get_loc(Scalar const &label) const final;
+        int64_t get_loc(Scalar const &label) const final;
         std::vector<int64_t> get_loc(IndexPtr const & other) const final;
 
         ResolvedIntegerSliceBound
@@ -211,8 +211,8 @@ namespace epoch_frame {
         int64_t get_lower_bound_index(Scalar const &value) const;
 
     protected:
-        const Array m_array;
         const std::string m_name;
+        const Array m_array;
         ScalarMapping<int64_t> m_indexer;
         std::vector<Scalar> m_index_list;
         MonotonicDirection m_monotonic_direction;

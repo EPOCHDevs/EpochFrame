@@ -15,7 +15,7 @@ namespace epoch_frame
                         bool ignore_na, std::shared_ptr<arrow::DoubleArray> const& deltas,
                         bool normalize)
     {
-        auto num_values = values.length();
+        auto num_values = static_cast<size_t>(values.length());
         if (num_values == 0)
         {
             return AssertResultIsOk(arrow::MakeEmptyArray(arrow::float64()));
@@ -128,8 +128,8 @@ namespace epoch_frame
                            arrow::DoubleArray const& input_y, double com, bool adjust,
                            bool ignore_na, bool bias)
     {
-        const auto num_values = input_x.length();
-        if (input_y.length() != num_values)
+        const auto num_values = static_cast<size_t>(input_x.length());
+        if (static_cast<size_t>(input_y.length()) != num_values)
         {
             throw std::invalid_argument("arrays are of different lengths, input_x.length() = " +
                                         std::to_string(num_values) +

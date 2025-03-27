@@ -15,9 +15,9 @@ namespace epoch_frame {
     };
 
     struct UnResolvedIntegerSliceBound {
-        std::optional<int64_t> start;
-        std::optional<int64_t> stop;
-        std::optional<int64_t> step;
+        std::optional<int64_t> start{std::nullopt};
+        std::optional<int64_t> stop{std::nullopt};
+        std::optional<int64_t> step{std::nullopt};
     };
 
     ResolvedIntegerSliceBound resolve_integer_slice(UnResolvedIntegerSliceBound const&, size_t length);
