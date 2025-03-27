@@ -11,7 +11,7 @@ namespace epoch_frame {
 using OriginType = std::variant<DateTime, epoch_core::GrouperOrigin>;
 struct TimeGrouperOptions {
     DateOffsetHandlerPtr freq;
-    std::optional<std::string> key;
+    std::optional<std::string> key{std::nullopt};
     epoch_core::GrouperClosedType closed{epoch_core::GrouperClosedType::Null};
     epoch_core::GrouperLabelType label{epoch_core::GrouperLabelType::Null};
     OriginType origin{epoch_core::GrouperOrigin::StartDay};
