@@ -1,1 +1,1 @@
-target_sources(epochframe_test PRIVATE market_calendar_test.cpp nyse_calendar_test.cpp)
+target_sources(epoch_frame_test PRIVATE market_calendar_test.cpp nyse_calendar_test.cpp)
