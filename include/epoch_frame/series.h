@@ -37,6 +37,13 @@ namespace epoch_frame {
             return Series(m_table, m_name.value_or("") + suffix);
         }
 
+        Series rename(std::string const& name) const {
+            return Series(m_index, m_table, name);
+        }
+
+        Series n_largest(int64_t n) const;
+        Series n_smallest(int64_t n) const;
+
         DataFrame to_frame(std::optional<std::string> const &name=std::nullopt) const;
         DataFrame transpose(IndexPtr const& new_index) const;
 

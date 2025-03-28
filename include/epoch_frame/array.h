@@ -617,6 +617,10 @@ public:
     Array where(const Array& mask, const Scalar& replacement) const;
     Array where(const Array& mask, const Array& replacement) const;
 
+    [[nodiscard]] arrow::ChunkedArrayPtr as_chunked_array() const {
+        return std::make_shared<arrow::ChunkedArray>(m_array);
+    }
+
 private:
     arrow::ArrayPtr m_array;
 

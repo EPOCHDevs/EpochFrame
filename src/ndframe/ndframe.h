@@ -331,6 +331,10 @@ namespace epoch_frame {
                         std::vector<std::string> const &subset = {},
                         bool ignore_index = false) const;
 
+        ChildType drop(IndexPtr const& index) const;
+
+        ChildType fillnull(Scalar const& value) const;
+
         ChildType bfill(AxisType axis = AxisType::Row) const;
 
         ChildType ffill(AxisType axis = AxisType::Row) const;
@@ -376,6 +380,9 @@ namespace epoch_frame {
         AggType sum(AxisType axis=AxisType::Row, bool skip_null=true) const;
         AggType tdigest(arrow::compute::TDigestOptions const &options, AxisType axis=AxisType::Row) const;
         AggType variance(arrow::compute::VarianceOptions const &options, AxisType axis=AxisType::Row) const;
+
+        Scalar idx_min() const;
+        Scalar idx_max() const;
 
         bool equals(ChildType const&) const;
 

@@ -440,4 +440,21 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
 
         return DataFrame(m_index, new_table);
      }
+
+     DataFrame DataFrame::drop(std::string const& column) const {
+        auto location = m_table->schema()->GetFieldIndex(column);
+        AssertFromFormat(location != -1, "Column {} not found", column);
+        auto new_table = AssertResultIsOk(m_table->RemoveColumn(location));
+        return DataFrame(m_index, new_table);
+     }
+
+     DataFrame DataFrame::drop(std::vector<std::string> const& columns) const {
+        auto table = std::ranges::fold_left(columns, m_table, [&](arrow::TablePtr const& table, std::string const& column) {
+            int64_t location = m_table->schema()->GetFieldIndex(column);
+            AssertFromFormat(location != -1, "Column {} not found", column);
+            return AssertResultIsOk(table->RemoveColumn(location));
+        });
+        return DataFrame(m_index, table);
+     }
+
 } // namespace epoch_frame

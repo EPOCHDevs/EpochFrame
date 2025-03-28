@@ -215,6 +215,10 @@ namespace epoch_frame {
             return array().to_vector<T>();
         }
 
+        arrow::ChunkedArrayPtr as_chunked_array() const {
+            return array().as_chunked_array();
+        }
+
     protected:
         virtual TemporalOperation<true> dt() const = 0;
     };

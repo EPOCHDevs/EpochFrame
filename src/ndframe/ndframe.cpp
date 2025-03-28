@@ -769,6 +769,17 @@ namespace epoch_frame {
     }
 
     template<class ChildType, class ArrowType>
+    ChildType NDFrame<ChildType, ArrowType>::drop(IndexPtr const& index) const {
+        auto diff = m_index->difference(index);
+        return loc(diff);
+    }
+
+    template<class ChildType, class ArrowType>
+    ChildType NDFrame<ChildType, ArrowType>::fillnull(Scalar const& value) const {
+        return where(is_null(), value);
+    }
+
+    template<class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::bfill(AxisType axis) const {
         return from_base(TableComponent{m_index, m_select->fill_null_backward(axis)});
     }
@@ -920,6 +931,16 @@ namespace epoch_frame {
         return m_agg->variance(options, axis).as<AggType>();
     }
 
+    template<class ChildType, class ArrowType>
+    Scalar NDFrame<ChildType, ArrowType>::idx_min() const {
+        return m_index->min();
+    }
+
+    template<class ChildType, class ArrowType>
+    Scalar NDFrame<ChildType, ArrowType>::idx_max() const {
+        return m_index->max();
+    }
+    
     template<class ChildType, class ArrowType>
     bool NDFrame<ChildType, ArrowType>::equals(ChildType const& other) const {
         return m_index->equals(other.m_index) && m_table->Equals(*other.m_table);

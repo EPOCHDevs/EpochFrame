@@ -183,6 +183,12 @@ namespace epoch_frame {
             return assign(df.m_index, df.m_table);
         }
 
+        DataFrame drop(std::string const& column) const;
+        DataFrame drop(std::vector<std::string> const& columns) const;
+        bool contains(std::string const& column) const{
+            return m_table->schema()->GetFieldIndex(column) != -1;
+        }
+
         // Inherit map method from NDFrame
         using NDFrame::map;
     private:

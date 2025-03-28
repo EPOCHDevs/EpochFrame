@@ -222,7 +222,7 @@ namespace epoch_frame {
         class Array to_array(int64_t lenght) const;
 
         double as_double() const {
-            return get_or_throw_value<double>();
+            return value<double>().value_or(std::numeric_limits<double>::quiet_NaN());
         }
 
         float as_float() const {
