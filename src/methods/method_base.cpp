@@ -120,7 +120,7 @@ namespace epoch_frame {
     }
 
     arrow::TablePtr MethodBase::merge_index() const {
-        return add_column(m_data.second.get_table("__series_MethodBase__"), RESERVED_INDEX_NAME, m_data.first->array().value());
+        return add_column(m_data.second.get_table(RESERVED_INDEX_NAME), RESERVED_INDEX_NAME, m_data.first->array().value());
     }
 
     TableComponent MethodBase::unzip_index(arrow::TablePtr const &table) const {
