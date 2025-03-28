@@ -47,7 +47,7 @@ namespace epoch_frame {
                                         bool ignore_index) const {
        AssertFromStream(how == DropMethod::Any, "drop_null only support any");
        AssertFromStream(axis == AxisType::Row, "drop_null only support row");
-       AssertFalseFromStream(subset.empty(), "subset can not be empty");
+       AssertFromStream(subset.empty(), "drop_null does not support subset");
        AssertFalseFromStream(ignore_index, "ignore_index can not be true");
 
        return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "drop_null"));
