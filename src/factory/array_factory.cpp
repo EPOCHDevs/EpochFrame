@@ -80,6 +80,11 @@ namespace epoch_frame::factory::array {
     }
 
     arrow::ArrayPtr make_contiguous_array(const arrow::ChunkedArrayPtr &chunked_array) {
+        AssertFromFormat(chunked_array, "chunked_array is null");
+        if (chunked_array->length() == 0) {
+            return AssertResultIsOk(arrow::MakeEmptyArray(chunked_array->type()));
+        }
+
         auto chunks = AssertArrayResultIsOk(arrow::Concatenate(chunked_array->chunks()))->chunks();
         AssertFromStream(chunks.size() == 1, "datum is not contiguous array");
         return chunks[0];
