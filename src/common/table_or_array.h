@@ -9,8 +9,14 @@
 namespace epoch_frame {
 class TableOrArray {
     public:
-        explicit TableOrArray(arrow::Datum const& datum) : m_impl(datum) {
+        explicit TableOrArray(arrow::Datum const& datum, std::optional<std::string> const& name = std::nullopt) : m_impl(datum) {
             AssertFromStream(datum.kind() == arrow::Datum::TABLE || datum.kind() == arrow::Datum::CHUNKED_ARRAY, "Datum is not a table or chunked array" << datum.kind());
+            if (datum.kind() == arrow::Datum::TABLE) {
+                const arrow::TablePtr table = this->table();
+                if (table->num_columns() == 1 && name.has_value() && table->field(0)->name() == name.value()) {
+                    m_impl = table->column(0);
+                }
+            }
         }
 
         explicit TableOrArray(arrow::TablePtr const& table) : m_impl(arrow::Datum{table}) {

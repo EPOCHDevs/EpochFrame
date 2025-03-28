@@ -32,5 +32,6 @@ namespace epoch_frame {
         const TableComponent& m_data;
 
         static constexpr const char * RESERVED_INDEX_NAME = "__RESERVED_INDEX__";
+        static constexpr const char * RESERVED_SERIES_NAME = "__RESERVED_SERIES_NAME__";
     };
 }

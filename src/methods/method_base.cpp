@@ -120,7 +120,7 @@ namespace epoch_frame {
     }
 
     arrow::TablePtr MethodBase::merge_index() const {
-        return add_column(m_data.second.get_table(RESERVED_INDEX_NAME), RESERVED_INDEX_NAME, m_data.first->array().value());
+        return add_column(m_data.second.get_table(RESERVED_SERIES_NAME), RESERVED_INDEX_NAME, m_data.first->array().value());
     }
 
     TableComponent MethodBase::unzip_index(arrow::TablePtr const &table) const {
@@ -131,7 +131,7 @@ namespace epoch_frame {
         auto newTable = table->RemoveColumn(field_index);
         AssertFromStream(newTable.ok(), "unzip index failed");
 
-        return TableComponent{m_data.first->Make(newIndex), TableOrArray{newTable.MoveValueUnsafe()}};
+        return TableComponent{m_data.first->Make(newIndex), TableOrArray{newTable.MoveValueUnsafe(), RESERVED_SERIES_NAME}};
     }
 
     TableOrArray MethodBase::rapply(std::string const &op, const arrow::Datum &other) const {
