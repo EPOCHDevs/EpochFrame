@@ -213,6 +213,9 @@ Array Array::delete_(int64_t loc) const {
 
 template<typename T>
 std::vector<T> Array::to_vector() const {
+    if (m_array->length() == 0) {
+        return std::vector<T>();
+    }
     return get_values<T>(m_array);
 }
 
