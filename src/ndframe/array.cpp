@@ -555,4 +555,8 @@ Array Array::where(const Array& mask, const Array& replacement) const {
     return Array(AssertContiguousArrayResultIsOk(arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
 }
 
+Array Array::append(const Array& other) const {
+    return Array(AssertResultIsOk(arrow::Concatenate({m_array, other.m_array})));
+}
+
 } // namespace epoch_frame

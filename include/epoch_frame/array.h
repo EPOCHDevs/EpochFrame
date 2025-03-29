@@ -621,9 +621,7 @@ public:
         return std::make_shared<arrow::ChunkedArray>(m_array);
     }
 
-    Array append(const Array& other) const {
-        return Array(AssertResultIsOk(arrow::Concatenate({m_array, other.m_array})));
-    }
+    Array append(const Array& other) const;
 
 private:
     arrow::ArrayPtr m_array;
