@@ -325,6 +325,11 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         return DataFrame(tableComponent.first, tableComponent.second.table());
     }
 
+    DataFrame DataFrame::reset_index(std::optional<std::string> const &name) const {
+        auto new_table = add_column(m_table, name.value_or(m_index->name()), m_index->as_chunked_array());
+        return DataFrame(new_table);
+    }
+
     GroupByAgg<DataFrame> DataFrame::group_by_agg(std::vector<std::string> const &by) const {
         return factory::group_by::make_agg_by_key<DataFrame>(m_table, by);
     }

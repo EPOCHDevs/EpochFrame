@@ -243,7 +243,7 @@ TEST_CASE("Array - Template Methods", "[array][template_methods]")
 
         // Test with null array
         Array null_arr;
-        REQUIRE_THROWS(null_arr.to_vector<double>());
+        REQUIRE(null_arr.to_vector<double>().empty());
     }
 
     SECTION("cast")

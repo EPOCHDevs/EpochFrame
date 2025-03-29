@@ -138,6 +138,8 @@ namespace epoch_frame {
 
         DataFrame from_base(TableComponent const &tableComponent) const override;
 
+        DataFrame reset_index(std::optional<std::string> const &name=std::nullopt) const;
+
         GroupByAgg<DataFrame> group_by_agg(std::vector<std::string> const &by) const;
         GroupByAgg<DataFrame> group_by_agg(arrow::ChunkedArrayVector const &by) const;
         GroupByApply group_by_apply(std::vector<std::string>  const &by, bool groupKeys=true) const;
