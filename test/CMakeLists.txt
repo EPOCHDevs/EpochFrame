@@ -16,7 +16,3 @@ add_subdirectory(dataframe)
 add_subdirectory(series)
 
 target_compile_definitions(epoch_frame_test PRIVATE -DEPOCHFRAME_S3_TEST_BUCKET="epochframe-test")
-
-include(CTest)
-include(Catch)
-catch_discover_tests(epoch_frame_test)
