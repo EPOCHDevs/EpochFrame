@@ -155,11 +155,19 @@ namespace epoch_frame {
     }
 
     Scalar Series::idx_min() const {
-        return m_index->at(m_index->argmin());
+        if (m_index->empty()) {
+            return Scalar();
+        }
+        auto index = this->index(min());
+        return m_index->at(index.as_int64());
     }
 
     Scalar Series::idx_max() const {
-        return m_index->at(m_index->argmax());
+        if (m_index->empty()) {
+            return Scalar();
+        }
+        auto index = this->index(max());
+        return m_index->at(index.as_int64());
     }
 
     //--------------------------------------------------------------------------
