@@ -155,11 +155,11 @@ namespace epoch_frame {
     }
 
     Scalar Series::idx_min() const {
-        return m_index->loc(min());
+        return m_index->at(m_index->argmin());
     }
 
     Scalar Series::idx_max() const {
-        return m_index->loc(max());
+        return m_index->at(m_index->argmax());
     }
 
     //--------------------------------------------------------------------------

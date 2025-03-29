@@ -131,9 +131,6 @@ namespace epoch_frame {
                    Scalar const &end = {}) const = 0;
 
         virtual IndexPtr loc(Array const & labels_or_filter) const = 0;
-        Scalar loc(Scalar const & label) const {
-            return at(get_loc(label));
-        }
 
         /// Like Pandas .searchsorted - find insertion position to maintain order
         /// 'side' can be 'left' or 'right'
