@@ -62,7 +62,7 @@ namespace {
     }
 
     // Get S3 path for testing
-    std::string get_s3_test_path(const std::string& path) {
+    constexpr auto get_s3_test_path(const char* path) {
         #ifdef EPOCHFRAME_S3_TEST_BUCKET
             return std::format("s3://{}/{}", EPOCHFRAME_S3_TEST_BUCKET, path);
         #else
@@ -431,8 +431,8 @@ TEST_CASE("Parquet Serialization - Series") {
     std::filesystem::remove(temp_file);
 }
 
-TEST_CASE("Parquet Serialization - S3", "[.][s3]") {
-    if (!s3_testing_available()) {
+TEST_CASE("Parquet Serialization - S3", "[s3]") {
+    if constexpr (!s3_testing_available()) {
         SKIP("S3 test bucket not configured");
     }
 

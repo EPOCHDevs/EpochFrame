@@ -15,4 +15,4 @@ add_subdirectory(index)
 add_subdirectory(dataframe)
 add_subdirectory(series)
 
-target_compile_definitions(epoch_frame_test PRIVATE -DEPOCHFRAME_S3_TEST_BUCKET="epochframe-test")
+target_compile_definitions(epoch_frame_test PRIVATE -DEPOCHFRAME_S3_TEST_BUCKET="epoch-test-files/epoch_frame")
