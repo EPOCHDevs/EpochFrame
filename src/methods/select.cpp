@@ -149,8 +149,8 @@ namespace epoch_frame {
                 return TableOrArray{AssertArrayResultIsOk(arrow::compute::IfElse(condition, m_data.second.datum(), other_))};
             }
 
-    auto complete_sort = [](IndexPtr const& index, TableOrArray const& data, arrow::Datum const& key, const auto* options) {
-        auto sort_indices = arrow_utils::call_unary_compute_contiguous_array(key, "array_sort_indices", options);
+    auto complete_sort = [](IndexPtr const& index, TableOrArray const& data, arrow::Datum const& key, const auto* options, const std::string& function_name) {
+        auto sort_indices = arrow_utils::call_unary_compute_contiguous_array(key, function_name, options);
         auto sorted_index = arrow_utils::call_compute_contiguous_array({index->array().value(), sort_indices}, "take");
         auto sorted_values = arrow_utils::call_compute_table_or_array(data, {sort_indices}, "take");
         return TableComponent{
@@ -164,7 +164,7 @@ namespace epoch_frame {
             ascending ? arrow::compute::SortOrder::Ascending : arrow::compute::SortOrder::Descending,
                         place_na_last ? arrow::compute::NullPlacement::AtEnd : arrow::compute::NullPlacement::AtStart
                     };
-        return complete_sort(m_data.first, m_data.second, m_data.first->array().value(), &options);
+        return complete_sort(m_data.first, m_data.second, m_data.first->array().value(), &options, "array_sort_indices");
     }
 
     TableComponent
@@ -181,6 +181,6 @@ namespace epoch_frame {
                     SortKey(key, order));
         }
 
-        return complete_sort(m_data.first, m_data.second, m_data.second.datum(), &options);
+        return complete_sort(m_data.first, m_data.second, m_data.second.datum(), &options, "sort_indices");
     }
 }
