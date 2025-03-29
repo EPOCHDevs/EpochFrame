@@ -100,6 +100,10 @@ public:
         return m_array->Equals(other.m_array);
     }
 
+    bool is_approx_equal(const Array& other, arrow::EqualOptions const& options=arrow::EqualOptions::Defaults()) const{
+        return m_array->ApproxEquals(other.m_array, options);
+    }
+
     /**
      * @brief Inequality operator
      *

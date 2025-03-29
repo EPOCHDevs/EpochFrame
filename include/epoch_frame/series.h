@@ -121,6 +121,9 @@ namespace epoch_frame {
         // 13) Selection & Transform
         //--------------------------------------------------------------------------
         arrow::ArrayPtr unique() const;
+        bool is_approx_equal(const Series& other, arrow::EqualOptions const& options=arrow::EqualOptions::Defaults()) const{
+            return m_table->ApproxEquals(*other.m_table, options);
+        }
 
         [[nodiscard]] TemporalOperation<true> dt() const {
             return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
