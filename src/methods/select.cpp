@@ -8,6 +8,7 @@
 #include "common/methods_helper.h"
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
+#include "epoch_frame/factory/index_factory.h"
 
 namespace epoch_frame {
 
@@ -154,7 +155,7 @@ namespace epoch_frame {
         auto sorted_index = arrow_utils::call_compute_contiguous_array({index->array().value(), sort_indices}, "take");
         auto sorted_values = arrow_utils::call_compute_table_or_array(data, {sort_indices}, "take");
         return TableComponent{
-            index->Make(sorted_index), sorted_values
+            factory::index::make_index(sorted_index, std::nullopt, index->name()), sorted_values
     };
     };
 
