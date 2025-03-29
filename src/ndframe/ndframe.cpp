@@ -959,7 +959,7 @@ namespace epoch_frame
     template <class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::fillnull(Scalar const& value) const
     {
-        return where(is_null(), value);
+        return where(is_valid(), value);
     }
 
     template <class ChildType, class ArrowType>
