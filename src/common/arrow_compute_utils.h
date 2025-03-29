@@ -150,7 +150,7 @@ namespace epoch_frame::arrow_utils {
 
     template<typename ArrowScalarType>
     ArrowScalarType call_unary_agg_compute_as(const arrow::Datum &input, const std::string &function_name,
-                                              bool skip_nulls = true, uint32_t min_count = 1) {
+                                              bool skip_nulls = true, uint32_t min_count = 0) {
         arrow::compute::ScalarAggregateOptions options{skip_nulls, min_count};
         return call_unary_compute_scalar_as<ArrowScalarType>(input, function_name, &options);
     }
@@ -161,7 +161,7 @@ namespace epoch_frame::arrow_utils {
 
     inline arrow::ScalarPtr
     call_unary_agg_compute(const arrow::Datum &input, const std::string &function_name,
-                           bool skip_nulls = true, uint32_t min_count = 1) {
+                           bool skip_nulls = true, uint32_t min_count = 0) {
         arrow::compute::ScalarAggregateOptions options{skip_nulls, min_count};
         return call_unary_agg_compute(input, function_name, options);
     }

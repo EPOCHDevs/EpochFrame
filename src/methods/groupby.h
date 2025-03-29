@@ -136,7 +136,7 @@ namespace epoch_frame {
 
     // Class for aggregation operations - only has agg methods
         #define MAKE_SCALAR_AGG_FUNCTION(name) \
-        OutputType name(bool skip_nulls=true, uint32_t min_count=1) const { \
+        OutputType name(bool skip_nulls=true, uint32_t min_count=0) const { \
             return agg(#name, std::make_shared<arrow::compute::ScalarAggregateOptions>(skip_nulls, min_count)); \
         }    
 

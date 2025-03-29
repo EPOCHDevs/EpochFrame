@@ -49,7 +49,7 @@ TEST_CASE("arrow_utils::call_unary_compute_as<T>", "[arrow][compute]") {
 }
 
 TEST_CASE("arrow_utils::call_unary_agg_compute - skip_nulls false", "[arrow][compute]") {
-    // [1,2,3,null] => if skip_nulls = false => min_count=1 => result is null for "sum"
+    // [1,2,3,null] => if skip_nulls = false => min_count=0 => result is null for "sum"
     auto arr = make_array(std::vector{1., 2., 3., std::numeric_limits<double>::quiet_NaN()});
     arrow::ScalarPtr scalar_val = call_unary_agg_compute(arr, "sum", /*skip_nulls=*/false);
     // Expect a null scalar

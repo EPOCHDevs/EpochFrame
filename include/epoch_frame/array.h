@@ -397,7 +397,7 @@ public:
      */
     Scalar call_aggregate_function(const std::string& function_name,
                                    bool skip_nulls = true,
-                                   uint32_t min_count = 1) const;
+                                   uint32_t min_count = 0) const;
 
     /**
      * @brief Cast the array to another type
@@ -516,7 +516,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The sum as a Scalar
      */
-    Scalar sum(bool skip_nulls = true, uint32_t min_count = 1) const;
+    Scalar sum(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Calculate the mean of the array
@@ -525,7 +525,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The mean as a Scalar
      */
-    Scalar mean(bool skip_nulls = true, uint32_t min_count = 1) const;
+    Scalar mean(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Calculate the min of the array
@@ -534,7 +534,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The min as a Scalar
      */
-    Scalar min(bool skip_nulls = true, uint32_t min_count = 1) const;
+    Scalar min(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Calculate the max of the array
@@ -543,7 +543,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The max as a Scalar
      */
-    Scalar max(bool skip_nulls = true, uint32_t min_count = 1) const;
+    Scalar max(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Calculate the argmin of the array
@@ -552,7 +552,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The argmin as an IndexType
      */
-    IndexType argmin(bool skip_nulls = true, uint32_t min_count = 1) const;
+    IndexType argmin(bool skip_nulls = true, uint32_t min_count = 0) const;
 
 
     /**
@@ -562,7 +562,7 @@ public:
      * @param min_count Minimum count for validity
      * @return The argmax as an IndexType
      */
-    IndexType argmax(bool skip_nulls = true, uint32_t min_count = 1) const;
+    IndexType argmax(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Check if any element is true
@@ -571,7 +571,7 @@ public:
      * @param min_count Minimum count for validity
      * @return True if any element is true, false otherwise
      */
-    bool any(bool skip_nulls = true, uint32_t min_count = 1) const;
+    bool any(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Check if all elements are true
@@ -580,7 +580,7 @@ public:
      * @param min_count Minimum count for validity
      * @return True if all elements are true, false otherwise
      */
-    bool all(bool skip_nulls = true, uint32_t min_count = 1) const;
+    bool all(bool skip_nulls = true, uint32_t min_count = 0) const;
 
     /**
      * @brief Apply a functor to each element of the array
