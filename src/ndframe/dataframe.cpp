@@ -75,7 +75,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
         AssertFromStream(indexPos != -1, new_index << " is not a valid column");
         auto index = m_table->column(indexPos);
         auto new_table = AssertResultIsOk(m_table->RemoveColumn(indexPos));
-        return DataFrame{m_index->Make(factory::array::make_contiguous_array(index)), new_table};
+        return DataFrame{factory::index::make_index(factory::array::make_contiguous_array(index), std::nullopt, new_index), new_table};
     }
 
     size_t DataFrame::num_rows() const {
@@ -327,7 +327,7 @@ DataFrame DataFrame::set_index(std::string const & new_index) const {
 
     DataFrame DataFrame::reset_index(std::optional<std::string> const &name) const {
         auto new_table = add_column(m_table, name.value_or(m_index->name()), m_index->as_chunked_array());
-        return DataFrame(new_table);
+        return DataFrame(factory::index::make_object_index(m_table->ColumnNames()), new_table);
     }
 
     GroupByAgg<DataFrame> DataFrame::group_by_agg(std::vector<std::string> const &by) const {
