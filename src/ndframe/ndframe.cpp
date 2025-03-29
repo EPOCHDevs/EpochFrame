@@ -1166,18 +1166,6 @@ namespace epoch_frame
     }
 
     template <class ChildType, class ArrowType>
-    Scalar NDFrame<ChildType, ArrowType>::idx_min() const
-    {
-        return m_index->min();
-    }
-
-    template <class ChildType, class ArrowType>
-    Scalar NDFrame<ChildType, ArrowType>::idx_max() const
-    {
-        return m_index->max();
-    }
-
-    template <class ChildType, class ArrowType>
     bool NDFrame<ChildType, ArrowType>::equals(ChildType const& other) const
     {
         return m_index->equals(other.m_index) && m_table->Equals(*other.m_table);

@@ -381,9 +381,6 @@ namespace epoch_frame {
         AggType tdigest(arrow::compute::TDigestOptions const &options, AxisType axis=AxisType::Row) const;
         AggType variance(arrow::compute::VarianceOptions const &options, AxisType axis=AxisType::Row) const;
 
-        Scalar idx_min() const;
-        Scalar idx_max() const;
-
         bool equals(ChildType const&) const;
 
         const TableComponent& tableComponent() const;

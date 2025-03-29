@@ -129,6 +129,10 @@ namespace epoch_frame {
             return TemporalOperation<true>(Array(factory::array::make_contiguous_array(m_table)));
         }
 
+        Scalar idx_min() const;
+
+        Scalar idx_max() const;
+
         /**
          * Return a StringOperation object that can be used to call string methods on this Series.
          * @return StringOperation

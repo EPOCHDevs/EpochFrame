@@ -154,6 +154,14 @@ namespace epoch_frame {
         return NDFrame<Series, arrow::ChunkedArray>::loc(callable(*this));
     }
 
+    Scalar Series::idx_min() const {
+        return m_index->loc(min());
+    }
+
+    Scalar Series::idx_max() const {
+        return m_index->loc(max());
+    }
+
     //--------------------------------------------------------------------------
     // 13) Selection & Transform
     //--------------------------------------------------------------------------
