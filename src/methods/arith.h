@@ -256,11 +256,17 @@ namespace epoch_frame {
             return apply("cumulative_prod", &options);
         }
 
-        [[nodiscard]] TableOrArray cumulative_max(arrow::compute::CumulativeOptions const &options) const {
+        [[nodiscard]] TableOrArray cumulative_max(arrow::compute::CumulativeOptions options) const {
+            if (!options.start && m_data.first->size() > 0 && m_data.second.is_chunked_array()) {
+                options.start = m_data.second.chunked_array()->GetScalar(0).MoveValueUnsafe();
+            }
             return apply("cumulative_max", &options);
         }
 
-        [[nodiscard]] TableOrArray cumulative_min(arrow::compute::CumulativeOptions const &options) const {
+        [[nodiscard]] TableOrArray cumulative_min(arrow::compute::CumulativeOptions options) const {
+            if (!options.start && m_data.first->size() > 0 && m_data.second.is_chunked_array()) {
+                options.start = m_data.second.chunked_array()->GetScalar(0).MoveValueUnsafe();
+            }
             return apply("cumulative_min", &options);
         }
 
