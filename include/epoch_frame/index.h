@@ -219,6 +219,10 @@ namespace epoch_frame {
             return array().as_chunked_array();
         }
 
+        Array append(IndexPtr const &other) const {
+            return array().append(other->array());
+        }
+
     protected:
         virtual TemporalOperation<true> dt() const = 0;
     };
