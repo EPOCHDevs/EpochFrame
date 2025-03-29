@@ -47,6 +47,15 @@ namespace epoch_frame {
 
         this->m_index = index;
         this->m_table = data;
+
+        if (m_table->num_rows() == 0 && index->size() > 0) {
+            if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
+                m_table = factory::table::make_null_table(m_table->schema(), index->size());
+            } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
+                m_table = factory::table::make_null_chunked_array(m_table->type(), index->size());
+            }
+        }
+        
         this->m_tableComponent = std::make_shared<TableComponent>(TableComponent{index, data});
         this->m_arithOp = std::make_shared<Arithmetic>(*m_tableComponent);
         this->m_compareOp = std::make_shared<Comparison>(*m_tableComponent);

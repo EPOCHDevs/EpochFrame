@@ -11,6 +11,10 @@ arrow::ChunkedArrayPtr make_empty_chunked_array(const arrow::DataTypePtr& type) 
     return std::make_shared<arrow::ChunkedArray>(std::vector<arrow::ArrayPtr>{}, type);
 }
 
+arrow::ChunkedArrayPtr make_null_chunked_array(const arrow::DataTypePtr& type, int64_t length) {
+    return std::make_shared<arrow::ChunkedArray>(std::vector<arrow::ArrayPtr>{arrow::MakeArrayOfNull(type, length)}, type);
+}
+
 arrow::TablePtr make_null_table(const arrow::SchemaPtr& schema, int64_t num_rows) {
     std::vector<arrow::ChunkedArrayPtr> columns(schema->num_fields());
     std::ranges::transform(schema->fields(), columns.begin(), [&](const arrow::FieldPtr& field) {

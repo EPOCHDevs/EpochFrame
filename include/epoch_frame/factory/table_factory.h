@@ -12,6 +12,8 @@ arrow::TablePtr make_empty_table(const arrow::SchemaPtr& schema);
 
 arrow::ChunkedArrayPtr make_empty_chunked_array(const arrow::DataTypePtr& type=arrow::null());
 
+arrow::ChunkedArrayPtr make_null_chunked_array(const arrow::DataTypePtr& type, int64_t length);
+
 arrow::TablePtr make_null_table(const arrow::SchemaPtr& schema, int64_t num_rows);
 
 template<typename T>
