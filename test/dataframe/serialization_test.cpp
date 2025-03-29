@@ -54,7 +54,7 @@ namespace {
 
     // Check if S3 testing is available
     constexpr bool s3_testing_available() {
-        #ifdef EPOCHFRAME_S3_TEST_BUCKET
+        #ifdef EPOCH_FRAME_S3_TEST_BUCKET
             return true;
         #else
             return false;
@@ -63,8 +63,8 @@ namespace {
 
     // Get S3 path for testing
     constexpr auto get_s3_test_path(const char* path) {
-        #ifdef EPOCHFRAME_S3_TEST_BUCKET
-            return std::format("s3://{}/{}", EPOCHFRAME_S3_TEST_BUCKET, path);
+        #ifdef EPOCH_FRAME_S3_TEST_BUCKET
+            return std::format("s3://{}/{}", EPOCH_FRAME_S3_TEST_BUCKET, path);
         #else
             return "";
         #endif
