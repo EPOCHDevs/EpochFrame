@@ -106,11 +106,23 @@ namespace epoch_frame::factory::index {
                 return std::make_shared<StructIndex>(index_array, name);
             }
             case arrow::Type::TIMESTAMP: {
+                auto type = std::static_pointer_cast<arrow::TimestampType>(index_array->type());
+           
+                if (type->unit() != arrow::TimeUnit::NANO) {
+                    return std::make_shared<DateTimeIndex>(Array{index_array}.cast(arrow::timestamp(arrow::TimeUnit::NANO, type->timezone())).value(), name);
+                }
                 return std::make_shared<DateTimeIndex>(index_array, name);
+              
+                break;
             }
             default:
                 break;
         }
+
+        if (arrow::is_temporal(index_array->type_id())) {
+            return std::make_shared<DateTimeIndex>(Array{index_array}.cast(arrow::timestamp(arrow::TimeUnit::NANO, "")).value(), name);
+        }
+
         throw std::invalid_argument("Unknown index type: " + index_array->type()->ToString());
     }
 

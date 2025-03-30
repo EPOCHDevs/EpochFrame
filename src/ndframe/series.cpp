@@ -41,17 +41,17 @@ namespace epoch_frame {
     Series Series::n_largest(int64_t n) const {
         arrow::compute::ArraySortOptions options;
         options.order = arrow::compute::SortOrder::Descending;
-        auto sorted = arrow_utils::call_unary_compute_contiguous_array(m_index->array().value(), "array_sort_indices", &options);
-        auto indices = sorted->Slice(0, n);
-        return loc(Array(indices));
+        auto sorted_indices = arrow_utils::call_unary_compute_contiguous_array(contiguous_array().value(), "array_sort_indices", &options);
+        auto indices = sorted_indices->Slice(0, n);
+        return iloc(Array(indices));
     }
 
     Series Series::n_smallest(int64_t n) const {
         arrow::compute::ArraySortOptions options;
         options.order = arrow::compute::SortOrder::Ascending;
-        auto sorted = arrow_utils::call_unary_compute_contiguous_array(m_index->array().value(), "array_sort_indices", &options);
-        auto indices = sorted->Slice(0, n);
-        return loc(Array(indices));
+        auto sorted_indices = arrow_utils::call_unary_compute_contiguous_array(contiguous_array().value(), "array_sort_indices", &options);
+        auto indices = sorted_indices->Slice(0, n);
+        return iloc(Array(indices));
     }
 
     DataFrame Series::to_frame(std::optional<std::string> const &name) const {
