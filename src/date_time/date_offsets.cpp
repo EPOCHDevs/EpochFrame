@@ -177,7 +177,7 @@ namespace epoch_frame {
     }
 
     int64_t MonthOffsetHandler::diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const {
-        const auto diff = AssertCastScalarResultIsOk<arrow::Int64Scalar>(arrow::compute::MonthsBetween(start, end));
+        const auto diff = AssertCastScalarResultIsOk<arrow::MonthIntervalScalar>(arrow::compute::MonthsBetween(start, end));
         return diff.value;
     }
 
