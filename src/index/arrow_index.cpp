@@ -168,7 +168,7 @@ namespace epoch_frame {
             return it->second;
         }
 
-        SPDLOG_WARN("get_loc: label {} not found", label.repr());
+        SPDLOG_DEBUG("get_loc: label {} not found", label.repr());
         return -1;
     }
 

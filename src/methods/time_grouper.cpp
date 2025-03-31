@@ -374,8 +374,8 @@ namespace epoch_frame
         }
         else
         {
-            auto _first = first.normalize().timestamp();
-            auto _last  = last.normalize().timestamp();
+            _first = first.normalize().timestamp();
+            _last  = last.normalize().timestamp();
 
             if (m_options.closed == epoch_core::GrouperClosedType::Left)
             {
