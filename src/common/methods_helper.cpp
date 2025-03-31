@@ -415,7 +415,7 @@ namespace epoch_frame {
 //  for missing combos, then you'd do additional "coalesce" steps. Here we do
 //  the simplest approach: only apply the arithmetic to columns found in both.*
 //----------------------------------------------------------------------
-    arrow::TablePtr
+    TableOrArray
     unsafe_binary_op(const TableOrArray &left_rb,
                      const TableOrArray &right_rb,
                      const std::string &op) {
@@ -434,17 +434,25 @@ namespace epoch_frame {
                         return std::tuple(lhs, make_table_from_array_schema(*lhs, rhs));
                     } else if constexpr (std::is_same_v<U1, arrow::ChunkedArray> && std::is_same_v<U2, arrow::Table>) {
                         return std::tuple(make_table_from_array_schema(*rhs, lhs), rhs);
-                    } else {
+                    } 
+                    else if constexpr (std::is_same_v<U1, arrow::ChunkedArray> && std::is_same_v<U2, arrow::ChunkedArray>) {
+                        return std::tuple(nullptr, nullptr);
+                    }
+                    else {
                         throw std::runtime_error("Unsupported unsafe_binary_op type");
                     }
                 }
         }, left_rb.datum().value, right_rb.datum().value);
 
-        return arrow_utils::apply_function_to_table(left, [&](arrow::Datum const &lhs, std::string const& column_name) {
+        if (left == nullptr && right == nullptr) {
+            return TableOrArray{arrow_utils::call_compute_array({left_rb.datum(), right_rb.datum()}, op)};
+        }
+
+        return TableOrArray{arrow_utils::apply_function_to_table(left, [&](arrow::Datum const &lhs, std::string const& column_name) {
             const auto &rhs = right->GetColumnByName(column_name);
             AssertFromStream(rhs != nullptr, "column not found: " << column_name);
             return arrow::Datum(arrow_utils::call_compute_array({lhs, rhs}, op));
-        });
+        })};
     }
 
     bool has_unique_type(const arrow::SchemaPtr &schema) {

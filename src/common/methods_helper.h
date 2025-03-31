@@ -35,7 +35,7 @@ namespace epoch_frame {
 
     // Perform the actual column-wise binary op once two RecordBatches
     // are aligned by row.
-    arrow::TablePtr
+    TableOrArray
     unsafe_binary_op(const TableOrArray &left_rb,
                      const TableOrArray &right_rb,
                      const std::string &op);

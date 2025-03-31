@@ -59,14 +59,19 @@ namespace epoch_frame {
                 if (effective_stop < 0)
                     effective_stop += len;
                 // For negative step, the stop index is clamped to [-1, len-1]
-                effective_stop = std::min(effective_stop, len - 1);
-                effective_stop = (effective_stop < -1 ? -1 : effective_stop);
+                effective_stop = std::clamp(effective_stop, static_cast<int64_t>(-1), len - 1);
             } else {
                 effective_stop = -1;
             }
         }
         
-        effective_start = std::min(effective_start, effective_stop);
+        // For negative step, we need to ensure start >= stop
+        if (effective_step < 0) {
+            effective_start = std::max(effective_start, effective_stop);
+        } else {
+            effective_start = std::min(effective_start, effective_stop);
+        }
+        
         return ResolvedIntegerSliceBound{static_cast<uint64_t>(effective_start), static_cast<uint64_t>(effective_stop),
                                          static_cast<uint64_t>(effective_step)};
     }
