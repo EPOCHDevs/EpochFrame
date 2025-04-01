@@ -32,6 +32,9 @@ TableOrArray make_empty_table_or_array(TableOrArray const& tableOrArray);
 
 TableOrArray make_table_or_array(arrow::TablePtr const& table, const std::string& series_name);
 
+arrow::TablePtr make_table(std::vector<std::vector<Scalar>> const& data, std::vector<std::string> const& names, arrow::DataTypePtr const& type);
+arrow::TablePtr make_table(std::vector<std::vector<Scalar>> const& data, arrow::FieldVector const& fields);
+
 template<typename T>
 int64_t get_size(std::shared_ptr<T> const& arr) {
     AssertFromFormat(arr, "get_size failed due to arr == nullptr.");

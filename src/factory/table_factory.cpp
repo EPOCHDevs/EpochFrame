@@ -60,4 +60,24 @@ TableOrArray make_table_or_array(arrow::TablePtr const& table, const std::string
     return TableOrArray(table);
 }
 
+arrow::TablePtr make_table(std::vector<std::vector<Scalar>> const& data, std::vector<std::string> const& names, arrow::DataTypePtr const& type){
+    AssertFromFormat(data.size() == names.size(), "make_table: data and names must have the same size");
+    arrow::FieldVector fields;
+    fields.reserve(names.size());
+    for (size_t i = 0; i < names.size(); ++i) {
+        fields.push_back(arrow::field(names[i], type));
+    }
+    return make_table(data, fields);
+}
+
+arrow::TablePtr make_table(std::vector<std::vector<Scalar>> const& data, arrow::FieldVector const& fields){
+    AssertFromFormat(data.size() == fields.size(), "make_table: data and fields must have the same size");
+    std::vector<arrow::ChunkedArrayPtr> columns;
+    columns.reserve(fields.size());
+    for (size_t i = 0; i < fields.size(); ++i) {
+        columns.push_back(factory::array::make_chunked_array(data[i], fields[i]->type()));
+    }
+    return arrow::Table::Make(arrow::schema(fields), columns);
+}
+
 } // namespace epoch_frame::factory::table
