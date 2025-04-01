@@ -65,13 +65,6 @@ namespace epoch_frame {
             }
         }
         
-        // For negative step, we need to ensure start >= stop
-        if (effective_step < 0) {
-            effective_start = std::max(effective_start, effective_stop);
-        } else {
-            effective_start = std::min(effective_start, effective_stop);
-        }
-        
         return ResolvedIntegerSliceBound{static_cast<uint64_t>(effective_start), static_cast<uint64_t>(effective_stop),
                                          static_cast<uint64_t>(effective_step)};
     }

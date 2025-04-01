@@ -738,7 +738,7 @@ TEST_CASE("Indexing Test") {
             REQUIRE(result.equals(expected));
         }
 
-        SECTION("where - Condition as Series, Other as DataFrameToDataFrameCallable") {
+        SECTION("where - Condition as Series, Other as DataFrame") {
             // A callable that returns an DataFrame filled with constant 777.
             DataFrameToDataFrameCallable other_callable = [](const DataFrame &frame) {
                 std::vector<std::vector<int64_t>> fill;
