@@ -123,7 +123,9 @@ namespace epoch_frame {
         //--------------------------------------------------------------------------
         bool operator==(Scalar const &other) const;
 
-        bool operator!=(Scalar const &other) const;
+        bool operator!=(Scalar const &other) const{
+            return !(*this == other);
+        }
 
         bool operator<(Scalar const &other) const;
 
