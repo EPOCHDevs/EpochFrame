@@ -37,6 +37,14 @@ namespace epoch_frame::arrow_utils {
         return call_compute(std::vector<arrow::Datum>{input}, function_name, options);
     }
 
+    inline arrow::TablePtr call_compute_table(
+            const std::vector<arrow::Datum> &inputs,
+            const std::string &function_name,
+            const arrow::compute::FunctionOptions *options = nullptr
+    ) {
+        return AssertTableResultIsOk(call_compute(inputs, function_name, options));
+    }
+
     inline arrow::TablePtr call_unary_compute_table(
             const arrow::Datum &input,
             const std::string &function_name,
@@ -44,7 +52,7 @@ namespace epoch_frame::arrow_utils {
     ) {
         arrow::Datum result;
         try {
-            result = call_unary_compute(input, function_name, options);
+            result = call_compute_table({input}, function_name, options);
             return result.table();
         } catch (const std::exception &e) {
             throw std::runtime_error(
@@ -52,7 +60,7 @@ namespace epoch_frame::arrow_utils {
         }
     }
 
-        inline arrow::ArrayPtr call_unary_compute_contiguous_array(
+    inline arrow::ArrayPtr call_unary_compute_contiguous_array(
             const arrow::Datum &input,
             const std::string &function_name,
             const arrow::compute::FunctionOptions *options = nullptr
@@ -76,17 +84,11 @@ namespace epoch_frame::arrow_utils {
         return AssertArrayResultIsOk(call_unary_compute(input, function_name, options));
     }
 
-    inline TableOrArray call_unary_compute_table_or_array(
+    TableOrArray call_unary_compute_table_or_array(
         const TableOrArray &input,
         const std::string &function_name,
         const arrow::compute::FunctionOptions *options = nullptr
-    ) {
-        if (input.is_table()) {
-            return TableOrArray{call_unary_compute_table(input.datum(), function_name, options)};
-        } else {
-            return TableOrArray{call_unary_compute_array(input.datum(), function_name, options)};
-        }
-    }
+    );
 
     inline arrow::ChunkedArrayPtr call_compute_array(
             const std::vector<arrow::Datum> &inputs,
@@ -102,14 +104,6 @@ namespace epoch_frame::arrow_utils {
         const arrow::compute::FunctionOptions *options = nullptr
 ) {
         return AssertContiguousArrayResultIsOk(call_compute(inputs, function_name, options));
-    }
-
-    inline arrow::TablePtr call_compute_table(
-            const std::vector<arrow::Datum> &inputs,
-            const std::string &function_name,
-            const arrow::compute::FunctionOptions *options = nullptr
-    ) {
-        return AssertTableResultIsOk(call_compute(inputs, function_name, options));
     }
 
     inline TableOrArray call_compute_table_or_array(
