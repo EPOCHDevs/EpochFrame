@@ -65,6 +65,14 @@ namespace epoch_frame::arrow_utils {
             const std::string &function_name,
             const arrow::compute::FunctionOptions *options = nullptr
     ) {
+        if (input.is_chunked_array()) {
+            std::vector<arrow::ArrayPtr> arrays;
+            arrays.reserve(input.chunked_array()->num_chunks());
+            for (const auto &chunk : input.chunked_array()->chunks()) {
+                arrays.push_back(call_unary_compute_contiguous_array(chunk, function_name, options));
+            }
+            return std::make_shared<arrow::ChunkedArray>(arrays);
+        }
         return AssertArrayResultIsOk(call_unary_compute(input, function_name, options));
     }
 
