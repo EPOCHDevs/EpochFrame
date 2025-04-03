@@ -456,6 +456,7 @@ TEST_CASE("Indexing Test") {
                 );
 
                 DataFrame result = default_frame.loc(slice);
+                INFO(result);
                 REQUIRE(result.equals(expected));
             }
 

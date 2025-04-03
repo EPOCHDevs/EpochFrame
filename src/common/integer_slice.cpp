@@ -4,13 +4,14 @@
 #include "epoch_frame/integer_slice.h"
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 
 namespace epoch_frame {
     ResolvedIntegerSliceBound resolve_integer_slice(UnResolvedIntegerSliceBound const &bound, size_t length) {
 
         // Convert length to int64_t for arithmetic.
-        int64_t len = static_cast<int64_t>(length);
+        auto len = static_cast<int64_t>(length);
         const auto [start, stop, step] = bound;
 
         // Determine the step; default to 1 if not provided.
@@ -29,7 +30,7 @@ namespace epoch_frame {
                 if (effective_start < 0)
                     effective_start += len;
                 // Clamp to [0, len]
-                effective_start = std::clamp(effective_start, static_cast<int64_t>(0), len);
+                effective_start = std::max(static_cast<int64_t>(0), effective_start);
             } else {
                 effective_start = 0;
             }
@@ -37,8 +38,8 @@ namespace epoch_frame {
                 effective_stop = stop.value();
                 if (effective_stop < 0)
                     effective_stop += len;
-                // Clamp to [0, len]
-                effective_stop = std::clamp(effective_stop, static_cast<int64_t>(0), len);
+                // Clamp stop to [0, len]
+                effective_stop = std::min(len, std::max(static_cast<int64_t>(0), effective_stop));
             } else {
                 effective_stop = len;
             }
@@ -50,7 +51,7 @@ namespace epoch_frame {
                 if (effective_start < 0)
                     effective_start += len;
                 // Clamp to [0, len-1]
-                effective_start = std::clamp(effective_start, static_cast<int64_t>(0), len - 1);
+                effective_start = std::min(len - 1, std::max(static_cast<int64_t>(0), effective_start));
             } else {
                 effective_start = len - 1;
             }
@@ -58,14 +59,47 @@ namespace epoch_frame {
                 effective_stop = stop.value();
                 if (effective_stop < 0)
                     effective_stop += len;
-                // For negative step, the stop index is clamped to [-1, len-1]
-                effective_stop = std::clamp(effective_stop, static_cast<int64_t>(-1), len - 1);
+                // Just use the computed value for now
+                effective_stop = std::min(len - 1, std::max(static_cast<int64_t>(-1), effective_stop));
             } else {
                 effective_stop = -1;
             }
         }
-        
-        return ResolvedIntegerSliceBound{static_cast<uint64_t>(effective_start), static_cast<uint64_t>(effective_stop),
-                                         static_cast<uint64_t>(effective_step)};
+
+        // Print debug info for specific test case
+        if (effective_step == -1 && start.has_value() && stop.has_value() && start.value() == 2 && stop.value() == -2) {
+            std::cout << "Debug [2:-2:-1]: effective_start=" << effective_start
+                      << ", effective_stop=" << effective_stop << std::endl;
+        }
+
+        // Calculate the length of the slice
+        uint64_t slice_length = 0;
+        if (effective_step > 0) {
+            // Empty slice if start >= stop
+            if (effective_start < effective_stop) {
+                slice_length = (effective_stop - effective_start - 1) / effective_step + 1;
+            }
+        } else {
+            // For negative step to work, we need start > stop
+            if (effective_start > effective_stop) {
+                if (effective_stop == -1) {
+                    // For negative step with stop = -1, we go from start down to 0
+                    slice_length = (effective_start + 1) / (-effective_step);
+                    if ((effective_start + 1) % (-effective_step) != 0) {
+                        slice_length += 1;
+                    }
+                } else {
+                    slice_length = (effective_start - effective_stop - 1) / (-effective_step) + 1;
+                }
+            }
+        }
+
+        // Return the start, length and step
+        return ResolvedIntegerSliceBound{
+            static_cast<uint64_t>(effective_start),
+            slice_length,
+            effective_step
+        };
     }
 }
+

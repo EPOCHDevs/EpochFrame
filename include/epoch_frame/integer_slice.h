@@ -10,8 +10,8 @@
 namespace epoch_frame {
     struct ResolvedIntegerSliceBound {
         uint64_t start;
-        uint64_t stop;
-        uint64_t step;
+        uint64_t length; // Number of elements in the slice
+        int64_t step;
     };
 
     struct UnResolvedIntegerSliceBound {

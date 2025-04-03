@@ -17,12 +17,12 @@
 #include "epoch_frame/factory/array_factory.h"
 
 namespace epoch_frame::arrow_utils {
-    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end) {
-        return index.Make(slice_array(index.array().value(), start, end));
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t length) {
+        return index.Make(slice_array(index.array().value(), start, length));
     }
 
-    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end, size_t step) {
-        return index.Make(slice_array(index.array().value(), start, end, step));
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t length, int64_t step) {
+        return index.Make(slice_array(index.array().value(), start, length, step));
     }
 
      arrow::ScalarPtr

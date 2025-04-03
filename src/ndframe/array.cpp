@@ -445,16 +445,21 @@ Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
         throw std::runtime_error("Cannot slice a null array");
     }
 
-    auto [start, stop, step] = resolve_integer_slice(slice, length());
+    auto [start, new_length, step] = resolve_integer_slice(slice, length());
+    
+    if (new_length == 0) {
+        return Array(m_array->Slice(0, 0)); // Empty slice
+    }
 
     if (step == 1) {
-        return this->slice(start, stop - start);
+        return this->slice(start, new_length);
     } else {
         arrow::UInt64Builder index_builder;
-        AssertStatusIsOk(index_builder.Reserve((stop - start + step - 1) / step));
+        AssertStatusIsOk(index_builder.Reserve(new_length));
 
-        for (size_t i = start; i < stop; i += step) {
-            index_builder.UnsafeAppend(i);
+        // Use this pattern for both positive and negative steps
+        for (uint64_t i = 0; i < new_length; i++) {
+            index_builder.UnsafeAppend(start + i * step);
         }
 
         auto index_array = AssertResultIsOk(index_builder.Finish());

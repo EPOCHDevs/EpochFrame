@@ -625,14 +625,23 @@ namespace epoch_frame
     template <class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::iloc(const UnResolvedIntegerSliceBound& bound) const
     {
-        auto [start, end, step] = resolve_integer_slice(bound, size());
-        if (step == 1)
-        {
-            return from_base(arrow_utils::integer_slice_index(*m_index, start, end),
-                             arrow_utils::slice_array(m_table, start, end));
+        auto [start, length, step] = resolve_integer_slice(bound, size());
+        
+        // Handle empty slices
+        if (length == 0) {
+            // Return an empty frame with the same index type and schema
+            if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
+                return from_base(factory::index::from_range(0), 
+                                 factory::table::make_empty_table(m_table->schema()));
+            } else {
+                return from_base(factory::index::from_range(0),
+                                 factory::table::make_empty_chunked_array(m_table->type()));
+            }
         }
-        return from_base(arrow_utils::integer_slice_index(*m_index, start, end, step),
-                         arrow_utils::slice_array(m_table, start, end, step));
+        
+        // The same slice_array function should handle both step=1 and other step values now
+        return from_base(arrow_utils::integer_slice_index(*m_index, start, length, step),
+                         arrow_utils::slice_array(m_table, start, length, step));
     }
 
     template <class ChildType, class ArrowType>
@@ -667,8 +676,8 @@ namespace epoch_frame
     {
         auto [start, end, _] = m_index->slice_locs(label_slice.first, label_slice.second);
         AssertFromStream(start <= end, "Start index must be less than end index");
-        auto table_slice = arrow_utils::slice_array(m_table, start, end);
-        auto index_slice = arrow_utils::integer_slice_index(*m_index, start, end);
+        auto table_slice = arrow_utils::slice_array(m_table, start, end-start);
+        auto index_slice = arrow_utils::integer_slice_index(*m_index, start, end-start);
         return from_base(std::move(index_slice), table_slice);
     }
 

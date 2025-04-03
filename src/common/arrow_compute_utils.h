@@ -187,25 +187,47 @@ namespace epoch_frame::arrow_utils {
     }
 
     template<typename ArrowType>
-    std::shared_ptr<ArrowType> slice_array(const std::shared_ptr<ArrowType> &array, size_t start, size_t end) {
+    requires (std::is_same_v<ArrowType, arrow::Array> || std::is_same_v<ArrowType, arrow::ChunkedArray> ||
+              std::is_same_v<ArrowType, arrow::Table> || std::is_same_v<ArrowType, arrow::RecordBatch>)
+    std::shared_ptr<ArrowType>
+    slice_array(const std::shared_ptr<ArrowType> &array, size_t start, size_t length, int64_t step = 1) {
         AssertFromStream(array != nullptr, "slice_array: array is null");
-        int64_t length{};
-        if constexpr (std::same_as<ArrowType, arrow::Table>) {
-            length = array->num_rows();
+        
+        // Early return for empty slices
+        if (length == 0) {
+            // Return an empty array of the same type
+            if constexpr (std::is_same_v<ArrowType, arrow::Array>) {
+                return array->Slice(0, 0);
+            } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
+                return std::make_shared<arrow::ChunkedArray>(
+                    std::vector<std::shared_ptr<arrow::Array>>{}, array->type());
+            } else {
+                // For Table and RecordBatch, the slice with length 0
+                return array->Slice(0, 0);
+            }
         }
-        else {
-            length = array->length();
-        }
+        
+        arrow::UInt64Builder index_builder;
+        AssertStatusIsOk(index_builder.Reserve(length));
 
-        if (start > end || start >= static_cast<size_t>(length)) {
-            return array->Slice(start, 0);
+        // This pattern works for both positive and negative steps
+        for (uint64_t i = 0; i < length; i++) {
+            // Cast to int64_t for safe calculation with negative steps
+            index_builder.UnsafeAppend(static_cast<uint64_t>(static_cast<int64_t>(start) + i * step));
         }
-
-        auto arr = array->Slice(start, end - start);
-        if (arr == nullptr) {
-            throw std::runtime_error("slice_array: array is null");
+        
+        auto index_result = AssertResultIsOk(index_builder.Finish());
+        arrow::Datum selected = AssertResultIsOk(arrow::compute::Take(array, index_result));
+        
+        if constexpr (std::is_same_v<ArrowType, arrow::Array>) {
+            return selected.make_array();
+        } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
+            return selected.chunked_array();
+        } else if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
+            return selected.table();
+        } else if constexpr (std::is_same_v<ArrowType, arrow::RecordBatch>) {
+            return selected.record_batch();
         }
-        return arr;
     }
 
     TableOrArray diff(const TableOrArray &array, int64_t periods = 1, bool pad = false);
@@ -221,31 +243,6 @@ namespace epoch_frame::arrow_utils {
                         const arrow::ChunkedArrayPtr &other,
                         std::optional<int64_t> min_periods = std::nullopt,
                         int64_t ddof = 1);
-
-    template<typename ArrowType>
-    requires (std::is_same_v<ArrowType, arrow::Array> || std::is_same_v<ArrowType, arrow::ChunkedArray> ||
-              std::is_same_v<ArrowType, arrow::Table> || std::is_same_v<ArrowType, arrow::RecordBatch>)
-    std::shared_ptr<ArrowType>
-    slice_array(const std::shared_ptr<ArrowType> &array, size_t start, size_t end, size_t step) {
-        AssertFromStream(array != nullptr, "slice_array: array is null");
-        arrow::UInt64Builder index_builder;
-        AssertStatusIsOk(index_builder.Reserve((end - start + 1) / step));
-
-        for (size_t i = start; i <= end; i += step) {
-            index_builder.UnsafeAppend(i);
-        }
-        auto index_result = AssertResultIsOk(index_builder.Finish());
-        arrow::Datum selected = AssertResultIsOk(arrow::compute::Take(array, index_result));
-        if constexpr (std::is_same_v<ArrowType, arrow::Array>) {
-            return selected.make_array();
-        } else if constexpr (std::is_same_v<ArrowType, arrow::ChunkedArray>) {
-            return selected.chunked_array();
-        } else if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
-            return selected.table();
-        } else if constexpr (std::is_same_v<ArrowType, arrow::RecordBatch>) {
-            return selected.record_batch();
-        }
-    }
 
     arrow::TablePtr apply_function_to_table(const arrow::TablePtr &table, std::function<arrow::Datum(arrow::Datum const&, std::string const&)> func, bool merge_chunks=true);
 
@@ -281,8 +278,8 @@ namespace epoch_frame::arrow_utils {
 
     TableOrArray call_compute_index_in(const TableOrArray &table, const arrow::ArrayPtr &values);
 
-    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end);
-    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t end, size_t step);
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t length);
+    IndexPtr integer_slice_index(const IIndex &index, size_t start, size_t length, int64_t step);
 
     /**
      * @brief Apply a function to each element in an array
