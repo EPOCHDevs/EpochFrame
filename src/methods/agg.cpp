@@ -3,7 +3,7 @@
 //
 
 #include "agg.h"
-#include "common/EpochThreadPool.h"
+#include "common/epoch_thread_pool.h"
 #include "common/arrow_compute_utils.h"
 #include "common/table_or_array.h"
 #include "epoch_frame/frame_or_series.h"

@@ -29,6 +29,10 @@ namespace epoch_frame {
         // General Attributes
         // ------------------------------------------------------------------------
 
+        arrow::DataTypePtr dtype() const {
+            return m_table->type();
+        }
+
         Series add_prefix(const std::string &prefix) const override {
             return Series(m_table, prefix + m_name.value_or(""));
         }

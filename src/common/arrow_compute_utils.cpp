@@ -3,7 +3,7 @@
 //
 
 #include "arrow_compute_utils.h"
-#include "common/EpochThreadPool.h"
+#include "common/epoch_thread_pool.h"
 #include "epoch_frame/factory/array_factory.h"
 #include "epoch_frame/frame_or_series.h"
 #include "index/arrow_index.h"
@@ -13,9 +13,7 @@
 #include <memory>
 #include <oneapi/tbb/partitioner.h>
 #include <stdexcept>
-#include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-#include <tbb/task_arena.h>
 #include <vector>
 
 namespace epoch_frame::arrow_utils

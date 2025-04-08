@@ -3,7 +3,7 @@
 //
 
 #include "methods_helper.h"
-#include "common/EpochThreadPool.h"
+#include "common/epoch_thread_pool.h"
 #include "epoch_frame/factory/array_factory.h"
 #include "epoch_frame/factory/dataframe_factory.h"
 #include "epoch_frame/factory/index_factory.h"
@@ -327,6 +327,7 @@ namespace epoch_frame
         arrow::ChunkedArrayVector arrays;
         arrow::FieldVector        fields;
         int64_t                   i = 0;
+        std::unordered_set<std::string> names;
         for (auto const& obj : objs)
         {
             auto [columns_, fields_] = obj.visit(
@@ -344,6 +345,10 @@ namespace epoch_frame
                         {
                             n = std::to_string(i++);
                         }
+                        else if (names.contains(n.value())) {
+                            n = n.value() + "_" + std::to_string(i++);
+                        }
+                        names.insert(n.value());
                         return std::pair<arrow::ChunkedArrayVector, arrow::FieldVector>{
                             std::vector{variant_.array()},
                             {arrow::field(n.value(), variant_.array()->type())}};

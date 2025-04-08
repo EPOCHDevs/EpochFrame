@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "common/EpochThreadPool.h"
+#include "common/epoch_thread_pool.h"
 #include "common/python_utils.h"
 #include "common/user_defined_compute_functions.h"
 #include "epoch_frame/common.h"

@@ -12,17 +12,17 @@ namespace epoch_frame::calendar
             .name = "FX",
             .regular_market_times =
                 RegularMarketTimes{{epoch_core::MarketTimeType::MarketOpen,
-                                    MarketTimes{MarketTime{Time{17h, 0min, 0s}}}},
+                                    MarketTimes{MarketTime{Time{17h, 0min, 0s}, -1}}},
                                    {epoch_core::MarketTimeType::MarketClose,
-                                    MarketTimes{MarketTime{Time{17h, 0min, 0s}, 1}}}},
+                                    MarketTimes{MarketTime{Time{17h, 0min, 0s}}}}},
             .tz = EST,
             // Forex markets generally only close for a few major holidays
             .regular_holidays = make_unnamed_calendar({us.Christmas, us.USNewYearsDay}),
             .aliases          = {"FX", "Forex", "FX_Market", "Currency"},
             // Include Sunday in weekmask since we handle special opens
-            .weekmask = {epoch_core::EpochDayOfWeek::Sunday, epoch_core::EpochDayOfWeek::Monday,
+            .weekmask = {epoch_core::EpochDayOfWeek::Monday,
                          epoch_core::EpochDayOfWeek::Tuesday, epoch_core::EpochDayOfWeek::Wednesday,
-                         epoch_core::EpochDayOfWeek::Thursday}};
+                         epoch_core::EpochDayOfWeek::Thursday, epoch_core::EpochDayOfWeek::Friday}};
     };
 
     const FXOptions& fx_instance()

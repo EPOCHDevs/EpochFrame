@@ -67,12 +67,20 @@ namespace epoch_frame::calendar::utils
         auto market_open  = schedules[0]["MarketOpen"];
         auto market_close = schedules[0]["MarketClose"];
 
+        auto open_type = market_open.dtype();
+        auto close_type = market_close.dtype();
+
         for (auto const& schedule : schedules | std::views::drop(1))
         {
+            auto other_market_open  = schedule["MarketOpen"];
+            auto other_market_close = schedule["MarketClose"];
+            auto type = outer ? JoinType::Outer : JoinType::Inner;
+
             auto market_open_df =
-                concat({{market_open, schedule["MarketOpen"]}, JoinType::Outer, AxisType::Column});
+                concat({{market_open.cast(arrow::int64()), other_market_open.cast(arrow::int64())}, type, AxisType::Column});
             auto market_close_df = concat(
-                {{market_close, schedule["MarketClose"]}, JoinType::Outer, AxisType::Column});
+                {{market_close.cast(arrow::int64()), other_market_close.cast(arrow::int64())}, type, AxisType::Column});
+
             if (outer)
             {
                 market_open  = market_open_df.min(AxisType::Column, true);
@@ -82,9 +90,10 @@ namespace epoch_frame::calendar::utils
             {
                 market_open  = market_open_df.max(AxisType::Column, true);
                 market_close = market_close_df.min(AxisType::Column, true);
+
             }
         }
-        return concat({{market_open.rename("MarketOpen"), market_close.rename("MarketClose")},
+        return concat({{market_open.rename("MarketOpen").cast(open_type), market_close.rename("MarketClose").cast(close_type)},
                        JoinType::Outer,
                        AxisType::Column});
     }
