@@ -14,4 +14,6 @@ build*
 __pycache__
 /dateutil/
 /pandas/
+
+.cache
 /pandas_market_calendars/

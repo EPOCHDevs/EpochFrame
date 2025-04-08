@@ -107,12 +107,12 @@ namespace epoch_frame::factory::index {
             }
             case arrow::Type::TIMESTAMP: {
                 auto type = std::static_pointer_cast<arrow::TimestampType>(index_array->type());
-           
+
                 if (type->unit() != arrow::TimeUnit::NANO) {
                     return std::make_shared<DateTimeIndex>(Array{index_array}.cast(arrow::timestamp(arrow::TimeUnit::NANO, type->timezone())).value(), name);
                 }
                 return std::make_shared<DateTimeIndex>(index_array, name);
-              
+
                 break;
             }
             default:
@@ -154,6 +154,20 @@ namespace epoch_frame::factory::index {
             --period;
         }
         return date_range(result, t.type);
+    }
+
+    std::shared_ptr<DateTimeIndex>  date_range_internal(arrow::TimestampScalar start, arrow::TimestampScalar const& end, DateOffsetHandlerPtr const& offset) {
+        std::vector<int64_t> result;
+        const auto days = std::chrono::floor<std::chrono::days>(system_clock::time_point(nanoseconds(end.value - start.value))).time_since_epoch().count();
+        result.reserve(std::max<int64_t>(0, days) + 1);
+
+        while (start.value <= end.value) {
+            result.push_back(start.value);
+            const auto next = offset->add(start);
+            AssertFromStream(next.value > start.value, "offset " << offset->name() << " did not increment date");
+            start = next;
+        }
+        return date_range(result, start.type);
     }
 
     std::string infer_tz_from_endpoints(std::optional<arrow::TimestampScalar> const& start, std::optional<arrow::TimestampScalar> const& end, std::string const& tz) {
@@ -219,7 +233,7 @@ namespace epoch_frame::factory::index {
         std::shared_ptr<DateTimeIndex>  index;
         if (end) {
             end = options.offset->rollback(*end);
-            index = date_range_internal(start, options.offset->diff(start, *end)+1, options.offset);
+            index = date_range_internal(start, *end, options.offset);
         }
         else {
             index = date_range_internal(start, *options.periods, options.offset);

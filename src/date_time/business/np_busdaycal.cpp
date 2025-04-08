@@ -69,7 +69,7 @@ namespace epoch_frame::np
         return holidays_begin;
     }
 
-    bool is_holiday(std::optional<DateTime> const& date, auto holidays_begin, auto  holidays_end)
+    bool is_holiday(DateTime const& date, auto holidays_begin, auto  holidays_end)
     {
         while (holidays_begin < holidays_end) {
             auto trial = holidays_begin + (holidays_end - holidays_begin) / 2;

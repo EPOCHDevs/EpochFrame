@@ -180,9 +180,14 @@ namespace epoch_frame {
     }
 
     std::strong_ordering DateTime::operator<=>(const DateTime &other) const {
-        auto ts1 = timestamp().value;
-        auto ts2 = other.timestamp().value;
-        return ts1 <=> ts2;
+        auto d1 = date;
+        auto d2 = other.date;
+        if (d1 != d2) {
+            return d1 <=> d2;
+        }
+        auto hms1 = hour + minute + second + microsecond;
+        auto hms2 = other.hour + other.minute + other.second + other.microsecond;
+        return hms1 <=> hms2;
     }
 
     DateTime DateTime::combine(const Date &date, const Time &time) {

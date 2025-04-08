@@ -180,11 +180,11 @@ namespace epoch_frame {
         }
 
         ScalarMapping<int64_t> indexer() const {
-            return m_indexer;
+            return get_indexer();
         }
 
         std::vector<Scalar> index_list() const {
-            return m_index_list;
+            return get_index_list();
         }
 
         constexpr bool is_monotonic() const {
@@ -213,13 +213,16 @@ namespace epoch_frame {
     protected:
         const std::string m_name;
         const Array m_array;
-        ScalarMapping<int64_t> m_indexer;
-        std::vector<Scalar> m_index_list;
+        mutable ScalarMapping<int64_t> m_indexer;
+        mutable std::vector<Scalar> m_index_list;
         MonotonicDirection m_monotonic_direction;
 
         void validate_monotonic_nature(std::optional<MonotonicDirection> const& expected);
 
         void validate_uniqueness() const;
+
+        ScalarMapping<int64_t>& get_indexer() const;
+        std::vector<Scalar>& get_index_list() const;
     };
 
     extern template class ArrowIndex<true>;

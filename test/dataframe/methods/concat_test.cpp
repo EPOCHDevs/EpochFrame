@@ -176,7 +176,7 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
         {
             "Empty frames vector",
             ConcatOptions{ {}, JoinType::Inner, AxisType::Row, false, false },
-            df_empty
+            std::nullopt
         },
         {
             "Single DataFrame",

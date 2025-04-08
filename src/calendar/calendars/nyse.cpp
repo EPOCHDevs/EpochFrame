@@ -1,11 +1,9 @@
 #include "../holidays/nyse.h"
-#include "../holidays/us.h"
 #include "all.h"
-#include "epoch_frame/series.h"
 #include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/series.h"
 
-
-#define us   USHolidays::Instance()
+#define us USHolidays::Instance()
 #define nyse NYSEHolidays::Instance()
 
 namespace epoch_frame::calendar
@@ -27,7 +25,7 @@ namespace epoch_frame::calendar
                 {epoch_core::MarketTimeType::MarketClose,
                  {MarketTime{Time{15h}},
                   MarketTime{Time{15h, 30min}, std::nullopt, Date{1952y, September, 29d}},
-                  MarketTime{Time{16h}, std::nullopt, Date{1974y, January, 16d}}}},
+                  MarketTime{Time{16h}, std::nullopt, Date{1974y, January, 1d}}}},
                 {epoch_core::MarketTimeType::Post, {MarketTime{Time{20h}}}},
             }},
             .tz                   = EST,
@@ -145,8 +143,133 @@ namespace epoch_frame::calendar
                         .calendar = factory::index::make_datetime_index(chain(
                             nyse.BacklogRelief12pmLateOpen1929, nyse.HeavyVolume12pmLateOpen1933))},
                 },
-            .special_closes       = {},
-            .special_closes_adhoc = {}};
+            .special_closes =
+                {
+                    SpecialTime{.time     = Time{.hour = 11h, .tz = EST},
+                                .calendar = make_unnamed_calendar(
+                                    {nyse.KingEdwardDeath11amyClose1910}, START_DATE)},
+                    SpecialTime{.time = Time{.hour = 12h, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.ParadeOfNationalGuardEarlyClose1917,
+                                            nyse.LibertyDay12pmEarlyClose1917,
+                                            nyse.LibertyDay12pmEarlyClose1918,
+                                            nyse.WallStreetExplosionEarlyClose1920,
+                                            nyse.NRAdemonstration12pmEarlyClose1933,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 12h, .minute = 30min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.RooseveltFuneral1230EarlyClose1919,
+                                            nyse.WoodrowWilsonFuneral1230EarlyClose1924,
+                                            nyse.TaftFuneral1230EarlyClose1930,
+                                            nyse.GasFumesOnTradingFloor1230EarlyClose1933,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 13h, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.FridayAfterIndependenceDayNYSEpre2013,
+                                            nyse.MonTuesThursBeforeIndependenceDay,
+                                            nyse.WednesdayBeforeIndependenceDayPost2013,
+                                            nyse.DayAfterThanksgiving1pmEarlyCloseInOrAfter1993,
+                                            nyse.ChristmasEvePost1999Early1pmClose,
+                                            nyse.GroverClevelandFuneral1pmClose1908,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 14h, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.DayAfterThanksgiving2pmEarlyCloseBefore1993,
+                                            nyse.HooverFuneral1400EarlyClose1964,
+                                            nyse.Snow2pmEarlyClose1967,
+                                            nyse.Snow2pmEarlyClose1978,
+                                            nyse.Snow2pmEarlyClose1996,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 14h, .minute = 7min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.KennedyAssassination1407EarlyClose,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 14h, .minute = 30min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.FalseArmisticeReport1430EarlyClose1918,
+                                            nyse.CromwellFuneral1430EarlyClose1925,
+                                            nyse.Snow230EarlyClose1975,
+                                            nyse.Snow230pmEarlyClose1994,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 15h, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.HurricaneWatch3pmEarlyClose1976,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 15h, .minute = 17min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.ReaganAssassAttempt317pmEarlyClose1981,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 15h, .minute = 28min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.ConEdPowerFail328pmEarlyClose1981,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 15h, .minute = 30min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.CircuitBreakerTriggered330pmEarlyClose1997,
+                                        },
+                                        START_DATE)},
+                    SpecialTime{.time = Time{.hour = 15h, .minute = 56min, .tz = EST},
+                                .calendar =
+                                    make_unnamed_calendar(
+                                        {
+                                            nyse.SystemProb356pmEarlyClose2005,
+                                        },
+                                        START_DATE)},
+                },
+            .special_closes_adhoc = {
+                SpecialTimeAdHoc{.time     = Time{.hour = 13h, .tz = EST},
+                                 .calendar = factory::index::make_datetime_index(
+                                     chain(nyse.ChristmasEve1pmEarlyCloseAdhoc,
+                                           nyse.DayAfterChristmas1pmEarlyCloseAdhoc,
+                                           nyse.BacklogRelief1pmEarlyClose1929))},
+                SpecialTimeAdHoc{
+                    .time     = Time{.hour = 14h, .tz = EST},
+                    .calendar = factory::index::make_datetime_index(chain(
+                        nyse.ChristmasEve2pmEarlyCloseAdhoc, nyse.HeavyVolume2pmEarlyClose1933,
+                        nyse.BacklogRelief2pmEarlyClose1928, nyse.TransitStrike2pmEarlyClose1966,
+                        nyse.Backlog2pmEarlyCloses1967, nyse.Backlog2pmEarlyCloses1968,
+                        nyse.PaperworkCrisis230pmEarlyCloses1969, nyse.Backlog2pmEarlyCloses1987))},
+                SpecialTimeAdHoc{.time     = Time{.hour = 14h, .minute = 30min, .tz = EST},
+                                 .calendar = factory::index::make_datetime_index(
+                                     chain(nyse.PaperworkCrisis230pmEarlyCloses1969,
+                                           nyse.Backlog230pmEarlyCloses1987))},
+                SpecialTimeAdHoc{.time     = Time{.hour = 15h, .tz = EST},
+                                 .calendar = factory::index::make_datetime_index(
+                                     chain(nyse.PaperworkCrisis3pmEarlyCloses1969to1970,
+                                           nyse.Backlog3pmEarlyCloses1987))},
+                SpecialTimeAdHoc{.time     = Time{.hour = 15h, .minute = 30min, .tz = EST},
+                                 .calendar = factory::index::make_datetime_index(
+                                     nyse.Backlog330pmEarlyCloses1987)},
+            }};
 
         const np::WeekMask WEEKMASK_PRE_1952{true, true, true, true, true, true, false};
 
@@ -163,19 +286,20 @@ namespace epoch_frame::calendar
         return options;
     }
 
-    NYSEExhangeCalendar::NYSEExhangeCalendar(std::optional<MarketTime> const& open_time,
-                                             std::optional<MarketTime> const& close_time)
+    NYSEExchangeCalendar::NYSEExchangeCalendar(std::optional<MarketTime> const& open_time,
+                                               std::optional<MarketTime> const& close_time)
         : MarketCalendar(open_time, close_time, instance().NYSE_OPTIONS)
     {
     }
 
-    IndexPtr NYSEExhangeCalendar::valid_days(const Date& start, const Date& end,
-                                             std::string const& tz) const
+    IndexPtr NYSEExchangeCalendar::valid_days(const Date& start, const Date& end,
+                                              std::string const& tz) const
     {
         auto start_date = DateTime{start}.tz_localize(tz);
         auto end_date   = DateTime{end}.tz_localize(tz);
 
-        DateTime saturday_end = tz == "" ? instance().SATURDAY_END.tz_localize("") : start_date;
+        DateTime saturday_end =
+            tz == "" ? instance().SATURDAY_END.tz_localize("") : instance().SATURDAY_END;
 
         if (start_date > saturday_end)
         {
@@ -202,9 +326,9 @@ namespace epoch_frame::calendar
         return days_pre->union_(days_post);
     }
 
-    Series NYSEExhangeCalendar::days_at_time(IndexPtr const&          days_,
-                                             const MarketTimeVariant& market_time,
-                                             int64_t                  day_offset) const
+    Series NYSEExchangeCalendar::days_at_time(IndexPtr const&          days_,
+                                              const MarketTimeVariant& market_time,
+                                              int64_t                  day_offset) const
     {
         auto days = MarketCalendar::days_at_time(days_, market_time, day_offset);
 
@@ -213,26 +337,23 @@ namespace epoch_frame::calendar
             auto type = std::get<epoch_core::MarketTimeType>(market_time);
             if (type == epoch_core::MarketTimeType::MarketClose && !is_custom(type))
             {
-                days =
-                    Series(days.index(),
-                           days.dt()
-                               .tz_convert(m_options.tz)
-                               .where(days.dt().day_of_week(arrow::compute::DayOfWeekOptions{}) !=
-                                          5_scalar,
-                                      days.dt().normalize() +
-                                          Scalar(_tdelta(instance().SATURDAY_CLOSE, std::nullopt)))
-                               .dt()
-                               .tz_convert(UTC)
-                               .value(),
-                           "");
+                auto days_array = days.dt().tz_convert(m_options.tz);
+                auto mask =
+                    days_array.dt().day_of_week(arrow::compute::DayOfWeekOptions{}) != 5_scalar;
+
+                auto replacement = days_array.dt().normalize() +
+                                   Scalar(_tdelta(instance().SATURDAY_CLOSE, std::nullopt));
+
+                days = Series(days.index(),
+                              days_array.where(mask, replacement).dt().tz_convert(UTC).value(), "");
             }
         }
 
         return days;
     }
 
-    IndexPtr NYSEExhangeCalendar::date_range_htf(Date const& start, Date const& end,
-                                                 std::optional<int64_t> periods) const
+    IndexPtr NYSEExchangeCalendar::date_range_htf(Date const& start, Date const& end,
+                                                  std::optional<int64_t> periods) const
     {
         if (start > instance().SATURDAY_END.date)
         {

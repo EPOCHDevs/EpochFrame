@@ -348,6 +348,9 @@ Array Array::sort(bool ascending) const {
 }
 
 Array Array::unique() const {
+    if (type()->id() == arrow::Type::STRUCT) {
+        return *this;
+    }
     return Array(arrow_utils::call_unary_compute_contiguous_array(m_array, "unique"));
 }
 
@@ -446,7 +449,7 @@ Array Array::operator[](const UnResolvedIntegerSliceBound& slice) const {
     }
 
     auto [start, new_length, step] = resolve_integer_slice(slice, length());
-    
+
     if (new_length == 0) {
         return Array(m_array->Slice(0, 0)); // Empty slice
     }

@@ -8,9 +8,9 @@
 #include <epoch_frame/series.h>
 
 #include "calendar_utils.h"
+#include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/frame_or_series.h"
 #include "epoch_frame/index.h"
-#include "epoch_frame/factory/index_factory.h"
 
 namespace cal_utils = epoch_frame::calendar::utils;
 namespace epoch_frame::calendar
@@ -271,10 +271,8 @@ namespace epoch_frame::calendar
                epoch_core::ranges::to_vector_v;
     }
 
-    Series
-    MarketCalendar::days_at_time(IndexPtr const&                                       days,
-                                 const MarketTimeVariant& market_time,
-                                 int64_t day_offset) const
+    Series MarketCalendar::days_at_time(IndexPtr const& days, const MarketTimeVariant& market_time,
+                                        int64_t day_offset) const
     {
         const Array localized_days = days->tz_localize("")->array();
 
@@ -503,7 +501,6 @@ namespace epoch_frame::calendar
         }
 
         auto schema = schedule.table()->schema();
-        ;
         if (adj_others && open_adj && open_adj->size() > 0)
         {
             auto mk_open_ind = schema->GetFieldIndex(epoch_core::MarketTimeTypeWrapper::ToString(
@@ -530,7 +527,7 @@ namespace epoch_frame::calendar
         {
             schedule = schedule.apply(
                 [&](Series const& x)
-                { return Series(x.index(), x.dt().tz_convert(options.tz).value()); });
+                { return Series(x.index(), x.dt().tz_convert(options.tz).as_chunked_array()); });
         }
 
         return schedule;
@@ -544,7 +541,7 @@ namespace epoch_frame::calendar
         return cal_utils::date_range_htf(options);
     }
 
-    // DataFrame MarketCalendar::open_at_time(DataFrame const& schedule, DateTime const& dt, bool
+    // open_at_time MarketCalendar::open_at_time(DataFrame const& schedule, DateTime const& dt, bool
     // include_close, bool only_rth) const {
     //     auto timestamp = dt.tz_localize("UTC").timestamp();
     //     auto cols = schedule.column_names();
