@@ -1,13 +1,19 @@
 #include "holiday_calendar.h"
-#include <iostream>
-#include <epoch_core/macros.h>
+#include "date_time/datetime.h"
 #include "epoch_frame/common.h"
+#include "epoch_frame/factory/dataframe_factory.h"
+#include <arrow/scalar.h>
+#include <epoch_core/macros.h>
+#include <iostream>
+#include <memory>
 
 namespace epoch_frame::calendar
 {
 
-    AbstractHolidayCalendar::AbstractHolidayCalendar(const AbstractHolidayCalendarData& data, DateTime start_date, DateTime end_date)
-        : name(data.name), rules(data.rules), start_date(std::move(start_date)), end_date(std::move(end_date))
+    AbstractHolidayCalendar::AbstractHolidayCalendar(const AbstractHolidayCalendarData& data,
+                                                     DateTime start_date, DateTime end_date)
+        : name(data.name), rules(data.rules), start_date(std::move(start_date)),
+          end_date(std::move(end_date))
     {
         AssertFromFormat(data.rules.size() > 0, "Rules must contain at least one holiday");
     }
@@ -48,9 +54,14 @@ namespace epoch_frame::calendar
                                    });
 
             // Update cache
-            cache = std::make_tuple(start_date_to_use, end_date_to_use, concat({.frames = pre_holidays}).sort_index());
+            cache = std::make_tuple(start_date_to_use, end_date_to_use,
+                                    concat({.frames = pre_holidays}).sort_index());
         }
-        return std::get<2>(*cache).loc({Scalar{start_date_to_use}, Scalar{end_date_to_use}});
+        auto   df = std::get<2>(*cache);
+        Scalar start_scalar{start_date_to_use};
+        Scalar end_scalar{end_date_to_use};
+
+        return df.loc({start_scalar, end_scalar});
     }
 
     // Static method to merge holiday calendars
@@ -102,4 +113,4 @@ namespace epoch_frame::calendar
         calendar_factories[data.name] = [data]()
         { return std::make_shared<AbstractHolidayCalendar>(data); };
     }
-} // namespace epoch_frame
+} // namespace epoch_frame::calendar

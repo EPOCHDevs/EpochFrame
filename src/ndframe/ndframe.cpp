@@ -626,19 +626,23 @@ namespace epoch_frame
     ChildType NDFrame<ChildType, ArrowType>::iloc(const UnResolvedIntegerSliceBound& bound) const
     {
         auto [start, length, step] = resolve_integer_slice(bound, size());
-        
+
         // Handle empty slices
-        if (length == 0) {
+        if (length == 0)
+        {
             // Return an empty frame with the same index type and schema
-            if constexpr (std::is_same_v<ArrowType, arrow::Table>) {
-                return from_base(factory::index::from_range(0), 
+            if constexpr (std::is_same_v<ArrowType, arrow::Table>)
+            {
+                return from_base(factory::index::from_range(0),
                                  factory::table::make_empty_table(m_table->schema()));
-            } else {
+            }
+            else
+            {
                 return from_base(factory::index::from_range(0),
                                  factory::table::make_empty_chunked_array(m_table->type()));
             }
         }
-        
+
         // The same slice_array function should handle both step=1 and other step values now
         return from_base(arrow_utils::integer_slice_index(*m_index, start, length, step),
                          arrow_utils::slice_array(m_table, start, length, step));
@@ -676,8 +680,8 @@ namespace epoch_frame
     {
         auto [start, end, _] = m_index->slice_locs(label_slice.first, label_slice.second);
         AssertFromStream(start <= end, "Start index must be less than end index");
-        auto table_slice = arrow_utils::slice_array(m_table, start, end-start);
-        auto index_slice = arrow_utils::integer_slice_index(*m_index, start, end-start);
+        auto table_slice = arrow_utils::slice_array(m_table, start, end - start);
+        auto index_slice = arrow_utils::integer_slice_index(*m_index, start, end - start);
         return from_base(std::move(index_slice), table_slice);
     }
 
@@ -1177,7 +1181,9 @@ namespace epoch_frame
     template <class ChildType, class ArrowType>
     bool NDFrame<ChildType, ArrowType>::equals(ChildType const& other) const
     {
-        return m_index->equals(other.m_index) && m_table->Equals(*other.m_table);
+        bool index_equals = m_index->equals(other.m_index);
+        bool table_equals = m_table->Equals(*other.m_table);
+        return index_equals && table_equals;
     }
 
     template <class ChildType, class ArrowType>

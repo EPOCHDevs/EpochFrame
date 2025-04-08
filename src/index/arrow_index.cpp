@@ -26,35 +26,48 @@ namespace epoch_frame {
     }
 
     template<bool IsMonotonic>
-    void ArrowIndex<IsMonotonic>::validate_monotonic_nature(std::optional<MonotonicDirection> const& expected) {
-        if (m_indexer.empty()) {
-            m_index_list.reserve(m_array.length());
-            for (int i = 0; i < m_array.length(); ++i) {
-                Scalar s = m_array[i];
-                m_indexer.emplace(s, i);
-                m_index_list.push_back(std::move(s));
-            }
+    std::vector<Scalar>& ArrowIndex<IsMonotonic>::get_index_list() const {
+        if (!m_index_list.empty()) {
+            return m_index_list;
         }
+        m_index_list.reserve(m_array.length());
+        for (int i = 0; i < m_array.length(); ++i) {
+            m_index_list.emplace_back(m_array[i]);
+        }
+        return m_index_list;
+    }
 
+    template<bool IsMonotonic>
+    ScalarMapping<int64_t>& ArrowIndex<IsMonotonic>::get_indexer() const {
+        if (!m_indexer.empty()) {
+            return m_indexer;
+        }
+        for (int i = 0; i < m_array.length(); ++i) {
+            m_indexer.emplace(m_array[i], i);
+        }
+        return m_indexer;
+    }
+
+    template<bool IsMonotonic>
+    void ArrowIndex<IsMonotonic>::validate_monotonic_nature(std::optional<MonotonicDirection> const& expected) {
         if constexpr (IsMonotonic) {
+            m_monotonic_direction = expected.value_or(MonotonicDirection::Increasing);
 
-            if (m_array.length() == 0) {
-                m_monotonic_direction = expected.value_or(MonotonicDirection::Increasing);
-                return;
-            }
-
-            // infer monotonic direction from the data
-            if (std::ranges::is_sorted(m_index_list, std::less{})) {
-                m_monotonic_direction = MonotonicDirection::Increasing;
-            } else if (std::ranges::is_sorted(m_index_list, std::greater{})) {
-                m_monotonic_direction = MonotonicDirection::Decreasing;
-            } else {
-                m_monotonic_direction = MonotonicDirection::NotMonotonic;
-            }
-
-            if (expected) {
-                AssertFromFormat(m_monotonic_direction == *expected, "ArrowIndex constructed with mismatched monotonic direction. expected: {}, got: {}", format_monotonic_direction(*expected), format_monotonic_direction(m_monotonic_direction));
-            }
+            // // infer monotonic direction from the data
+            // if (std::ranges::is_sorted(m_index_list, std::less{})) {
+            //     m_monotonic_direction = MonotonicDirection::Increasing;
+            // } else if (std::ranges::is_sorted(m_index_list, std::greater{})) {
+            //     m_monotonic_direction = MonotonicDirection::Decreasing;
+            // } else {
+            //     m_monotonic_direction = MonotonicDirection::NotMonotonic;
+            // }
+            //
+            // if (expected) {
+            //     AssertFromFormat(m_monotonic_direction == *expected, "ArrowIndex constructed with mismatched monotonic direction. expected: {}, got: {}", format_monotonic_direction(*expected), format_monotonic_direction(m_monotonic_direction));
+            // }
+        }
+        else {
+            m_monotonic_direction = expected.value_or(MonotonicDirection::NotMonotonic);
         }
     }
 
@@ -93,9 +106,9 @@ namespace epoch_frame {
         if constexpr (!IsMonotonic) {
             m_monotonic_direction = MonotonicDirection::NotMonotonic;
         }
-        else {
-            validate_uniqueness();
-        }
+        // else {
+        //     validate_uniqueness();
+        // }
     }
 
 
@@ -164,7 +177,8 @@ namespace epoch_frame {
             throw std::runtime_error("get_loc: label is null");
         }
         auto casted = label.cast(m_array->type());
-        if (auto it = m_indexer.find(casted); it != m_indexer.end()) {
+        const auto& indexer = get_indexer();
+        if (auto it = indexer.find(casted); it != indexer.end()) {
             return it->second;
         }
 
@@ -191,7 +205,7 @@ namespace epoch_frame {
         if (label.is_null()) {
             return false;
         }
-        return m_indexer.contains(label);
+        return get_indexer().contains(label);
     }
 
     template<bool IsMonotonic>
@@ -328,7 +342,7 @@ namespace epoch_frame {
     template<bool IsMonotonic>
     int64_t ArrowIndex<IsMonotonic>::get_lower_bound_index(const Scalar &value) const {
         if constexpr (IsMonotonic) {
-            auto indexer_view = m_indexer | std::views::keys;
+            auto indexer_view = get_indexer() | std::views::keys;
             auto it = std::ranges::lower_bound(indexer_view, value);
             return (it != indexer_view.end()) ? it.base()->second : 0;
         }

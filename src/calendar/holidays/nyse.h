@@ -4,9 +4,9 @@
 #include "epoch_frame/aliases.h"
 #include "epoch_frame/factory/date_offset_factory.h"
 #include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/index.h"
 #include <set>
 #include <vector>
-#include "epoch_frame/index.h"
 
 namespace epoch_frame::calendar
 {
@@ -756,7 +756,7 @@ namespace epoch_frame::calendar
         const std::vector<DateTime> OfficeLocationChange1920 = {"1920-05-01"__date};
 
         // 1923
-        const std::vector<DateTime> HardingDeath1923 = {"1923-08-03"__date};
+        const std::vector<DateTime> HardingDeath1923   = {"1923-08-03"__date};
         const std::vector<DateTime> HardingFuneral1923 = {"1923-08-10"__date};
 
         // 1924
@@ -803,10 +803,9 @@ namespace epoch_frame::calendar
             .end_date   = DateTime({1933y, std::chrono::August, 4d})};
 
         // 1933
-        const std::vector<DateTime> HeavyVolume1933 = {
-            "1933-07-29"__date, "1933-08-05"__date, "1933-08-12"__date,
-            "1933-08-19"__date, "1933-08-26"__date, "1933-09-02"__date
-        };
+        const std::vector<DateTime> HeavyVolume1933 = {"1933-07-29"__date, "1933-08-05"__date,
+                                                       "1933-08-12"__date, "1933-08-19"__date,
+                                                       "1933-08-26"__date, "1933-09-02"__date};
 
         const std::vector<DateTime> HeavyVolume2pmEarlyClose1933 = {
             "1933-07-26"__date, "1933-07-27"__date, "1933-07-28"__date};

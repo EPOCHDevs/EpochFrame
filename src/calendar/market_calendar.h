@@ -2,11 +2,11 @@
 
 #include "calendar_common.h"
 #include <common/python_utils.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 
 namespace epoch_frame::calendar
 {
@@ -20,6 +20,11 @@ namespace epoch_frame::calendar
         std::string name() const noexcept
         {
             return m_options.name;
+        }
+
+        std::vector<std::string> aliases() const noexcept
+        {
+            return m_options.aliases;
         }
 
         std::string tz() const noexcept
@@ -58,13 +63,13 @@ namespace epoch_frame::calendar
         }
 
         void change_time(epoch_core::MarketTimeType type, const std::vector<MarketTime>& times,
-                 epoch_core::OpenCloseType opens = epoch_core::OpenCloseType::Default);
+                         epoch_core::OpenCloseType opens = epoch_core::OpenCloseType::Default);
 
         std::vector<MarketTimeWithTZ> get_time(epoch_core::MarketTimeType market_time,
-                                         bool                     all_times = false) const;
+                                               bool                       all_times = false) const;
 
         std::optional<MarketTimeWithTZ> get_time_on(epoch_core::MarketTimeType market_time,
-                                              const Date&              date) const;
+                                                    const Date&                date) const;
 
         std::optional<MarketTimeWithTZ> open_time_on(const Date& date) const
         {
@@ -173,43 +178,47 @@ namespace epoch_frame::calendar
         }
 
         virtual IndexPtr valid_days(const Date& start_date, const Date& end_date,
-                            std::string const& tz = "UTC") const;
-    
-        virtual Series days_at_time(IndexPtr const& days, const MarketTimeVariant& market_time, int64_t day_offset = 0) const;
+                                    std::string const& tz = "UTC") const;
+
+        virtual Series days_at_time(IndexPtr const& days, const MarketTimeVariant& market_time,
+                                    int64_t day_offset = 0) const;
 
         Series special_dates(epoch_core::MarketTimeType market_time, const Date& start,
                              const Date& end, bool filter_holidays = true) const;
 
-        DataFrame schedule(const Date& start_date, const Date& end_date, ScheduleOptions const& options) const;
+        DataFrame schedule(const Date& start_date, const Date& end_date,
+                           ScheduleOptions const& options) const;
 
-        DataFrame
-        schedule_from_days(IndexPtr const& days, ScheduleOptions const& options={}) const;
+        DataFrame schedule_from_days(IndexPtr const&        days,
+                                     ScheduleOptions const& options = {}) const;
 
-        virtual IndexPtr date_range_htf(Date const& start, Date const& end, std::optional<int64_t> periods = {}) const;
+        virtual IndexPtr date_range_htf(Date const& start, Date const& end,
+                                        std::optional<int64_t> periods = {}) const;
 
-        DataFrame open_at_time(DataFrame const& schedule, DateTime const& timestamp, bool include_close=false, bool only_rth=false) const;
+        bool open_at_time(DataFrame const& schedule, DateTime const& timestamp,
+                          bool include_close = false, bool only_rth = false) const;
 
       protected:
-        inline static const RegularMarketTimes REGULAR_MARKET_TIMES{{
-            {epoch_core::MarketTimeType::MarketOpen, MarketTimes{MarketTime{Time{0h}}}},
-            {epoch_core::MarketTimeType::MarketClose, MarketTimes{MarketTime{Time{23h}}}}}};
+        inline static const RegularMarketTimes REGULAR_MARKET_TIMES{
+            {{epoch_core::MarketTimeType::MarketOpen, MarketTimes{MarketTime{Time{0h}}}},
+             {epoch_core::MarketTimeType::MarketClose, MarketTimes{MarketTime{Time{23h}}}}}};
 
         inline static const OpenCloseMap OPEN_CLOSE_MAP{
             {{epoch_core::MarketTimeType::MarketOpen, epoch_core::OpenCloseType::True},
-            {epoch_core::MarketTimeType::MarketClose, epoch_core::OpenCloseType::False},
-            {epoch_core::MarketTimeType::BreakStart, epoch_core::OpenCloseType::False},
-            {epoch_core::MarketTimeType::BreakEnd, epoch_core::OpenCloseType::True},
-            {epoch_core::MarketTimeType::Pre, epoch_core::OpenCloseType::True},
-            {epoch_core::MarketTimeType::Post, epoch_core::OpenCloseType::False}}};
+             {epoch_core::MarketTimeType::MarketClose, epoch_core::OpenCloseType::False},
+             {epoch_core::MarketTimeType::BreakStart, epoch_core::OpenCloseType::False},
+             {epoch_core::MarketTimeType::BreakEnd, epoch_core::OpenCloseType::True},
+             {epoch_core::MarketTimeType::Pre, epoch_core::OpenCloseType::True},
+             {epoch_core::MarketTimeType::Post, epoch_core::OpenCloseType::False}}};
 
-        MarketCalendarOptions                                                      m_options;
-        std::shared_ptr<CustomBusinessDay>                                         m_holidays;
+        MarketCalendarOptions                                                        m_options;
+        std::shared_ptr<CustomBusinessDay>                                           m_holidays;
         std::unordered_map<epoch_core::MarketTimeType, std::vector<MarketTimeDelta>> m_regular_tds;
         std::unordered_map<epoch_core::MarketTimeType, Date> m_discontinued_market_times;
         std::vector<epoch_core::MarketTimeType>              m_market_times;
         std::vector<epoch_core::MarketTimeType>              m_oc_market_times;
         std::set<epoch_core::MarketTimeType>                 m_customized_market_times;
-        RegularMarketTimesWithTZ m_regular_market_times;
+        RegularMarketTimesWithTZ                             m_regular_market_times;
 
         static TimeDelta _tdelta(const std::optional<Time>& time,
                                  std::optional<int64_t>     day_offset);
@@ -227,29 +236,36 @@ namespace epoch_frame::calendar
         }
 
         std::vector<epoch_core::MarketTimeType>
-        market_times(epoch_core::MarketTimeType start, epoch_core::MarketTimeType end) const noexcept;
+        market_times(epoch_core::MarketTimeType start,
+                     epoch_core::MarketTimeType end) const noexcept;
 
-        IndexPtr try_holidays(const AbstractHolidayCalendarPtr& cal, const Date& s, const Date& e) const;
+        IndexPtr try_holidays(const AbstractHolidayCalendarPtr& cal, const Date& s,
+                              const Date& e) const;
 
         Series
         special_dates(std::vector<std::pair<Time, epoch_core::EpochDayOfWeek>> const& calendars,
                       SpecialTimesAdHoc const& ad_hoc_dates, const Date& start,
                       const Date& end) const;
 
-        Series
-        special_dates(SpecialTimes const& calendars,
-                      SpecialTimesAdHoc const& ad_hoc_dates, const Date& start,
-                      const Date& end) const;
+        Series special_dates(SpecialTimes const& calendars, SpecialTimesAdHoc const& ad_hoc_dates,
+                             const Date& start, const Date& end) const;
 
-        Series
-        special_dates(std::vector<FrameOrSeries>& indexes,
-                      SpecialTimesAdHoc const& ad_hoc_dates, const Date& start,
-                      const Date& end) const;
+        Series special_dates(std::vector<FrameOrSeries>& indexes,
+                             SpecialTimesAdHoc const& ad_hoc_dates, const Date& start,
+                             const Date& end) const;
 
-        static arrow::SchemaPtr get_schedule_schema(const std::vector<epoch_core::MarketTimeType>& market_times);
+        static arrow::SchemaPtr
+        get_schedule_schema(const std::vector<epoch_core::MarketTimeType>& market_times);
 
-        std::vector<epoch_core::MarketTimeType> get_market_times_from_filter(epoch_core::MarketTimeType start, epoch_core::MarketTimeType end, MarketTimeFilter const& filter) const;
+        std::vector<epoch_core::MarketTimeType>
+        get_market_times_from_filter(epoch_core::MarketTimeType start,
+                                     epoch_core::MarketTimeType end,
+                                     MarketTimeFilter const&    filter) const;
 
-        std::vector<epoch_core::MarketTimeType> get_market_times(epoch_core::MarketTimeType start, epoch_core::MarketTimeType end) const;
+        std::vector<epoch_core::MarketTimeType>
+        get_market_times(epoch_core::MarketTimeType start, epoch_core::MarketTimeType end) const;
     };
+
+    using MarketCalendarPtr = std::shared_ptr<MarketCalendar>;
+
 } // namespace epoch_frame::calendar

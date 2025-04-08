@@ -1,1 +1,1 @@
-target_sources(epoch_frame PRIVATE cme.cpp nyse.cpp)
+target_sources(epoch_frame PRIVATE cme.cpp crypto.cpp nyse.cpp cboe.cpp cme_globex.cpp fx.cpp ice.cpp)

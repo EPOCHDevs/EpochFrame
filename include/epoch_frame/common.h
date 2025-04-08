@@ -5,27 +5,30 @@
 #pragma once
 #include "aliases.h"
 #include "enums.h"
+#include "frame_or_series.h"
 #include <variant>
 #include <vector>
-#include "frame_or_series.h"
 
-namespace epoch_frame {
-    struct ConcatOptions {
+namespace epoch_frame
+{
+    struct ConcatOptions
+    {
         std::vector<FrameOrSeries> frames;
-        JoinType joinType{JoinType::Outer};
-        AxisType axis{AxisType::Row};
-        bool ignore_index{false};
-        bool sort{false};
+        JoinType                   joinType{JoinType::Outer};
+        AxisType                   axis{AxisType::Row};
+        bool                       ignore_index{false};
+        bool                       sort{false};
     };
-    DataFrame concat(ConcatOptions const &options);
+    DataFrame concat(ConcatOptions const& options);
 
-    struct MergeOptions {
+    struct MergeOptions
+    {
         FrameOrSeries left;
         FrameOrSeries right;
-        JoinType joinType{JoinType::Inner};
-        AxisType axis{AxisType::Row};
-        bool ignore_index{false};
-        bool sort{false};
+        JoinType      joinType{JoinType::Inner};
+        AxisType      axis{AxisType::Row};
+        bool          ignore_index{false};
+        bool          sort{false};
     };
-    DataFrame merge(MergeOptions const &options);
-}
+    DataFrame merge(MergeOptions const& options);
+} // namespace epoch_frame

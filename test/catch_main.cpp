@@ -3,6 +3,7 @@
 //
 #include <catch2/catch_session.hpp>
 #include "epoch_frame/serialization.h"
+#include <tbb/tbb.h>
 
 int main( int argc, char* argv[] ) {
     // your setup ...

@@ -110,7 +110,7 @@ namespace epoch_frame::calendar {
         OpenCloseMap       open_close_map{};
         std::string        tz{"UTC"};
 
-        AbstractHolidayCalendarPtr regular_holidays;
+        AbstractHolidayCalendarPtr regular_holidays{nullptr};
         np::HolidayList            adhoc_holidays{};
         std::vector<std::string>   aliases{};
         np::WeekSet                weekmask{epoch_core::EpochDayOfWeek::Monday, epoch_core::EpochDayOfWeek::Tuesday,

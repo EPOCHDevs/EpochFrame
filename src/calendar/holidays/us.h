@@ -1,15 +1,17 @@
 #pragma once
 #include "aliases.h"
-#include "date_time/holiday/holiday_data.h"
+#include "date_time/holiday/holiday.h"
 #include "epoch_frame/factory/date_offset_factory.h"
 #include "epoch_frame/factory/scalar_factory.h"
 using namespace std::chrono_literals;
 
 namespace epoch_frame::calendar
 {
+    using namespace factory::offset;
     struct USHolidays
     {
-        static USHolidays Instance() {
+        static const USHolidays& Instance()
+        {
             static USHolidays instance;
             return instance;
         }
@@ -31,17 +33,17 @@ namespace epoch_frame::calendar
         /*
          * Christmas Eve
          */
-        const HolidayData ChristmasEveBefore1993 = {
-            .name         = "Christmas Eve",
-            .month        = std::chrono::December,
-            .day          = 24d,
-            .end_date     = DateTime({1993y, std::chrono::January, 1d}),
-            .days_of_week = {
-                epoch_core::EpochDayOfWeek::Monday,
-                epoch_core::EpochDayOfWeek::Tuesday,
-                epoch_core::EpochDayOfWeek::Wednesday,
-                epoch_core::EpochDayOfWeek::Thursday,
-            }};
+        const HolidayData ChristmasEveBefore1993 = {.name  = "Christmas Eve",
+                                                    .month = std::chrono::December,
+                                                    .day   = 24d,
+                                                    .end_date =
+                                                        DateTime({1993y, std::chrono::January, 1d}),
+                                                    .days_of_week = {
+                                                        epoch_core::EpochDayOfWeek::Monday,
+                                                        epoch_core::EpochDayOfWeek::Tuesday,
+                                                        epoch_core::EpochDayOfWeek::Wednesday,
+                                                        epoch_core::EpochDayOfWeek::Thursday,
+                                                    }};
 
         const HolidayData ChristmasEveInOrAfter1993 = {
             .name         = "Christmas Eve",
@@ -62,13 +64,13 @@ namespace epoch_frame::calendar
             .name       = "New Year's Day",
             .month      = std::chrono::January,
             .day        = 1d,
-            .observance = nearest_workday,
+            .observance = sunday_to_monday,
         };
 
         /*
          * Martin Luther King Jr. Day (third Monday in January)
          */
-        const HolidayData USMartinLutherKingJr = {
+        const HolidayData USMartinLutherKingJrAfter1998 = {
             .name       = "Dr. Martin Luther King Jr. Day",
             .month      = std::chrono::January,
             .day        = 1d,
@@ -175,6 +177,8 @@ namespace epoch_frame::calendar
             .day        = 31d,
             .offset     = DateOffsetHandlerPtrs{date_offset(MO(-1))},
             .start_date = DateTime{.date = {1971y, std::chrono::January, 1d}},
+            // This implementation uses last Monday of May, which is equivalent to
+            // the Python version that uses first Monday after the 25th
         };
 
         /*
@@ -189,9 +193,10 @@ namespace epoch_frame::calendar
         };
 
         const HolidayData USIndependenceDay = {
-            .name       = "Independence Day",
+            .name       = "July 4th",
             .month      = std::chrono::July,
             .day        = 4d,
+            .start_date = DateTime({1954y, std::chrono::January, 1d}),
             .observance = nearest_workday,
         };
 
@@ -319,6 +324,7 @@ namespace epoch_frame::calendar
             .day        = 1d,
             .start_date = DateTime({1863y, std::chrono::July, 1d}),
             .end_date   = DateTime({1863y, std::chrono::July, 3d}),
+            // In Python, this uses day=(1,2,3) instead of a date range
         };
 
         /*
@@ -335,27 +341,23 @@ namespace epoch_frame::calendar
         /*
          * Adhoc Holiday Collections
          */
-        const std::vector<DateTime> November29BacklogRelief = {
-            "1929-11-01"__date, "1929-11-29"__date};
+        const std::vector<DateTime> November29BacklogRelief = {"1929-11-01"__date,
+                                                               "1929-11-29"__date};
 
         const std::vector<DateTime> March33BankHoliday = {
             "1933-03-06"__date, "1933-03-07"__date, "1933-03-08"__date, "1933-03-09"__date,
             "1933-03-10"__date, "1933-03-13"__date, "1933-03-14"__date};
 
-        const std::vector<DateTime> August45VictoryOverJapan = {
-            "1945-08-15"__date, "1945-08-16"__date};
+        const std::vector<DateTime> August45VictoryOverJapan = {"1945-08-15"__date,
+                                                                "1945-08-16"__date};
 
-        const std::vector<DateTime> ChristmasEvesAdhoc = {
-            "1945-12-24"__date, "1956-12-24"__date};
+        const std::vector<DateTime> ChristmasEvesAdhoc = {"1945-12-24"__date, "1956-12-24"__date};
 
-        const std::vector<DateTime> DayAfterChristmasAdhoc = {
-            "1958-12-26"__date};
+        const std::vector<DateTime> DayAfterChristmasAdhoc = {"1958-12-26"__date};
 
-        const std::vector<DateTime> DayBeforeDecorationAdhoc = {
-            "1961-05-29"__date};
+        const std::vector<DateTime> DayBeforeDecorationAdhoc = {"1961-05-29"__date};
 
-        const std::vector<DateTime> LincolnsBirthDayAdhoc = {
-            "1968-02-12"__date};
+        const std::vector<DateTime> LincolnsBirthDayAdhoc = {"1968-02-12"__date};
 
         const std::vector<DateTime> PaperworkCrisis68 = {
             "1968-06-12"__date, "1968-06-19"__date, "1968-06-26"__date, "1968-07-10"__date,
@@ -366,24 +368,21 @@ namespace epoch_frame::calendar
             "1968-11-20"__date, "1968-12-04"__date, "1968-12-11"__date, "1968-12-18"__date,
             "1968-12-25"__date};
 
-        const std::vector<DateTime> DayAfterIndependenceDayAdhoc = {
-            "1968-07-05"__date};
+        const std::vector<DateTime> DayAfterIndependenceDayAdhoc = {"1968-07-05"__date};
 
         const std::vector<DateTime> WeatherSnowClosing = {"1969-02-10"__date};
 
-        const std::vector<DateTime> FirstLunarLandingClosing = {
-            "1969-07-21"__date};
+        const std::vector<DateTime> FirstLunarLandingClosing = {"1969-07-21"__date};
 
-        const std::vector<DateTime> NewYorkCityBlackout77 = {
-            "1977-07-14"__date};
+        const std::vector<DateTime> NewYorkCityBlackout77 = {"1977-07-14"__date};
 
-        const std::vector<DateTime> September11Closings = {
-            "2001-09-11"__date, "2001-09-12"__date, "2001-09-13"__date, "2001-09-14"__date};
+        const std::vector<DateTime> September11Closings = {"2001-09-11"__date, "2001-09-12"__date,
+                                                           "2001-09-13"__date, "2001-09-14"__date};
 
         const std::vector<DateTime> HurricaneGloriaClosings = {"1985-09-27"__date};
 
-        const std::vector<DateTime> HurricaneSandyClosings = {
-            "2012-10-29"__date, "2012-10-30"__date};
+        const std::vector<DateTime> HurricaneSandyClosings = {"2012-10-29"__date,
+                                                              "2012-10-30"__date};
 
         // National Days of Mourning
         const std::vector<DateTime> USNationalDaysofMourning = {

@@ -264,12 +264,14 @@ namespace epoch_frame {
     OffsetHandler(n),  m_offset(std::move(timedelta)) {
         if (params.calendar) {
             std::visit([&]<typename T>(T x) {
-                AssertFromFormat( x != nullptr, "calendar is not a valid business day calendar");
+                if (x == nullptr) {
+                    return;
+                }
 
                 if constexpr (std::is_same_v<T, np::BusinessDayCalendarPtr>) {
                     m_calendar = std::move(x);
                 }
-                else {
+                else if constexpr (std::is_same_v<T, calendar::AbstractHolidayCalendarPtr>) {
                     auto index = x->holidays();
                     std::shared_ptr<arrow::TimestampArray> _holidays = index->array().to_timestamp_view();
                     std::ranges::transform(*_holidays, std::back_inserter(params.holidays), [dt = index->dtype()](const std::optional<int64_t> &holiday) {
@@ -336,20 +338,25 @@ namespace epoch_frame {
     }
 
     arrow::TimestampScalar CustomBusinessDay::add(const arrow::TimestampScalar &other) const {
-        const auto roll = n() <= 0 ? np::BusDayOffsetRoll::Following : np::BusDayOffsetRoll::Preceding;
-        auto other_dt = factory::scalar::to_datetime(other);
-        auto date = DateTime(other_dt.date);
-        auto incr_dt = m_calendar->offset(date, n(), roll);
-        auto result = DateTime::combine(incr_dt.date, other_dt.time());
-        if (m_offset) {
-            result = result + *m_offset;
+        if (m_calendar) {
+            const auto roll = n() <= 0 ? np::BusDayOffsetRoll::Following : np::BusDayOffsetRoll::Preceding;
+            auto other_dt = factory::scalar::to_datetime(other);
+            auto date = DateTime(other_dt.date);
+            auto incr_dt = m_calendar->offset(date, n(), roll);
+            auto result = DateTime::combine(incr_dt.date, other_dt.time());
+            if (m_offset) {
+                result = result + *m_offset;
+            }
+            return result.timestamp();
         }
-        return result.timestamp();
-
+        return other + (n() * TimeDelta{{.days = 1}});
     }
 
     bool CustomBusinessDay::is_on_offset(const arrow::TimestampScalar &other) const {
-        return m_calendar->is_busday(factory::scalar::to_datetime(other));
+        if (m_calendar) {
+            return m_calendar->is_busday(factory::scalar::to_datetime(other));
+        }
+        return true;
     }
 
 }
