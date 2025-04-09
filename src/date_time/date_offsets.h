@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include "day_of_week.h"
+#include "epoch_frame/day_of_week.h"
 #include "epoch_frame/aliases.h"
 #include "epoch_frame/enums.h"
-#include "relative_delta.h"
+#include "epoch_frame/relative_delta.h"
 #include <arrow/compute/api.h>
 #include <arrow/scalar.h>
 #include <fmt/format.h>

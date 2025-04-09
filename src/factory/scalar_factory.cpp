@@ -6,7 +6,6 @@
 #include "common/asserts.h"
 #include <chrono>
 #include "common/arrow_compute_utils.h"
-#include "date_time/time_delta.h"
 #include "methods/temporal.h"
 
 

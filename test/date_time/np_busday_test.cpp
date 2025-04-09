@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include "date_time/business/np_busdaycal.h"
-#include "date_time/datetime.h"
-#include "date_time/day_of_week.h"
+#include "epoch_frame/datetime.h"
+#include "epoch_frame/day_of_week.h"
 #include <memory>
 #include <vector>
 #include <array>

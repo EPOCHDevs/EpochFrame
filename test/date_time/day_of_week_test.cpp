@@ -1,7 +1,7 @@
 //
 // Created by adesola on 3/14/24.
 //
-#include "date_time/day_of_week.h"
+#include "epoch_frame/day_of_week.h"
 #include <catch2/catch_test_macros.hpp>
 #include "epoch_frame/factory/scalar_factory.h"
 #include "common/asserts.h"
@@ -56,17 +56,17 @@ TEST_CASE("epoch_core::EpochDayOfWeek - Basic Functionality", "[day_of_week]") {
         // Test the operator() method - note we need to use operator() with a parameter
         Weekday monday = MO;
         Weekday tuesday = TU;
-        
+
         auto monday_1st = monday(1);
         auto monday_2nd = monday(2);
         auto monday_last = monday(-1);
-        
+
         REQUIRE(monday_1st.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_1st.n().value_or(0) == 1);
-        
+
         REQUIRE(monday_2nd.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_2nd.n().value_or(0) == 2);
-        
+
         REQUIRE(monday_last.weekday() == epoch_core::EpochDayOfWeek::Monday);
         REQUIRE(monday_last.n().value_or(0) == -1);
     }
@@ -82,7 +82,7 @@ TEST_CASE("epoch_core::EpochDayOfWeek - Timestamp Detection", "[day_of_week]") {
         auto thursday_tp = to_datetime(arrow::TimestampScalar(TS_THURSDAY, arrow::TimeUnit::NANO));
         auto friday_tp = to_datetime(arrow::TimestampScalar(TS_FRIDAY, arrow::TimeUnit::NANO));
         auto saturday_tp = to_datetime(arrow::TimestampScalar(TS_SATURDAY, arrow::TimeUnit::NANO));
-        
+
         // Test the day of week detection
         REQUIRE(sunday_tp.weekday() == 6);    // Sunday is 6
         REQUIRE(monday_tp.weekday() == 0);    // Monday is 0
@@ -99,14 +99,14 @@ TEST_CASE("epoch_core::EpochDayOfWeek - Weekday Matching", "[day_of_week]") {
         Weekday monday1(epoch_core::EpochDayOfWeek::Monday);
         Weekday monday2(epoch_core::EpochDayOfWeek::Monday);
         Weekday tuesday(epoch_core::EpochDayOfWeek::Tuesday);
-        
+
         REQUIRE(monday1 == monday2);
         REQUIRE(monday1 != tuesday);
-        
+
         Weekday first_monday(epoch_core::EpochDayOfWeek::Monday, 1);
         Weekday second_monday(epoch_core::EpochDayOfWeek::Monday, 2);
-        
+
         REQUIRE(first_monday != second_monday);
     }
 
-} 
+}

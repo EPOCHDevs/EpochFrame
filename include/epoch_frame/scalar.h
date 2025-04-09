@@ -9,9 +9,9 @@
 #include <type_traits>
 #include <string>
 #include <arrow/scalar.h>
-#include <date_time/datetime.h>
+#include <epoch_frame/datetime.h>
 #include <flatbuffers/array.h>
-#include "date_time/day_of_week.h"
+#include "epoch_frame/day_of_week.h"
 
 namespace epoch_frame {
 

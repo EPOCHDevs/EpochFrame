@@ -7,13 +7,11 @@
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/index.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "common/asserts.h"
 #include <iostream>
 #include <date_time/holiday/holiday_calendar.h>
 
 #include "epoch_frame/array.h"
-#include "date_time/relative_delta_options.h"
-#include "date_time/day_of_week.h"
+#include "epoch_frame/day_of_week.h"
 #include "date_time/business/np_busdaycal.h"
 
 using namespace epoch_frame::factory::index;

@@ -7,11 +7,10 @@
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/index.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "common/asserts.h"
 #include <iostream>
 #include "epoch_frame/array.h"
-#include "date_time/relative_delta_options.h"
-#include "date_time/day_of_week.h"
+#include "epoch_frame/relative_delta_options.h"
+#include "epoch_frame/day_of_week.h"
 
 using namespace epoch_frame::factory::index;
 using namespace epoch_frame::factory::scalar;
@@ -730,13 +729,13 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     SECTION("DateRange with RelativeDelta - Daily Range") {
         epoch_frame::RelativeDeltaOption delta_option{.days = 1.0};
         auto delta_handler = efo::date_offset(1, delta_option);
-        
+
         auto start_date = "2023-01-01"_date;
         auto end_date = "2023-01-10"_date;
-        
+
         // Create a date range index
         auto index = date_range({.start = start_date, .end = end_date, .offset = delta_handler});
-        
+
         // Check index length and values
         REQUIRE(index->size() == 10);  // 10 days from Jan 1 to Jan 10 (inclusive)
         REQUIRE(get_timestamp_value(index, 0) == TS_2023_01_01);
@@ -746,19 +745,19 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
     SECTION("DateRange with RelativeDelta - Weekly Range") {
         epoch_frame::RelativeDeltaOption delta_option{.weeks = 1.0};
         auto delta_handler = efo::date_offset(1, delta_option);
-        
+
         auto start_date = "2023-01-01"_date;
         auto end_date = "2023-02-01"_date;
-        
+
         // Create a date range index with weekly frequency
         auto index = date_range({.start = start_date, .end = end_date, .offset = delta_handler});
-        
+
         // Check index values - should have 6 weekly points
         REQUIRE(index->size() == 5);
-        
+
         // Check first and last values
         REQUIRE(get_timestamp_value(index, 0) == TS_2023_01_01);
-        
+
         // Verify each step is 7 days
         for (int i = 1; i < index->size(); i++) {
             int64_t diff = get_timestamp_value(index, i) - get_timestamp_value(index, i-1);
@@ -772,16 +771,16 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
             .day = 15
         };
         auto delta_handler = efo::date_offset(1, delta_option);
-        
+
         auto start_date = "2023-01-01"_date;
         auto end_date = "2023-07-01"_date;
-        
+
         // Create a date range index with complex frequency
         auto index = date_range({.start = start_date, .end = end_date, .offset = delta_handler});
-        
+
         // Verify values at different points
         REQUIRE(get_timestamp_value(index, 0) == start_date.value);
-        
+
         // Check date pattern - should follow the 1 month, 15 days pattern
         auto expected_dates = {
             "2023-01-01"_date,
@@ -794,13 +793,13 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
 
         INFO("Index: " << index->array().value()->ToString());
         REQUIRE(index->size() == 6);
-        
+
         int i = 0;
         for (auto const& expected_date : expected_dates) {
             REQUIRE( to_datetime(arrow::TimestampScalar{get_timestamp_value(index, i++), arrow::TimeUnit::NANO, ""}) == to_datetime(expected_date));
         }
     }
-    
+
     SECTION("DateRange with Weekday RelativeDelta") {
         // Test for weekday offsets - advancing to next Monday
         epoch_frame::RelativeDeltaOption delta_option{
@@ -808,13 +807,13 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
             .weekday = epoch_frame::FR
         };
         auto weekday_handler = efo::date_offset(1, delta_option);
-        
+
         auto start_date = "2023-01-01"_date;  // Sunday
         auto end_date = "2023-01-30"_date;    // Monday, 4 weeks later
-        
+
         // Create a date range with weekday frequency
         auto index = date_range({.start = start_date, .end = end_date, .offset = weekday_handler});
-        
+
         // Expected dates: all Mondays between start and end
         auto expected_dates = {
             "2023-01-01"_date,  // First Monday
@@ -822,16 +821,16 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
             "2023-01-20"_date,  // Third Monday
             "2023-01-27"_date,  // Fourth Monday
         };
-        
+
         INFO("Index: " << index->array().value()->ToString());
         REQUIRE(index->size() == 4);
-        
+
         int i = 0;
         for (auto const& expected_date : expected_dates) {
             REQUIRE( to_datetime(arrow::TimestampScalar{get_timestamp_value(index, i++), arrow::TimeUnit::NANO, ""}) == to_datetime(expected_date));
         }
     }
-    
+
     SECTION("DateRange with Year-Month End RelativeDelta") {
         // Test for year-end and month-end combination
         epoch_frame::RelativeDeltaOption delta_option{
@@ -839,13 +838,13 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
             .day = 31       // Month end
         };
         auto quarter_end_handler = efo::date_offset(1, delta_option);
-        
+
         auto start_date = "2023-01-31"_date;
         auto end_date = "2024-01-31"_date;
-        
+
         // Create a date range with quarter-end frequency
         auto index = date_range({.start = start_date, .end = end_date, .offset = quarter_end_handler});
-        
+
         // Expected dates: all quarter ends (Mar 31, Jun 30, Sep 30, Dec 31)
         auto expected_dates = {
             "2023-01-31"_date,
@@ -854,9 +853,9 @@ TEST_CASE("DateOffsets - RelativeDelta Offset Combinations", "[date_offsets]") {
             "2023-10-31"_date,
             "2024-01-31"_date
         };
-        
+
         REQUIRE(index->size() == 5);
-        
+
         int i = 0;
         for (auto const& expected_date : expected_dates) {
             REQUIRE( to_datetime(arrow::TimestampScalar{get_timestamp_value(index, i++), arrow::TimeUnit::NANO, ""}) == to_datetime(expected_date));
@@ -883,7 +882,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
             REQUIRE(to_datetime(efo::weeks(3)->add("2023-01-01"_date)) == DateTime{{2023y, January, 22d}});
         }
     }
-    
+
     SECTION("Week with Day of Week Anchoring") {
         SECTION("Monday anchoring") {
             auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);
@@ -897,7 +896,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
             REQUIRE(to_datetime(friday_handler->add(friday)) == DateTime{{2023y, January, 13d}});
         }
     }
-    
+
     SECTION("Week Handlers - Multiple Week Increment with Anchoring") {
             auto wednesday_handler = efo::weeks(2, epoch_core::EpochDayOfWeek::Wednesday);
             REQUIRE(to_datetime(wednesday_handler->add(sunday)) == DateTime{{2023y, January, 11d}});
@@ -907,10 +906,10 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
     SECTION("Week Handlers - is_on_offset") {
         // Test the is_on_offset method exists and returns a boolean
         auto week_handler = efo::weeks(1);
-        
+
         // Just make sure it doesn't crash
         REQUIRE(week_handler->is_on_offset(monday));
-        
+
         // Test with day anchoring as well
         auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);
         // Again, just make sure it doesn't crash
@@ -922,7 +921,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
         auto ts1 = "2023-01-01"_date;
         auto ts2 = "2023-01-29"_date; // 4 weeks later
 
-        SECTION("Positive diff") {      
+        SECTION("Positive diff") {
             auto diff = week_handler->diff(ts1, ts2);
             REQUIRE(diff == 4); // Should be positive
         }
@@ -944,7 +943,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]") {
         auto week_handler = efo::weeks(1);
         auto start = "2023-01-01"_date;
         uint32_t period = 5; // Just test with 2 periods to avoid uniqueness issues
-        
+
         auto range = date_range({.start = start, .periods = period, .offset = week_handler})->array();
         INFO("Range: " << range);
         REQUIRE(range.length() == period);
@@ -1009,5 +1008,5 @@ TEST_CASE("DateOffsets - Easter Handlers", "[date_offsets]") {
         auto result = offset->add(date.timestamp());
         REQUIRE(to_datetime(result) == expected);
      }
-}   
+}
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "date_time/time_delta.h"
+#include "epoch_frame/time_delta.h"
 #include "epoch_frame/aliases.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>

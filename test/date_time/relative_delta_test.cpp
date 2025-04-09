@@ -1,7 +1,7 @@
 //
 // Created by adesola on 3/14/24.
 //
-#include "date_time/relative_delta.h"
+#include "epoch_frame/relative_delta.h"
 #include <catch2/catch_test_macros.hpp>
 #include "epoch_frame/factory/scalar_factory.h"
 #include "common/asserts.h"
@@ -132,7 +132,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto delta = RelativeDelta({.days = 1});
         auto result = delta * 28;
         REQUIRE((today + result) == Date{2003y, October, 15d});
-        
+
         auto result2 = 28 * delta;
         REQUIRE((today + result2) == Date{2003y, October, 15d});
     }
@@ -210,9 +210,9 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         // Equivalent to (minutes=15, seconds=36)
         auto rd1 = RelativeDelta({.minutes = 15.6});
         auto normalized1 = rd1.normalized();
-        
+
         REQUIRE(rd1.normalized() == RelativeDelta({.minutes = 15, .seconds = 36}));
-        
+
         // Equivalent to (minutes=25, seconds=20, microseconds=25000)
         auto rd2 = RelativeDelta({.minutes = 25.33375});
         REQUIRE(rd2.normalized() == RelativeDelta({.minutes = 25, .seconds = 20, .microseconds = 25000}));
@@ -228,7 +228,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto rd1 = RelativeDelta({.years = 1, .months = 1, .days = 1, .hours = 1, .minutes = 1, .seconds = 1, .microseconds = 1});
         auto rd2 = RelativeDelta({.years = 1, .months = 1, .days = 1, .hours = 1, .minutes = 1, .seconds = 1, .microseconds = 1});
         auto rd3 = RelativeDelta({.years = 1, .months = 1, .days = 1, .hours = 1, .minutes = 1, .seconds = 1, .microseconds = 2});
-        
+
         REQUIRE(rd1 == rd2);
         REQUIRE(rd1 != rd3);
     }
@@ -320,7 +320,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
     SECTION("Age Calculation") {
         DateTime birthdate{1978y, April, 5d, 12h, 0min, 0s};
         auto age = RelativeDelta({.dt1 = now, .dt2 = birthdate});
-        
+
         REQUIRE(age.years() == 25);
         // Other components may vary, but at least check the years
     }
@@ -332,7 +332,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
     SECTION("Negation Operator") {
         auto rd = RelativeDelta({.years = 2, .months = 3, .days = 4});
         auto negated = -rd;
-        
+
         REQUIRE(negated.years() == -2);
         REQUIRE(negated.months() == -3);
         REQUIRE(negated.days() == -4);
@@ -343,7 +343,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto wday_mo_1 = RelativeDelta({.year = 1997, .month = 4, .weekday = MO(1)});
         auto wday_mo_2 = RelativeDelta({.year = 1997, .month = 4, .weekday = MO(2)});
         auto wday_tu = RelativeDelta({.year = 1997, .month = 4, .weekday = TU});
-        
+
         REQUIRE(wday_mo_1 == wday_mo_1);
         REQUIRE(no_wday != wday_mo_1);
         REQUIRE(wday_mo_1 != no_wday);
@@ -365,7 +365,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         REQUIRE(RelativeDelta({now, DateTime{1978y, April, 5d, 12h, 0min, 0s}}) == RelativeDelta({.years = 25, .months = 5, .days = 12, .hours = 8, .minutes = 54, .seconds = 47, .microseconds = 282310}));
     }
 
-    SECTION("John Age With Date") {        
+    SECTION("John Age With Date") {
         REQUIRE(RelativeDelta({DateTime{today}, DateTime{1978y, April, 5d, 12h, 0min, 0s}}) == RelativeDelta({.years = 25, .months = 5, .days = 11, .hours = 12}));
     }
 
@@ -377,7 +377,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto result1 = RelativeDelta() + RelativeDelta({.day = 0, .hour = 0});
         REQUIRE(result1.day() == 0);
         REQUIRE(result1.hour() == 0);
-        
+
         auto result2 = RelativeDelta({.day = 0, .hour = 0}) + RelativeDelta();
         REQUIRE(result2.day() == 0);
         REQUIRE(result2.hour() == 0);
@@ -389,16 +389,16 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
 
     SECTION("Relative Delta Fractional Values") {
         auto d1 = DateTime{2009y, September, 3d, 0h, 0min, 0s};
-        
+
         auto rd1 = RelativeDelta({.days = 1.48});
         REQUIRE((d1 + rd1) == DateTime{2009y, September, 4d, 11h, 31min, 12s});
-        
+
         auto rd2 = RelativeDelta({.days = 1, .hours = 12.5});
         REQUIRE((d1 + rd2) == DateTime{2009y, September, 4d, 12h, 30min, 0s});
-        
+
         auto rd3 = RelativeDelta({.hours = 1, .minutes = 30.5});
         REQUIRE((d1 + rd3) == DateTime{2009y, September, 3d, 1h, 30min, 30s});
-        
+
         auto rd4 = RelativeDelta({.hours = 5, .minutes = 30, .seconds = 30.5});
         REQUIRE((d1 + rd4) == DateTime{2009y, September, 3d, 5h, 30min, 30s, 500000us});
     }
@@ -429,7 +429,7 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto expected = RelativeDelta({.days = 1, .weeks = 1, .hours = 1, .minutes = 1, .seconds = 1, .microseconds = 1001});
         REQUIRE((RelativeDelta() + td) == expected);
     }
-    
+
     SECTION("Add TimeDelta to Populated RelativeDelta") {
         TimeDelta td(
         {
@@ -485,15 +485,15 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         auto rd1 = RelativeDelta({.days = 1});
         REQUIRE(rd1.days() == 1);
         REQUIRE(rd1.weeks() == 0);
-        
+
         auto rd2 = RelativeDelta({.days = -1});
         REQUIRE(rd2.days() == -1);
         REQUIRE(rd2.weeks() == 0);
-        
+
         auto rd3 = RelativeDelta({.days = 8});
         REQUIRE(rd3.days() == 8);
         REQUIRE(rd3.weeks() == 1);
-        
+
         auto rd4 = RelativeDelta({.days = -8});
         REQUIRE(rd4.days() == -8);
         REQUIRE(rd4.weeks() == -1);
@@ -504,17 +504,17 @@ TEST_CASE("RelativeDelta", "[relative_delta]") {
         rd1.set_weeks(1);
         REQUIRE(rd1.days() == 8);
         REQUIRE(rd1.weeks() == 1);
-        
+
         auto rd2 = RelativeDelta({.days = -1});
         rd2.set_weeks(1);
         REQUIRE(rd2.days() == 6);
         REQUIRE(rd2.weeks() == 0);
-        
+
         auto rd3 = RelativeDelta({.days = 8});
         rd3.set_weeks(-1);
         REQUIRE(rd3.days() == -6);
         REQUIRE(rd3.weeks() == 0);
-        
+
         auto rd4 = RelativeDelta({.days = -8});
         rd4.set_weeks(-1);
         REQUIRE(rd4.days() == -8);

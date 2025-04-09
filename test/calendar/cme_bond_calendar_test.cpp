@@ -1,9 +1,6 @@
-#include "calendar/calendar_common.h"
 #include "calendar/calendars/all.h"
-#include "date_time/business/np_busdaycal.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "epoch_frame/factory/series_factory.h"
 #include "epoch_frame/scalar.h"
 #include "epoch_frame/series.h"
 #include <catch.hpp>

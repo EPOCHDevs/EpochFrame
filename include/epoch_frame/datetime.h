@@ -129,6 +129,7 @@ namespace epoch_frame
         }
 
         static DateTime fromtimestamp(int64_t timestamp, const std::string& tz = "");
+
         static DateTime combine(const Date& date, const Time& time);
 
         friend std::ostream& operator<<(std::ostream& os, const DateTime& dt);

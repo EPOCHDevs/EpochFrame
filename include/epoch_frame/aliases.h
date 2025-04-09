@@ -99,5 +99,10 @@ namespace epoch_frame {
     namespace calendar {
         class AbstractHolidayCalendar;
         using AbstractHolidayCalendarPtr = std::shared_ptr<AbstractHolidayCalendar>;
+
+        class MarketCalendar;
+        using MarketCalendarPtr = std::shared_ptr<MarketCalendar>;
+
+        struct MarketTime;
     }
 } // namespace epoch_frame

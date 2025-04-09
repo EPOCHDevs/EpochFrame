@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include <arrow/api.h>
-#include "date_time/datetime.h"
+#include "epoch_frame/datetime.h"
+#include <arrow/type_fwd.h>
 
 namespace epoch_frame::factory::scalar {
 

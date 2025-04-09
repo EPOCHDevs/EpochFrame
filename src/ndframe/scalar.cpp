@@ -5,16 +5,15 @@
 #include <epoch_core/macros.h>
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
-#include <methods/compare.h>
 #include <methods/temporal.h>
 #include <arrow/compute/api.h>
 #include "common/asserts.h"
 #include "common/arrow_compute_utils.h"
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/series.h"
-#include "date_time/time_delta.h"
+#include "epoch_frame/time_delta.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "date_time/datetime.h"
+#include "epoch_frame/datetime.h"
 
 namespace epoch_frame {
 

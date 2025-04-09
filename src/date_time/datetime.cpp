@@ -1,4 +1,4 @@
-#include "datetime.h"
+#include "epoch_frame/datetime.h"
 
 #include <epoch_core/macros.h>
 #include <methods/temporal.h>
@@ -161,6 +161,10 @@ namespace epoch_frame {
     DateTime& DateTime::operator-=(const TimeDelta &other) {
         *this = *this - other;
         return *this;
+    }
+
+    DateTime DateTime::fromtimestamp(int64_t ts, const std::string &tz) {
+        return factory::scalar::to_datetime(arrow::TimestampScalar(ts, arrow::TimeUnit::NANO, tz));
     }
 
     DateTime DateTime::now(const std::string &tz) {

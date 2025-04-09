@@ -1,7 +1,7 @@
 //
 // Created by adesola on 3/14/24.
 //
-#include "date_time/time_delta.h"
+#include "epoch_frame/time_delta.h"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 #include <iostream>
@@ -73,7 +73,7 @@ TEST_CASE("TimeDelta - Construction", "[time_delta]") {
         // Test day overflow error
         TimeDelta::Components comp;
         comp.days = 1000000000;  // Over the limit
-        
+
         REQUIRE_THROWS_AS(TimeDelta(comp), std::runtime_error);
     }
 }
@@ -84,9 +84,9 @@ TEST_CASE("TimeDelta - Basic Properties", "[time_delta]") {
     comp.seconds = 3723;
     comp.microseconds = 500123;
     comp.weeks = 2;
-    
+
     TimeDelta td(comp);
-    
+
     SECTION("Direct Components") {
         REQUIRE(td.days() == 19);  // 5 + (2 * 7) = 19
         REQUIRE(td.seconds() == 3723);
@@ -98,38 +98,38 @@ TEST_CASE("TimeDelta - Normalization", "[time_delta]") {
     SECTION("Microseconds Overflow") {
         TimeDelta::Components comp;
         comp.microseconds = 1500000;  // 1.5 seconds in microseconds
-        
+
         TimeDelta td(comp);
         REQUIRE(td.seconds() == 1);
         REQUIRE(td.microseconds() == 500000);
     }
-    
+
     SECTION("Seconds Overflow") {
         TimeDelta::Components comp;
         comp.seconds = 86500;  // 86400 (1 day) + 100 seconds
-        
+
         TimeDelta td(comp);
         REQUIRE(td.days() == 1);
         REQUIRE(td.seconds() == 100);
     }
-    
+
     SECTION("Negative Values") {
         TimeDelta::Components comp;
         comp.seconds = -10;
         comp.microseconds = -500000;  // -10 seconds and -0.5 seconds
-        
+
         TimeDelta td(comp);
         // After normalization, we should have -1 day, 86400-10 = 86390 seconds, 500000 microseconds
         REQUIRE(td.days() == -1);
         REQUIRE(td.seconds() == 86389);
         REQUIRE(td.microseconds() == 500000);
     }
-    
+
     SECTION("Mixed Positive and Negative") {
         TimeDelta::Components comp;
         comp.days = 1;
         comp.seconds = -10;  // 1 day - 10 seconds
-        
+
         TimeDelta td(comp);
         REQUIRE(td.days() == 0);
         REQUIRE(td.seconds() == 86400 - 10);  // 1 day - 10 seconds = 86390 seconds
@@ -140,25 +140,25 @@ TEST_CASE("TimeDelta - Floating Point Precision", "[time_delta]") {
     SECTION("Fractional Microseconds") {
         TimeDelta::Components comp;
         comp.microseconds = 0.5;  // Should be rounded to 1
-        
+
         TimeDelta td(comp);
         REQUIRE(td.microseconds() == 1);
     }
-    
+
     SECTION("Floating Point Edge Cases") {
         // Very small fraction in days that shouldn't affect seconds
         TimeDelta::Components comp;
         comp.days = 1.0000000001;  // Should be treated as 1 day
-        
+
         TimeDelta td(comp);
         REQUIRE(td.days() == 1);
         REQUIRE(td.seconds() == 0);  // The fraction is too small to count as a second
     }
-    
+
     SECTION("Python Equivalent for Handling Small Values") {
         TimeDelta::Components comp;
         comp.days = 0.0000001;  // Very small number of days
-        
+
         TimeDelta td(comp);
         // Python would convert this to microseconds
         // 0.0000001 days = 0.0000001 * 86400 seconds = 0.00864 seconds = 8640 microseconds
@@ -169,4 +169,4 @@ TEST_CASE("TimeDelta - Floating Point Precision", "[time_delta]") {
 }
 
 // Additional test cases can be added as functionality is implemented in the TimeDelta class
-// such as arithmetic operations, comparisons, etc. 
+// such as arithmetic operations, comparisons, etc.

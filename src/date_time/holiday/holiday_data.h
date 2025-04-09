@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../date_offsets.h"
-#include "../day_of_week.h"
+#include "epoch_frame/day_of_week.h"
 #include "epoch_frame/aliases.h"
 #include <optional>
 #include <set>
