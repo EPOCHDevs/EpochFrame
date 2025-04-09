@@ -163,6 +163,10 @@ namespace epoch_frame {
         return *this;
     }
 
+    DateTime DateTime::now(const std::string &tz) {
+        return fromtimestamp(std::chrono::duration_cast<nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count(), tz);
+    }
+
     TimeDelta DateTime::operator-(const DateTime &other) const {
         if (tz != other.tz) {
             throw std::runtime_error("timezones are different" + tz + " and " + other.tz);

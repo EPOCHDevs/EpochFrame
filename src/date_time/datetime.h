@@ -85,6 +85,8 @@ namespace epoch_frame
 
         bool operator==(const DateTime& other) const = default;
 
+        static DateTime now(const std::string& tz = "");
+
         std::strong_ordering operator<=>(const DateTime& other) const;
         DateTime             operator+(const TimeDelta& delta) const;
         DateTime&            operator+=(const TimeDelta& delta);
