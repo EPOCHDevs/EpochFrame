@@ -182,16 +182,23 @@ namespace epoch_frame {
     //--------------------------------------------------------------------------
 
     std::ostream &operator<<(std::ostream &os, Series const &df) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+
         tabulate::Table table;
         tabulate::Table::Row_t header{std::format("index({})", df.m_index->dtype()->ToString())};
         header.push_back(std::format("{}({})", df.m_name.value_or(""), df.m_table->type()->ToString()));
         table.add_row(header);
         for (size_t i = 0; i < df.m_index->size(); ++i) {
-            auto index = df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString();
+            const auto index = tabulate::Table::Row_t::value_type{df.m_index->array().value()->GetScalar(i).MoveValueUnsafe()->ToString()};
             tabulate::Table::Row_t row{index};
-            row.push_back(df.m_table->GetScalar(i).MoveValueUnsafe()->ToString());
+            const auto scalar = AssertResultIsOk(df.m_table->GetScalar(i));
+            row.emplace_back(scalar->ToString());
             table.add_row(row);
         }
+#pragma GCC diagnostic pop
+
         os << table;
         return os;
     }
