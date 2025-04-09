@@ -128,6 +128,9 @@ namespace epoch_frame
                            arrow::DoubleArray const& input_y, double com, bool adjust,
                            bool ignore_na, bool bias)
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
         const auto num_values = static_cast<size_t>(input_x.length());
         if (static_cast<size_t>(input_y.length()) != num_values)
         {
@@ -194,14 +197,14 @@ namespace epoch_frame
                         double old_mean_y = mean_y.value();
 
                         // avoid numerical errors on constant series
-                        if (mean_x != cur_x)
+                        if (*mean_x != *cur_x)
                         {
                             mean_x =
                                 ((old_wt * old_mean_x) + (new_wt * *cur_x)) / (old_wt + new_wt);
                         }
 
                         // avoid numerical errors on constant series
-                        if (mean_y != cur_y)
+                        if (*mean_y != *cur_y)
                         {
                             mean_y =
                                 ((old_wt * old_mean_y) + (new_wt * *cur_y)) / (old_wt + new_wt);
@@ -256,6 +259,7 @@ namespace epoch_frame
                 builder.UnsafeAppendNull();
             }
         }
+#pragma GCC diagnostic pop
 
         return AssertResultIsOk(builder.Finish());
     }

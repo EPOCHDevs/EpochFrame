@@ -31,7 +31,7 @@ TEST_CASE("CME Globex Fixed Income Calendar", "[calendar]")
     };
     static CMEGlobexFixedIncomeCalendar cal;
 
-    std::vector<TestCase> test_cases = {
+    static std::vector<TestCase> test_cases = {
         // 2009
         // 2009 Martin Luther King Day (19th = Monday)
         {"2009-01-16"__date, Time{15h, 15min}},

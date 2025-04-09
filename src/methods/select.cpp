@@ -175,13 +175,14 @@ namespace epoch_frame {
         SortOrder order = ascending ? SortOrder::Ascending : SortOrder::Descending;
 
         auto [index, data] = m_data;
-        SortOptions options;
-        options.null_placement = null_placement;
+        std::vector<SortKey> sort_keys;
+        sort_keys.reserve(by.size());
         for (auto const &key: by) {
-            options.sort_keys.push_back(
+            sort_keys.push_back(
                     SortKey(key, order));
         }
 
+        SortOptions options{sort_keys, null_placement};
         return complete_sort(m_data.first, m_data.second, m_data.second.datum(), &options, "sort_indices");
     }
 }

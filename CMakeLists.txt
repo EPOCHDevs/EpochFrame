@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
 # Add option for shared vs static libraries (default to shared for development)
+set(PROJECT_VERSION 0.1.0)
 option(BUILD_SHARED_LIBS "Build libraries as shared instead of static" ON)
 message(STATUS "Building libraries as ${BUILD_SHARED_LIBS}")
 if(BUILD_SHARED_LIBS)

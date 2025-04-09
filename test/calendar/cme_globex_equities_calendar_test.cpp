@@ -36,7 +36,7 @@ TEST_CASE("CME Globex Equities Calendar", "[calendar]")
             std::variant<Time, epoch_core::MarketTimeType> market_time;
         };
 
-        std::vector<TestCase> test_cases = {
+        static std::vector<TestCase> test_cases = {
             // 2009
             // 2009 Martin Luther King Day (19th = Monday)
             {"2009-01-16"__date, epoch_core::MarketTimeType::MarketOpen},
