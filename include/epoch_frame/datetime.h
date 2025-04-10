@@ -160,29 +160,29 @@ namespace epoch_frame
         DateTime  operator-(const chrono_years& other) const;
         DateTime& operator-=(const chrono_years& other);
 
-        DateTime  operator+(const chrono_hour& other) const;
-        DateTime& operator+=(const chrono_hour& other);
+        DateTime  operator+(const chrono_hours& other) const;
+        DateTime& operator+=(const chrono_hours& other);
 
-        DateTime  operator-(const chrono_hour& other) const;
-        DateTime& operator-=(const chrono_hour& other);
+        DateTime  operator-(const chrono_hours& other) const;
+        DateTime& operator-=(const chrono_hours& other);
 
-        DateTime  operator+(const chrono_minute& other) const;
-        DateTime& operator+=(const chrono_minute& other);
+        DateTime  operator+(const chrono_minutes& other) const;
+        DateTime& operator+=(const chrono_minutes& other);
 
-        DateTime  operator-(const chrono_minute& other) const;
-        DateTime& operator-=(const chrono_minute& other);
+        DateTime  operator-(const chrono_minutes& other) const;
+        DateTime& operator-=(const chrono_minutes& other);
 
-        DateTime  operator+(const chrono_second& other) const;
-        DateTime& operator+=(const chrono_second& other);
+        DateTime  operator+(const chrono_seconds& other) const;
+        DateTime& operator+=(const chrono_seconds& other);
 
-        DateTime  operator-(const chrono_second& other) const;
-        DateTime& operator-=(const chrono_second& other);
+        DateTime  operator-(const chrono_seconds& other) const;
+        DateTime& operator-=(const chrono_seconds& other);
 
-        DateTime  operator+(const chrono_microsecond& other) const;
-        DateTime& operator+=(const chrono_microsecond& other);
+        DateTime  operator+(const chrono_microseconds& other) const;
+        DateTime& operator+=(const chrono_microseconds& other);
 
-        DateTime  operator-(const chrono_microsecond& other) const;
-        DateTime& operator-=(const chrono_microsecond& other);
+        DateTime  operator-(const chrono_microseconds& other) const;
+        DateTime& operator-=(const chrono_microseconds& other);
 
         DateTime operator-(const int64_t& delta) const
         {

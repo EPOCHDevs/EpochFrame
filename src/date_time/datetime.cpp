@@ -347,89 +347,89 @@ namespace epoch_frame
         return DateTime{date - other, hour, minute, second, microsecond, tz};
     }
 
-    DateTime DateTime::operator+(const chrono_hour& other) const
+    DateTime DateTime::operator+(const chrono_hours& other) const
     {
         return from_time_point(to_time_point() + other, tz);
     }
 
-    DateTime& DateTime::operator+=(const chrono_hour& other)
+    DateTime& DateTime::operator+=(const chrono_hours& other)
     {
         *this = *this + other;
         return *this;
     }
 
-    DateTime DateTime::operator-(const chrono_hour& other) const
+    DateTime DateTime::operator-(const chrono_hours& other) const
     {
         return from_time_point(to_time_point() - other, tz);
     }
 
-    DateTime& DateTime::operator-=(const chrono_hour& other)
+    DateTime& DateTime::operator-=(const chrono_hours& other)
     {
         *this = *this - other;
         return *this;
     }
 
-    DateTime DateTime::operator+(const chrono_minute& other) const
+    DateTime DateTime::operator+(const chrono_minutes& other) const
     {
         return from_time_point(to_time_point() + other, tz);
     }
 
-    DateTime& DateTime::operator+=(const chrono_minute& other)
+    DateTime& DateTime::operator+=(const chrono_minutes& other)
     {
         *this = *this + other;
         return *this;
     }
 
-    DateTime DateTime::operator-(const chrono_minute& other) const
+    DateTime DateTime::operator-(const chrono_minutes& other) const
     {
         return from_time_point(to_time_point() - other, tz);
     }
 
-    DateTime& DateTime::operator-=(const chrono_minute& other)
+    DateTime& DateTime::operator-=(const chrono_minutes& other)
     {
         *this = *this - other;
         return *this;
     }
 
-    DateTime DateTime::operator+(const chrono_second& other) const
+    DateTime DateTime::operator+(const chrono_seconds& other) const
     {
         return from_time_point(to_time_point() + other, tz);
     }
 
-    DateTime& DateTime::operator+=(const chrono_second& other)
+    DateTime& DateTime::operator+=(const chrono_seconds& other)
     {
         *this = *this + other;
         return *this;
     }
 
-    DateTime DateTime::operator-(const chrono_second& other) const
+    DateTime DateTime::operator-(const chrono_seconds& other) const
     {
         return from_time_point(to_time_point() - other, tz);
     }
 
-    DateTime& DateTime::operator-=(const chrono_second& other)
+    DateTime& DateTime::operator-=(const chrono_seconds& other)
     {
         *this = *this - other;
         return *this;
     }
 
-    DateTime DateTime::operator+(const chrono_microsecond& other) const
+    DateTime DateTime::operator+(const chrono_microseconds& other) const
     {
         return from_time_point(to_time_point() + other, tz);
     }
 
-    DateTime& DateTime::operator+=(const chrono_microsecond& other)
+    DateTime& DateTime::operator+=(const chrono_microseconds& other)
     {
         *this = *this + other;
         return *this;
     }
 
-    DateTime DateTime::operator-(const chrono_microsecond& other) const
+    DateTime DateTime::operator-(const chrono_microseconds& other) const
     {
         return from_time_point(to_time_point() - other, tz);
     }
 
-    DateTime& DateTime::operator-=(const chrono_microsecond& other)
+    DateTime& DateTime::operator-=(const chrono_microseconds& other)
     {
         *this = *this - other;
         return *this;
