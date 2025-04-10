@@ -56,6 +56,32 @@ namespace epoch_frame
         {
             return chrono_year_month_day{year, month, day};
         }
+
+        static Date from_ymd(chrono_year_month_day const& ymd)
+        {
+            return Date{ymd.year(), ymd.month(), ymd.day()};
+        }
+
+        chrono_time_point to_time_point() const;
+        static Date       from_time_point(chrono_time_point const& time_point);
+
+        Date  operator+(chrono_days const& other) const;
+        Date& operator+=(chrono_days const& other);
+
+        Date  operator-(chrono_days const& other) const;
+        Date& operator-=(chrono_days const& other);
+
+        Date  operator+(chrono_months const& other) const;
+        Date& operator+=(chrono_months const& other);
+
+        Date  operator-(chrono_months const& other) const;
+        Date& operator-=(chrono_months const& other);
+
+        Date  operator+(chrono_years const& other) const;
+        Date& operator+=(chrono_years const& other);
+
+        Date  operator-(chrono_years const& other) const;
+        Date& operator-=(chrono_years const& other);
     };
 
     struct DateTime
@@ -85,6 +111,9 @@ namespace epoch_frame
 
         bool operator==(const DateTime& other) const = default;
 
+        chrono_time_point to_time_point() const;
+        static DateTime from_time_point(chrono_time_point const& time_point, const std::string& tz);
+
         static DateTime now(const std::string& tz = "");
 
         std::strong_ordering operator<=>(const DateTime& other) const;
@@ -112,6 +141,48 @@ namespace epoch_frame
             *this -= TimeDelta{{.days = 1.0}};
             return *this;
         }
+
+        DateTime  operator+(const chrono_days& other) const;
+        DateTime& operator+=(const chrono_days& other);
+
+        DateTime  operator-(const chrono_days& other) const;
+        DateTime& operator-=(const chrono_days& other);
+
+        DateTime  operator+(const chrono_months& other) const;
+        DateTime& operator+=(const chrono_months& other);
+
+        DateTime  operator-(const chrono_months& other) const;
+        DateTime& operator-=(const chrono_months& other);
+
+        DateTime  operator+(const chrono_years& other) const;
+        DateTime& operator+=(const chrono_years& other);
+
+        DateTime  operator-(const chrono_years& other) const;
+        DateTime& operator-=(const chrono_years& other);
+
+        DateTime  operator+(const chrono_hour& other) const;
+        DateTime& operator+=(const chrono_hour& other);
+
+        DateTime  operator-(const chrono_hour& other) const;
+        DateTime& operator-=(const chrono_hour& other);
+
+        DateTime  operator+(const chrono_minute& other) const;
+        DateTime& operator+=(const chrono_minute& other);
+
+        DateTime  operator-(const chrono_minute& other) const;
+        DateTime& operator-=(const chrono_minute& other);
+
+        DateTime  operator+(const chrono_second& other) const;
+        DateTime& operator+=(const chrono_second& other);
+
+        DateTime  operator-(const chrono_second& other) const;
+        DateTime& operator-=(const chrono_second& other);
+
+        DateTime  operator+(const chrono_microsecond& other) const;
+        DateTime& operator+=(const chrono_microsecond& other);
+
+        DateTime  operator-(const chrono_microsecond& other) const;
+        DateTime& operator-=(const chrono_microsecond& other);
 
         DateTime operator-(const int64_t& delta) const
         {
