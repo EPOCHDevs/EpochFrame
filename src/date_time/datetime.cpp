@@ -486,23 +486,12 @@ namespace epoch_frame
 
     std::ostream& operator<<(std::ostream& os, const Date& dt)
     {
-        os << static_cast<int>(dt.year) << "-" << static_cast<uint32_t>(dt.month) << "-"
-           << static_cast<uint32_t>(dt.day);
-        return os;
+       return os << dt.repr();
     }
 
     std::ostream& operator<<(std::ostream& os, const DateTime& dt)
     {
-        os << static_cast<int>(dt.date.year) << "-" << static_cast<uint32_t>(dt.date.month) << "-"
-           << static_cast<uint32_t>(dt.date.day) << " " << static_cast<uint32_t>(dt.hour.count())
-           << ":" << static_cast<uint32_t>(dt.minute.count()) << ":"
-           << static_cast<uint32_t>(dt.second.count()) << "."
-           << static_cast<uint32_t>(dt.microsecond.count());
-        if (!dt.tz.empty())
-        {
-            os << ",tz=" << dt.tz;
-        }
-        return os;
+        return os << dt.repr();
     }
 
     DateTime DateTime::tz_localize(const std::string& tz_) const

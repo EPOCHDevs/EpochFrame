@@ -22,22 +22,17 @@ namespace epoch_frame
         bool                 operator==(const Time& other) const = default;
         friend std::ostream& operator<<(std::ostream& os, Time const& time)
         {
-            os << time.hour << ":" << time.minute << ":" << time.second;
-            if (time.microsecond.count() > 0)
-            {
-                os << "." << time.microsecond;
-            }
-            if (!time.tz.empty())
-            {
-                os << "[" << time.tz << "]";
-            }
-            return os;
+            return os << time.repr();
         }
 
         Time& replace_tz(std::string const& _tz)
         {
             tz = _tz;
             return *this;
+        }
+
+        std::string repr() const {
+            return std::format("{}:{}:{} {}", hour, minute, second, tz);
         }
     };
     struct Date
@@ -82,6 +77,10 @@ namespace epoch_frame
 
         Date  operator-(chrono_years const& other) const;
         Date& operator-=(chrono_years const& other);
+
+        std::string repr() const {
+            return std::format("{}-{}-{}", year, month, day);
+        }
     };
 
     struct DateTime
@@ -209,6 +208,10 @@ namespace epoch_frame
 
         DateTime tz_localize(const std::string& tz) const;
         DateTime tz_convert(const std::string& tz) const;
+
+        std::string repr() const {
+            return std::format("{}-{}-{} {}:{}:{} {}", date.year, date.month, date.day, hour, minute, second, tz);
+        }
 
         int64_t toordinal() const
         {
