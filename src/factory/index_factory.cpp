@@ -271,10 +271,13 @@ namespace epoch_frame::factory::index {
 
     IndexPtr make_datetime_index(std::vector<DateTime> const& timestamps, std::string const& name, std::string const& tz) {
         std::vector<int64_t> scalars;
+        std::unordered_set<std::string> timezones;
         scalars.reserve(timestamps.size());
         for (auto const& timestamp : timestamps) {
             scalars.emplace_back(timestamp.timestamp().value);
+            timezones.emplace(timestamp.tz);
         }
-        return make_datetime_index(scalars, name, tz);
+        AssertFromStream(timezones.size() == 1, "All timestamps must have the same timezone");
+        return make_datetime_index(scalars, name, tz.empty() ? *timezones.begin() : tz);
     }
 } // namespace epoch_frame::factory::index

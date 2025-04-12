@@ -34,11 +34,11 @@ namespace epoch_frame {
 
         explicit Scalar(const arrow::DurationScalar &other);
 
-        explicit Scalar(const struct Date &other);
+        explicit Scalar(const Date &other);
 
-        explicit Scalar(const struct DateTime &other);
+        explicit Scalar(const DateTime &other);
 
-        explicit Scalar(const struct TimeDelta &other);
+        explicit Scalar(const TimeDelta &other);
 
         explicit Scalar(std::string const &other);
 
@@ -48,8 +48,8 @@ namespace epoch_frame {
         // (Definition is inline.)
         template<typename T>
         requires std::is_scalar_v<T>
-        explicit Scalar(T &&other)
-                : Scalar(MakeScalar(std::forward<T>(other))) {}
+        explicit Scalar(T other)
+                : Scalar(MakeScalar(std::move(other))) {}
 
         // ------------------------------------------------------------------------
         // General Attributes
