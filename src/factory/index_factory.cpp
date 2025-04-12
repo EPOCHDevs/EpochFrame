@@ -277,7 +277,12 @@ namespace epoch_frame::factory::index {
             scalars.emplace_back(timestamp.timestamp().value);
             timezones.emplace(timestamp.tz);
         }
-        AssertFromStream(timezones.size() == 1, "All timestamps must have the same timezone");
-        return make_datetime_index(scalars, name, tz.empty() ? *timezones.begin() : tz);
+        if (timezones.size() == 2 && timezones.contains("UTC") && timezones.contains("")) {
+            AssertFromStream(timezones.contains(tz), "All timestamps must have the same timezone");
+            return make_datetime_index(scalars, name, tz);
+        }
+
+        AssertFromStream(timezones.size() <= 1, "All timestamps must have the same timezone");
+        return make_datetime_index(scalars, name, (tz.empty() && !timezones.empty()) ? *timezones.begin() : tz);
     }
 } // namespace epoch_frame::factory::index

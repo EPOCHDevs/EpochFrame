@@ -63,7 +63,7 @@ TEST_CASE("CME Globex Energy and Metals Calendar", "[calendar]")
 
         auto df =
             make_dataframe(index->tz_localize(UTC), {index->as_chunked_array()}, {"holidays"});
-            auto expected = index::make_datetime_index(holidays)->tz_localize(UTC);
+            auto expected = index::make_datetime_index(holidays);
             INFO("Holidays: " << df.index()->repr() << "\nExpected: \n" << expected->repr());
         REQUIRE(df.index()->equals(expected));
 

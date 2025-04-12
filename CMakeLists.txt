@@ -44,7 +44,6 @@ if (BUILD_TEST)
   find_package(trompeloeil 47 REQUIRED)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
-  enable_testing()
 endif()
 
 # Include the EpochCore dependency
