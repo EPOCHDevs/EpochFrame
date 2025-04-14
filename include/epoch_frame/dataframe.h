@@ -93,7 +93,9 @@ namespace epoch_frame
         DataFrame       operator[](const Array& array) const;
         DataFrame       operator[](const StringVectorCallable& callable) const;
         Series          loc(const Scalar& index_label) const;
+        DataFrame       safe_loc(const Scalar& index_label) const;
         Scalar          loc(const Scalar& index_label, const std::string& column) const;
+        Series          safe_loc(const Scalar& index_label, const std::string& column) const;
         DataFrame       loc(const DataFrameToSeriesCallable&) const;
         Series          loc(const Scalar&, const LocColArgumentVariant&) const;
         DataFrame       loc(const LocRowArgumentVariant&, const LocColArgumentVariant&) const;

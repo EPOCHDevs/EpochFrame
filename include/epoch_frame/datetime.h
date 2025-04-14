@@ -31,9 +31,12 @@ namespace epoch_frame
             return *this;
         }
 
-        std::string repr() const {
+        std::string repr() const
+        {
             return std::format("{}:{}:{} {}", hour, minute, second, tz);
         }
+
+        std::strong_ordering operator<=>(const Time& other) const;
     };
     struct Date
     {
@@ -78,7 +81,8 @@ namespace epoch_frame
         Date  operator-(chrono_years const& other) const;
         Date& operator-=(chrono_years const& other);
 
-        std::string repr() const {
+        std::string repr() const
+        {
             return std::format("{}-{}-{}", year, month, day);
         }
     };
@@ -209,8 +213,10 @@ namespace epoch_frame
         DateTime tz_localize(const std::string& tz) const;
         DateTime tz_convert(const std::string& tz) const;
 
-        std::string repr() const {
-            return std::format("{}-{}-{} {}:{}:{} {}", date.year, date.month, date.day, hour, minute, second, tz);
+        std::string repr() const
+        {
+            return std::format("{}-{}-{} {}:{}:{} {}", date.year, date.month, date.day, hour,
+                               minute, second, tz);
         }
 
         int64_t toordinal() const

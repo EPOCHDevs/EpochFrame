@@ -116,6 +116,13 @@ namespace epoch_frame
                                      chrono_day{static_cast<uint32_t>(n + 1)}};
     }
 
+    std::strong_ordering Time::operator<=>(const Time& other) const
+    {
+        auto hms1 = hour + minute + second + microsecond;
+        auto hms2 = other.hour + other.minute + other.second + other.microsecond;
+        return hms1 <=> hms2;
+    }
+
     int8_t Date::weekday() const
     {
         return (toordinal() + 6) % 7;
@@ -474,9 +481,7 @@ namespace epoch_frame
         {
             return d1 <=> d2;
         }
-        auto hms1 = hour + minute + second + microsecond;
-        auto hms2 = other.hour + other.minute + other.second + other.microsecond;
-        return hms1 <=> hms2;
+        return time() <=> other.time();
     }
 
     DateTime DateTime::combine(const Date& date, const Time& time)
@@ -486,7 +491,7 @@ namespace epoch_frame
 
     std::ostream& operator<<(std::ostream& os, const Date& dt)
     {
-       return os << dt.repr();
+        return os << dt.repr();
     }
 
     std::ostream& operator<<(std::ostream& os, const DateTime& dt)
