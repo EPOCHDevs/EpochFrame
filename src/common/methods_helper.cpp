@@ -387,8 +387,7 @@ namespace epoch_frame
         return concat_column_unsafe(aligned_frames, newIndex, ignore_index);
     }
 
-    DataFrame concat_row(std::vector<FrameOrSeries> const& objs, bool ignore_index, bool intersect)
-    {
+    DataFrame concat_row(std::vector<FrameOrSeries> const& objs, bool ignore_index, bool intersect) {
         constexpr const char* indexName = "__index__";
 
         std::vector<arrow::TablePtr> tables(objs.size());
@@ -432,24 +431,13 @@ namespace epoch_frame
                 SortIndices(merged, arrow::SortOptions{{arrow::compute::SortKey{indexName}}}));
             merged = AssertTableResultIsOk(arrow::compute::Take(merged, sorted_index));
             Array dt_index(factory::array::make_contiguous_array(merged->column(indexField)));
-            if (dt_index.unique().is_equal(dt_index))
-            {
-                return DataFrame(std::make_shared<DateTimeIndex>(dt_index.value(), ""),
-                                 AssertResultIsOk(merged->RemoveColumn(indexField)));
-            }
+            return DataFrame(std::make_shared<DateTimeIndex>(dt_index.value(), ""),
+                             AssertResultIsOk(merged->RemoveColumn(indexField)));
         }
-        else
-        {
-            Array dt_index(factory::array::make_contiguous_array(merged->column(indexField)));
-            if (dt_index.unique().is_equal(dt_index))
-            {
-                return DataFrame(factory::index::make_index(index, std::nullopt, ""),
-                                 AssertResultIsOk(merged->RemoveColumn(indexField)));
-            }
-        }
-        SPDLOG_DEBUG("concat_row: index is not unique, using group_by_agg.first()");
-        DataFrame df{merged};
-        return df.group_by_agg(indexName).first();
+
+        Array dt_index(factory::array::make_contiguous_array(merged->column(indexField)));
+        return DataFrame(factory::index::make_index(index, std::nullopt, ""),
+                         AssertResultIsOk(merged->RemoveColumn(indexField)));
     }
 
     DataFrame concat(const ConcatOptions& options)
