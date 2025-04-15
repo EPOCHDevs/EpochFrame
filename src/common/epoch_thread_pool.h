@@ -36,6 +36,11 @@ namespace epoch_frame
             arena.execute(std::forward<F>(func));
         }
 
+        template <typename F> void enqueue(F&& func)
+        {
+            arena.enqueue(std::forward<F>(func));
+        }
+
         // Get the number of threads in the pool
         int get_max_concurrency() const
         {
