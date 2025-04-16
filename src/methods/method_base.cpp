@@ -34,6 +34,9 @@ namespace epoch_frame {
     MethodBase::apply(std::string const &op,
                       const arrow::compute::FunctionOptions *options) const {
         auto [index, data] = m_data;
+        if (data.size() == 0) {
+            return data;
+        }
 
         if (data.is_chunked_array()) {
             return TableOrArray{arrow_utils::call_unary_compute_array(data.datum(), op, options)};
@@ -96,6 +99,9 @@ namespace epoch_frame {
         // 2) Otherwise, do a full outer join on the "index" column.
         auto left_rb = m_data.second;
         auto right_rb = otherData.second;
+        if (left_rb.size() == 0 && right_rb.size() == 0) {
+            return m_data;
+        }
 
         if (left_index->equals(right_index))
         {
