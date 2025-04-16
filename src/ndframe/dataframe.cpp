@@ -599,7 +599,7 @@ namespace epoch_frame
         }
 
         auto                                  arr_columns = arr->ColumnNames();
-        const std::unordered_set<std::string> arr_column_set(arr_columns.begin(),
+        const std::unordered_set arr_column_set(arr_columns.begin(),
                                                              arr_columns.end());
         auto                                  new_table = arrow_utils::apply_function_to_table(
             m_table,
