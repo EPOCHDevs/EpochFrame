@@ -1184,7 +1184,10 @@ namespace epoch_frame
         bool index_equals = m_index->equals(other.m_index);
         bool table_equals = true;
         if constexpr (std::is_same_v<ChildType, Series>) {
-            table_equals = m_table->Equals(*other.m_table, options);
+            if (arrow::is_floating(m_table->type()->id())) {
+                return  m_table->ApproxEquals(*other.m_table, options);
+            }
+            return m_table->Equals(*other.m_table, options);
         }
         else {
             auto lhs_columns = m_table->ColumnNames();
@@ -1198,7 +1201,12 @@ namespace epoch_frame
             for (auto const& column : lhs_columns) {
                 arrow::ChunkedArrayPtr lhs_column = m_table->GetColumnByName(column);
                 arrow::ChunkedArrayPtr rhs_column = other.m_table->GetColumnByName(column);
-                table_equals = lhs_column->Equals(*rhs_column, options);
+                if (arrow::is_floating(lhs_column->type()->id())) {
+                    table_equals = lhs_column->ApproxEquals(*rhs_column, options);
+                }
+                else {
+                    table_equals = lhs_column->Equals(*rhs_column, options);
+                }
                 if (!table_equals) {
                     return false;
                 }
