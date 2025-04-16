@@ -1179,12 +1179,12 @@ namespace epoch_frame
     }
 
     template <class ChildType, class ArrowType>
-    bool NDFrame<ChildType, ArrowType>::equals(ChildType const& other) const
+    bool NDFrame<ChildType, ArrowType>::equals(ChildType const& other, arrow::EqualOptions const& options) const
     {
         bool index_equals = m_index->equals(other.m_index);
         bool table_equals = true;
         if constexpr (std::is_same_v<ChildType, Series>) {
-            table_equals = m_table->Equals(*other.m_table);
+            table_equals = m_table->Equals(*other.m_table, options);
         }
         else {
             auto lhs_columns = m_table->ColumnNames();
@@ -1196,9 +1196,9 @@ namespace epoch_frame
                 return false;
             }
             for (auto const& column : lhs_columns) {
-                auto lhs_column = m_table->GetColumnByName(column);
-                auto rhs_column = other.m_table->GetColumnByName(column);
-                table_equals = lhs_column->Equals(*rhs_column);
+                arrow::ChunkedArrayPtr lhs_column = m_table->GetColumnByName(column);
+                arrow::ChunkedArrayPtr rhs_column = other.m_table->GetColumnByName(column);
+                table_equals = lhs_column->Equals(*rhs_column, options);
                 if (!table_equals) {
                     return false;
                 }
