@@ -100,6 +100,15 @@ namespace epoch_frame {
         }
 
         if (array->null_count() != 0) {
+            if constexpr (std::is_same_v<T, double>) {
+                std::vector<double> result;
+                result.reserve(array->length());
+                std::shared_ptr<arrow::DoubleArray> viewArray = get_view<double>(array);
+                std::transform(viewArray->begin(), viewArray->end(), std::back_inserter(result), [](auto const &s) {
+                    return s.value_or(std::numeric_limits<double>::quiet_NaN());
+                });
+                return result;
+            }
             throw std::runtime_error("values() called on null array");
         }
 
