@@ -1,6 +1,7 @@
 #include "time_grouper.h"
 #include "common/asserts.h"
 #include "common/python_utils.h"
+#include "epoch_core/macros.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
 #include <execution>
@@ -155,7 +156,8 @@ namespace epoch_frame
         auto [bins, labels] = get_time_bins(index);
 
         // If bins is empty, return an empty array
-        if (bins.empty()) {
+        if (bins.empty())
+        {
             return AssertResultIsOk(arrow::ChunkedArray::Make({}));
         }
 
@@ -164,12 +166,17 @@ namespace epoch_frame
         std::vector<int64_t> rep(bins.size());
 
         // Optimized exclusive scan to calculate differences between consecutive bins
-        if (bins.size() > 100'000) {
+        if (bins.size() > 100'000)
+        {
             // Parallel version
-            std::transform(std::execution::par, bins.begin() + 1, bins.end(), bins.begin(), rep.begin() + 1, std::minus<int64_t>());
-        } else {
+            std::transform(std::execution::par, bins.begin() + 1, bins.end(), bins.begin(),
+                           rep.begin() + 1, std::minus<int64_t>());
+        }
+        else
+        {
             // Sequential version
-            std::transform(bins.begin() + 1, bins.end(), bins.begin(), rep.begin() + 1, std::minus<int64_t>());
+            std::transform(bins.begin() + 1, bins.end(), bins.begin(), rep.begin() + 1,
+                           std::minus<int64_t>());
         }
 
         // Set the first element manually to match NumPy behavior
@@ -183,13 +190,15 @@ namespace epoch_frame
         for (size_t i = 0; i < bins.size(); ++i)
         {
             int64_t count = rep[i];
-            for (int64_t j = 0; j < count; ++j) {
+            for (int64_t j = 0; j < count; ++j)
+            {
                 comp_ids.push_back(i);
             }
         }
 
         // Convert to Apache Arrow array and perform the take operation
-        auto indices = labels->array().take(Array{factory::array::make_contiguous_array(comp_ids)}, false);
+        auto indices =
+            labels->array().take(Array{factory::array::make_contiguous_array(comp_ids)}, false);
         return factory::array::make_array(indices.value());
     }
 
@@ -215,14 +224,15 @@ namespace epoch_frame
                     origin_timestamp = first_dt.timestamp().value;
                     break;
                 case epoch_core::GrouperOrigin::End:
-                case epoch_core::GrouperOrigin::EndDay: {
+                case epoch_core::GrouperOrigin::EndDay:
+                {
                     auto origin_last    = origin_type == epoch_core::GrouperOrigin::End
-                             ? last
-                             : Scalar{last_dt}
-                    .dt()
-                    .ceil({arrow::compute::RoundTemporalOptions{
-                        1, arrow::compute::CalendarUnit::DAY}})
-                    .timestamp();
+                                              ? last
+                                              : Scalar{last_dt}
+                                                 .dt()
+                                                 .ceil({arrow::compute::RoundTemporalOptions{
+                                                     1, arrow::compute::CalendarUnit::DAY}})
+                                                 .timestamp();
                     auto sub_freq_times = floor_div(origin_last.value - first.value, freq_value);
 
                     if (m_options.closed == epoch_core::GrouperClosedType::Left)
@@ -257,8 +267,8 @@ namespace epoch_frame
 
         int64_t foffset     = pymod(first.value - origin_timestamp, freq_value);
         int64_t loffset     = pymod(last.value - origin_timestamp, freq_value);
-        int64_t  fresult_int = 0;
-        int64_t  lresult_int = 0;
+        int64_t fresult_int = 0;
+        int64_t lresult_int = 0;
         if (m_options.closed == epoch_core::GrouperClosedType::Right)
         {
             if (foffset > loffset)
@@ -309,7 +319,7 @@ namespace epoch_frame
         }
         if (!last_tz.empty())
         {
-            lresult = lresult.dt().tz_localize(last_dt.tz).dt().tz_convert(last_tz);
+            lresult = lresult.dt().tz_localize("UTC").dt().tz_convert(last_tz);
         }
 
         return {fresult, lresult};
@@ -324,22 +334,20 @@ namespace epoch_frame
         const auto tick_handler = std::dynamic_pointer_cast<TickHandler>(m_options.freq);
         if (tick_handler)
         {
-            auto     index_tz = first.tz;
-            auto origin = m_options.origin;
-            bool     origin_is_value = std::holds_alternative<DateTime>(m_options.origin);
+            auto index_tz        = first.tz;
+            auto origin          = m_options.origin;
+            bool origin_is_value = std::holds_alternative<DateTime>(m_options.origin);
             if (origin_is_value)
             {
                 auto origin_value = std::get<DateTime>(m_options.origin);
-                AssertFromStream(
-                    origin_value.tz != index_tz,
-                    "origin must have the same timezone as the index. origin: "
-                        << origin_value.tz << "\tindex: " << index_tz);
+                AssertFalseFromStream((origin_value.tz == "") != (index_tz == ""),
+                                      "origin must have the same timezone as the index. origin: "
+                                          << origin_value.tz << "\tindex: " << index_tz);
             }
             else if (std::get<epoch_core::GrouperOrigin>(origin) ==
                      epoch_core::GrouperOrigin::Epoch)
             {
-                AssertFromStream(index_tz.empty(),
-                                          "index must have a timezone if origin is Epoch");
+                AssertFromStream(index_tz.empty(), "index must have a timezone if origin is Epoch");
                 origin = DateTime{
                     .date = {std::chrono::year{1970}, std::chrono::month{1}, std::chrono::day{1}},
                     .tz   = index_tz};

@@ -26,11 +26,11 @@ namespace epoch_frame::calendar
             switch (date.weekday())
             {
                 case 5:
-                    return date - TimeDelta({2});
+                    return date - TimeDelta(2);
                 case 6:
-                    return date - TimeDelta({3});
+                    return date - TimeDelta(3);
                 case 0:
-                    return date - TimeDelta({1});
+                    return date - TimeDelta(1);
                 default:
                     return date;
             }
@@ -41,9 +41,9 @@ namespace epoch_frame::calendar
             switch (date.weekday())
             {
                 case 3:
-                    return date + TimeDelta({2});
+                    return date + TimeDelta(2);
                 case 4:
-                    return date + TimeDelta({1});
+                    return date + TimeDelta(1);
                 default:
                     return date;
             }

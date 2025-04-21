@@ -31,7 +31,7 @@ namespace epoch_frame::calendar
             int      weekday = july4th.weekday();
             if (weekday >= 1 && weekday <= 4)
             { // Tuesday to Friday
-                return july4th - TimeDelta({1});
+                return july4th - TimeDelta(1);
             }
             return std::nullopt;
         };
@@ -361,7 +361,7 @@ namespace epoch_frame::calendar
             {
                 diff_to_thu += 7;
             }
-            return dt + TimeDelta({diff_to_thu + 22});
+            return dt + TimeDelta(diff_to_thu + 22);
         };
 
         const HolidayData USThanksgivingFriday = {

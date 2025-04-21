@@ -12,9 +12,9 @@ namespace epoch_frame::calendar
         switch (date.weekday())
         {
             case 5:
-                return date + TimeDelta({2});
+                return date + TimeDelta(2);
             case 6:
-                return date + TimeDelta({1});
+                return date + TimeDelta(1);
             default:
                 return date;
         }
@@ -31,9 +31,9 @@ namespace epoch_frame::calendar
         {
             case 5: // Saturday
             case 6: // Sunday
-                return date + TimeDelta({2});
+                return date + TimeDelta(2);
             case 0: // Monday
-                return date + TimeDelta({1});
+                return date + TimeDelta(1);
             default:
                 return date;
         }
@@ -45,9 +45,9 @@ namespace epoch_frame::calendar
         switch (date.weekday())
         {
             case 5: // Saturday
-                return date - TimeDelta({1});
+                return date - TimeDelta(1);
             case 6: // Sunday
-                return date - TimeDelta({2});
+                return date - TimeDelta(2);
             default:
                 return date;
         }
@@ -58,7 +58,7 @@ namespace epoch_frame::calendar
         // If holiday falls on Sunday, use day thereafter (Monday) instead.
         if (date.weekday() == 6)
         { // Sunday
-            return date + TimeDelta({1});
+            return date + TimeDelta(1);
         }
         return date;
     };
@@ -71,9 +71,9 @@ namespace epoch_frame::calendar
         switch (date.weekday())
         {
             case 6: // Sunday
-                return date + TimeDelta({1});
+                return date + TimeDelta(1);
             case 5: // Saturday
-                return date + TimeDelta({2});
+                return date + TimeDelta(2);
             default:
                 return date;
         }
@@ -86,9 +86,9 @@ namespace epoch_frame::calendar
         switch (date.weekday())
         {
             case 5: // Saturday
-                return date - TimeDelta({1});
+                return date - TimeDelta(1);
             case 6: // Sunday
-                return date + TimeDelta({1});
+                return date + TimeDelta(1);
             default:
                 return date;
         }
@@ -97,10 +97,10 @@ namespace epoch_frame::calendar
     constexpr auto next_workday = [](const DateTime& date) -> DateTime
     {
         // Returns next workday used for observances
-        DateTime next_date = date + TimeDelta({1});
+        DateTime next_date = date + TimeDelta(1);
         while (next_date.weekday() > 4)
         { // Mon-Fri are 0-4
-            next_date = next_date + TimeDelta({1});
+            next_date = next_date + TimeDelta(1);
         }
         return next_date;
     };
@@ -108,10 +108,10 @@ namespace epoch_frame::calendar
     constexpr auto previous_workday = [](const DateTime& date) -> DateTime
     {
         // Returns previous workday used for observances
-        DateTime prev_date = date - TimeDelta({1});
+        DateTime prev_date = date - TimeDelta(1);
         while (prev_date.weekday() > 4)
         { // Mon-Fri are 0-4
-            prev_date = prev_date - TimeDelta({1});
+            prev_date = prev_date - TimeDelta(1);
         }
         return prev_date;
     };

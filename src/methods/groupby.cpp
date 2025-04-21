@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "arrow/compute/api.h"
+#include "epoch_core/macros.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
 #include <arrow/acero/exec_plan.h>
@@ -453,6 +454,29 @@ namespace epoch_frame
             ConcatOptions{.frames = values, .joinType = JoinType::Outer, .axis = AxisType::Row});
     }
 
+    DataFrame
+    ApplyOperations::apply(std::function<arrow::TablePtr(DataFrame const&)> const& fn) const
+    {
+        const auto                 groups = m_grouper->groups();
+        std::vector<FrameOrSeries> values(groups.size());
+        std::transform(groups.begin(), groups.end(), values.begin(),
+                       [&](auto const& group)
+                       {
+                           const DataFrame df    = m_data.iloc(Array(group.second));
+                           const auto      table = fn(df);
+                           AssertFromStream(table, "table is null");
+                           AssertFromStream(table->num_rows() == 1, "table must have 1 row");
+                           return DataFrame(factory::index::make_index(
+                                                AssertResultIsOk(arrow::MakeArrayFromScalar(
+                                                    *group.first.value(), 1)),
+                                                std::nullopt, ""),
+                                            table);
+                       });
+
+        return concat(
+            ConcatOptions{.frames = values, .joinType = JoinType::Outer, .axis = AxisType::Row});
+    }
+
     //-------------------------------------------------------------------------
     // GroupByAgg implementation
     //-------------------------------------------------------------------------
@@ -527,6 +551,11 @@ namespace epoch_frame
     }
 
     DataFrame GroupByApply::apply(std::function<DataFrame(DataFrame const&)> const& fn) const
+    {
+        return m_operations->apply(fn);
+    }
+
+    DataFrame GroupByApply::apply(std::function<arrow::TablePtr(DataFrame const&)> const& fn) const
     {
         return m_operations->apply(fn);
     }
