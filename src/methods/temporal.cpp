@@ -335,7 +335,7 @@ namespace epoch_frame
             auto new_type = timestamp(arrow::TimeUnit::NANO, timezone);
             return Array{std::make_shared<arrow::TimestampArray>(
                 new_type, m_data->length(), m_data->data()->buffers[0], m_data->data()->buffers[1],
-                m_data->offset())};
+                m_data.null_count(), m_data->offset())};
         }
         catch (const std::exception& e)
         {
