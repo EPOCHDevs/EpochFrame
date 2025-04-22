@@ -1,7 +1,7 @@
 #include "../holidays/us.h"
 #include "all.h"
-#include "epoch_frame/datetime.h"
 #include "date_time/holiday/holiday.h"
+#include "epoch_frame/datetime.h"
 #include "epoch_frame/index.h"
 
 #define us USHolidays::Instance()
@@ -17,7 +17,7 @@ namespace epoch_frame::calendar
         inline static const auto good_friday_unless_christmas_nye_friday =
             [](const DateTime& dt) -> std::optional<DateTime>
         {
-            const auto year = dt.date.year;
+            const auto year = dt.date().year;
 
             // Check if Christmas falls on a Friday (weekday 4)
             auto christmas = us.Christmas.observance(DateTime{year, std::chrono::December, 25d});
@@ -41,8 +41,8 @@ namespace epoch_frame::calendar
             if (!christmas_on_friday && !nye_on_friday)
             {
                 auto dates = Holiday{GoodFriday}.dates(
-                    DateTime{dt.date.year, std::chrono::January, 1d}.timestamp(),
-                    DateTime{dt.date.year, std::chrono::December, 31d}.timestamp());
+                    DateTime{dt.date().year, std::chrono::January, 1d}.timestamp(),
+                    DateTime{dt.date().year, std::chrono::December, 31d}.timestamp());
                 if (dates->size() > 0)
                 {
                     return dates->at(0).to_datetime();

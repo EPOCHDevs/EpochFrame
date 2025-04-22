@@ -29,7 +29,7 @@ DateTime createDateTime(const std::string& date_str) {
     }
 
     return DateTime{Date{chrono_year(year), chrono_month(month), chrono_day(day)},
-                   chrono_hour(0), chrono_minute(0), chrono_second(0), chrono_microsecond(0)};
+                   {chrono_hour(0), chrono_minute(0), chrono_second(0), chrono_microsecond(0)}};
 }
 
 // Helper function to convert a string to BusDayOffsetRoll

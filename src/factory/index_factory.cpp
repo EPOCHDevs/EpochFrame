@@ -381,7 +381,7 @@ namespace epoch_frame::factory::index
         for (auto const& timestamp : timestamps)
         {
             scalars.emplace_back(timestamp.timestamp().value);
-            timezones.emplace(timestamp.tz);
+            timezones.emplace(timestamp.tz());
         }
         if (timezones.size() == 2 && timezones.contains("UTC") && timezones.contains(""))
         {

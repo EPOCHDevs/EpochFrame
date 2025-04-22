@@ -34,7 +34,7 @@ TEST_CASE("CME Agriculture Calendar", "[calendar]")
         // christmas (observed): 2020-12-25, 2020-12-27
         // new years (observed): 2021-01-01
 
-        auto good_dates = cal.valid_days("2020-01-01"__date.date, "2021-01-10"__date.date);
+        auto good_dates = cal.valid_days("2020-01-01"__date.date(), "2021-01-10"__date.date());
 
         std::vector<DateTime> expected_holidays = {
             "2020-01-20 00:00:00"__dt, "2020-02-17 00:00:00"__dt, "2020-04-10 00:00:00"__dt,
@@ -63,7 +63,7 @@ TEST_CASE("CME Agriculture Calendar", "[calendar]")
 
     SECTION("test_dec_jan")
     {
-        auto schedule = cal.schedule("2020-12-30"__date.date, "2021-01-10"__date.date, {});
+        auto schedule = cal.schedule("2020-12-30"__date.date(), "2021-01-10"__date.date(), {});
 
         // First market open should be 2020-12-29 23:01:00 UTC
         auto first_open = schedule.iloc(0, "MarketOpen").to_datetime();

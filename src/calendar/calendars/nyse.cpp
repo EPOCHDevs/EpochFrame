@@ -355,7 +355,7 @@ namespace epoch_frame::calendar
     IndexPtr NYSEExchangeCalendar::date_range_htf(Date const& start, Date const& end,
                                                   std::optional<int64_t> periods) const
     {
-        if (start > instance().SATURDAY_END.date)
+        if (start > instance().SATURDAY_END.date())
         {
             return MarketCalendar::date_range_htf(start, end, periods);
         }

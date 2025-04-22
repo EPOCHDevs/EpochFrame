@@ -24,7 +24,7 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
 
     SECTION("test_sunday_opens")
     {
-        auto schedule = cal.schedule("2020-01-01"__date.date, "2020-01-31"__date.date, {});
+        auto schedule = cal.schedule("2020-01-01"__date.date(), "2020-01-31"__date.date(), {});
 
         // Get Monday January 13, 2020's market open time and verify it's on Sunday at 5PM Chicago
         // time
@@ -33,7 +33,7 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
                                .tz_convert("America/Chicago")
                                .to_datetime();
 
-        REQUIRE(market_open.date.day == 12d);    // Sunday January 12
+        REQUIRE(market_open.date().day == 12d);  // Sunday January 12
         REQUIRE(market_open.time().hour == 17h); // 5 PM
         REQUIRE(market_open.time().minute == 0min);
     }
@@ -44,7 +44,7 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
         // New Year's Day: 2020-01-01
         // Christmas: 2020-12-25
 
-        auto good_dates = cal.valid_days("2020-01-01"__date.date, "2020-12-31"__date.date);
+        auto good_dates = cal.valid_days("2020-01-01"__date.date(), "2020-12-31"__date.date());
 
         std::vector<DateTime> holidays = {"2020-04-10 00:00:00"__dt, "2020-01-01 00:00:00"__dt,
                                           "2020-12-25 00:00:00"__dt};
@@ -65,7 +65,7 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
         // Labor Day: 2020-09-07
         // Thanksgiving: 2020-11-26
 
-        auto schedule = cal.schedule("2020-01-01"__date.date, "2020-12-31"__date.date, {});
+        auto schedule = cal.schedule("2020-01-01"__date.date(), "2020-12-31"__date.date(), {});
 
         std::vector<DateTime> noon_close_dates = {"2020-01-20"__date, "2020-02-17"__date,
                                                   "2020-05-25"__date, "2020-09-07"__date,
@@ -91,7 +91,7 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
         // Black Friday: 2020-11-27
         // Christmas Eve: 2020-12-24
 
-        auto schedule = cal.schedule("2020-11-27"__date.date, "2020-12-24"__date.date, {});
+        auto schedule = cal.schedule("2020-11-27"__date.date(), "2020-12-24"__date.date(), {});
 
         std::vector<DateTime> noon_15_close_dates = {"2020-11-27"__date, "2020-12-24"__date};
 
@@ -113,12 +113,12 @@ TEST_CASE("CME Bond Calendar", "[calendar]")
     SECTION("test_good_fridays")
     {
         // Regular Good Friday (2020-04-10) should be a holiday
-        auto schedule_2020 = cal.schedule("2020-01-01"__date.date, "2020-12-31"__date.date, {});
+        auto schedule_2020 = cal.schedule("2020-01-01"__date.date(), "2020-12-31"__date.date(), {});
         REQUIRE_FALSE(schedule_2020.index()->contains(Scalar("2020-04-10 00:00:00"__dt)));
 
         // Good Friday when it's the first Friday of the month (2021-04-02) should be a trading day
         // with early close
-        auto schedule_2021 = cal.schedule("2021-01-01"__date.date, "2021-12-31"__date.date, {});
+        auto schedule_2021 = cal.schedule("2021-01-01"__date.date(), "2021-12-31"__date.date(), {});
         REQUIRE(schedule_2021.index()->contains(Scalar("2021-04-02 00:00:00"__dt)));
 
         auto market_close = schedule_2021.loc(Scalar{"2021-04-02"_date}, "MarketClose")

@@ -13,7 +13,8 @@ using namespace epoch_frame::factory;
 using namespace epoch_frame::factory::scalar;
 using namespace epoch_frame;
 
-TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
+TEST_CASE("CME Globex Crypto Calendar", "[calendar]")
+{
     using namespace epoch_frame::calendar;
     using namespace epoch_frame;
 
@@ -234,7 +235,8 @@ TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
         // 2023 Good Friday (7 = Friday)
         {"2023-04-07"__date, Time{10h, 15min}}};
 
-    for (const auto& [date_, market_time] : test_cases) {
+    for (const auto& [date_, market_time] : test_cases)
+    {
         std::visit(
             [&]<typename T>(T const& market_time)
             {
@@ -245,7 +247,7 @@ TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
                     auto   offset      = date_scalar.dt().is_dst().as_bool() ? 5.0 : 6.0;
                     auto   delta       = TimeDelta{{.hours = offset}};
                     Scalar day_ts{date + delta};
-                    auto   year     = date.date.year;
+                    auto   year     = date.date().year;
                     auto   schedule = cal.schedule(Date{year, January, 1d},
                                                    Date{year + years(1), January, 1d}, {.tz = CST});
 
@@ -281,9 +283,8 @@ TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
                             auto market_open  = schedule.loc(date_scalar, "MarketOpen");
                             auto market_close = schedule.loc(date_scalar, "MarketClose");
 
-                            auto expected_open_date =
-                                offset::minutes(0)->add(offset::hours(17)->add(
-                                    offset::days(-1)->add(day_ts.timestamp())));
+                            auto expected_open_date = offset::minutes(0)->add(
+                                offset::hours(17)->add(offset::days(-1)->add(day_ts.timestamp())));
                             Scalar expected_open_scalar{expected_open_date};
 
                             {
@@ -291,9 +292,8 @@ TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
                                 REQUIRE(market_open == expected_open_scalar);
                             }
 
-                            auto expected_close_date =
-                                offset::minutes(0)->add(offset::hours(16)->add(
-                                    offset::days(0)->add(day_ts.timestamp())));
+                            auto expected_close_date = offset::minutes(0)->add(
+                                offset::hours(16)->add(offset::days(0)->add(day_ts.timestamp())));
                             Scalar expected_close_scalar{expected_close_date};
 
                             {
@@ -303,8 +303,7 @@ TEST_CASE("CME Globex Crypto Calendar", "[calendar]") {
                         }
                         else
                         {
-                            REQUIRE_FALSE(
-                                schedule.index()->contains(day_ts.dt().tz_localize("")));
+                            REQUIRE_FALSE(schedule.index()->contains(day_ts.dt().tz_localize("")));
                         }
                     }
                 }

@@ -26,7 +26,7 @@ TEST_CASE("CME Globex Grains and Oilseeds Calendar", "[calendar]")
 
     SECTION("test_x")
     {
-        auto good_dates = cal.valid_days("2023-01-01"__date.date, "2023-12-31"__date.date);
+        auto good_dates = cal.valid_days("2023-01-01"__date.date(), "2023-12-31"__date.date());
 
         // Dates that should be holidays
         std::vector<DateTime> expected_holidays = {"2023-01-01"__date, "2023-12-24"__date,

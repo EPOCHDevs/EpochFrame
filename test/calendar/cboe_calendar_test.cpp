@@ -10,14 +10,15 @@ using namespace epoch_frame::factory;
 using namespace epoch_frame::factory::scalar;
 using namespace epoch_frame;
 
-
 TEST_CASE("CBOE Calendars", "[calendar]")
 {
     using namespace epoch_frame::calendar;
     using namespace epoch_frame;
 
-    struct CBOECalendarFixture {
-        CBOECalendarFixture() {
+    struct CBOECalendarFixture
+    {
+        CBOECalendarFixture()
+        {
             calendars.push_back(std::make_unique<CFEExchangeCalendar>());
             calendars.push_back(std::make_unique<CBOEEquityOptionsExchangeCalendar>());
         }
@@ -25,7 +26,7 @@ TEST_CASE("CBOE Calendars", "[calendar]")
     };
 
     static CBOECalendarFixture fixture;
-    static const auto& calendars = fixture.calendars;
+    static const auto&         calendars = fixture.calendars;
 
     SECTION("test_open_time_tz")
     {
@@ -61,20 +62,21 @@ TEST_CASE("CBOE Calendars", "[calendar]")
         // christmas (observed): dec 26
         // new years (observed): jan 2 2017
 
-        std::vector<DateTime> expected_holidays = {
+        std::vector expected_holidays = {
             "2016-01-01 00:00:00"__dt, "2016-01-18 00:00:00"__dt, "2016-02-15 00:00:00"__dt,
             "2016-05-30 00:00:00"__dt, "2016-07-04 00:00:00"__dt, "2016-09-05 00:00:00"__dt,
             "2016-11-24 00:00:00"__dt, "2016-12-26 00:00:00"__dt, "2017-01-02 00:00:00"__dt};
 
         for (const auto& cal : calendars)
         {
-            auto valid_days = cal->valid_days("2016-01-01"__date.date, "2016-12-31"__date.date);
+            auto valid_days = cal->valid_days("2016-01-01"__date.date(), "2016-12-31"__date.date());
 
             // Verify none of the holidays are in valid days
             for (const auto& holiday : expected_holidays)
             {
-                INFO("Testing holiday: " << holiday);
-                auto holiday_utc = holiday.replace_tz("UTC");
+                auto holiday_utc = holiday.tz_localize("UTC");
+                INFO("Testing holiday: " << holiday_utc);
+                INFO(valid_days->repr());
                 REQUIRE_FALSE(valid_days->contains(Scalar(holiday_utc)));
             }
         }
@@ -86,8 +88,8 @@ TEST_CASE("CBOE Calendars", "[calendar]")
 
         for (const auto& cal : calendars)
         {
-            auto start_date = "2015-04-01"__date.date;
-            auto end_date   = "2016-04-01"__date.date;
+            auto start_date = "2015-04-01"__date.date();
+            auto end_date   = "2016-04-01"__date.date();
             DYNAMIC_SECTION("Calendar: " << cal->name() << " " << start_date << " - " << end_date)
             {
                 auto valid_days = cal->valid_days(start_date, end_date);
@@ -103,7 +105,7 @@ TEST_CASE("CBOE Calendars", "[calendar]")
         // Only early close is day after thanksgiving: nov 25, 2016
         for (const auto& cal : calendars)
         {
-            auto schedule = cal->schedule("2016-01-01"__date.date, "2016-12-31"__date.date, {});
+            auto schedule = cal->schedule("2016-01-01"__date.date(), "2016-12-31"__date.date(), {});
 
             // Check Nov 25, 2016 is an early close date
             auto market_close = schedule.loc(Scalar{"2016-11-25"_date}, "MarketClose")
@@ -130,7 +132,7 @@ TEST_CASE("CBOE Calendars", "[calendar]")
 
         for (const auto& cal : calendars)
         {
-            auto valid_days = cal->valid_days("1994-01-01"__date.date, "2012-12-31"__date.date);
+            auto valid_days = cal->valid_days("1994-01-01"__date.date(), "2012-12-31"__date.date());
 
             // Verify none of the adhoc holidays are in valid days
             for (const auto& holiday : expected_adhoc_holidays)
@@ -146,7 +148,7 @@ TEST_CASE("CBOE Calendars", "[calendar]")
     {
         // Test specific datetime is within trading hours
         CFEExchangeCalendar cal;
-        auto schedule = cal.schedule("2016-11-25"__date.date, "2016-11-25"__date.date);
+        auto schedule = cal.schedule("2016-11-25"__date.date(), "2016-11-25"__date.date());
 
         // Trading hours are 8:30 to 12:15 on early close day (Black Friday)
         DateTime early_time{"2016-11-25 09:00:00"__dt.replace_tz("America/Chicago")};

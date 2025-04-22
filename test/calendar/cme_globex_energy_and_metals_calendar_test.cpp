@@ -67,7 +67,7 @@ TEST_CASE("CME Globex Energy and Metals Calendar", "[calendar]")
         INFO("Holidays: " << df.index()->repr() << "\nExpected: \n" << expected->repr());
         REQUIRE(df.index()->equals(expected));
 
-        auto valid_days = cal.valid_days(start.date, end.date);
+        auto valid_days = cal.valid_days(start.date(), end.date());
         for (auto const& h : holidays)
         {
             REQUIRE_FALSE(valid_days->contains(Scalar(h)));

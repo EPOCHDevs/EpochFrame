@@ -1,11 +1,11 @@
 #include "calendar/calendars/all.h"
 #include "epoch_frame/datetime.h"
-#include "epoch_frame/time_delta.h"
 #include "epoch_frame/factory/date_offset_factory.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/factory/scalar_factory.h"
 #include "epoch_frame/scalar.h"
 #include "epoch_frame/series.h"
+#include "epoch_frame/time_delta.h"
 #include <bits/chrono.h>
 #include <catch.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -589,7 +589,7 @@ TEST_CASE("CME Globex Fixed Income Calendar", "[calendar]")
                     auto   offset      = date_scalar.dt().is_dst().as_bool() ? 5.0 : 6.0;
                     auto   delta       = TimeDelta{{.hours = offset}};
                     Scalar day_ts{date + delta};
-                    auto   year     = date.date.year;
+                    auto   year     = date.date().year;
                     auto   schedule = cal.schedule(Date{year, January, 1d},
                                                    Date{year + years(1), January, 1d}, {.tz = CST});
 

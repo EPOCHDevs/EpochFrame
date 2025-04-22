@@ -35,7 +35,7 @@ namespace epoch_frame::factory::array
                                                          arrow::timestamp(arrow::TimeUnit::NANO));
         }
 
-        arrow::TimestampBuilder builder{arrow::timestamp(arrow::TimeUnit::NANO, begin_->tz),
+        arrow::TimestampBuilder builder{arrow::timestamp(arrow::TimeUnit::NANO, begin_->tz()),
                                         arrow::default_memory_pool()};
 
         AssertStatusIsOk(builder.Reserve(std::distance(begin_, end_)));

@@ -45,7 +45,7 @@ namespace epoch_frame
         .name       = "Australia Day",
         .month      = std::chrono::January,
         .day        = 26d,
-        .start_date = DateTime({1935y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1935y, std::chrono::January, 1d}),
         .observance = next_monday_if_weekend,
     };
 
@@ -70,7 +70,7 @@ namespace epoch_frame
         .name       = "ANZAC Day",
         .month      = std::chrono::April,
         .day        = 25d,
-        .start_date = DateTime({1921y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1921y, std::chrono::January, 1d}),
     };
 
     // Queen's Birthday
@@ -191,7 +191,7 @@ namespace epoch_frame
         .name       = "Waitangi Day",
         .month      = std::chrono::February,
         .day        = 6d,
-        .start_date = DateTime({1974y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1974y, std::chrono::January, 1d}),
         .observance = next_monday_if_weekend,
     };
 
@@ -200,7 +200,7 @@ namespace epoch_frame
         .name       = "ANZAC Day",
         .month      = std::chrono::April,
         .day        = 25d,
-        .start_date = DateTime({1921y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1921y, std::chrono::January, 1d}),
         .observance = next_monday_if_weekend,
     };
 
@@ -241,24 +241,24 @@ namespace epoch_frame
         .name       = "Matariki",
         .month      = std::chrono::June,
         .day        = 24d,
-        .start_date = DateTime({2022y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2022y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2022y, std::chrono::December, 31d}),
     };
 
     const HolidayData Matariki2023 = {
         .name       = "Matariki",
         .month      = std::chrono::July,
         .day        = 14d,
-        .start_date = DateTime({2023y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2023y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2023y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2023y, std::chrono::December, 31d}),
     };
 
     const HolidayData Matariki2024 = {
         .name       = "Matariki",
         .month      = std::chrono::June,
         .day        = 28d,
-        .start_date = DateTime({2024y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2024y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2024y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2024y, std::chrono::December, 31d}),
     };
 
 } // namespace epoch_frame

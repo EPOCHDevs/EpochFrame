@@ -214,10 +214,11 @@ namespace epoch_frame {
 
         [[nodiscard]] StringOperation<false> str() const;
 
-        [[nodiscard]] arrow::TimestampScalar timestamp(std::string const &format="%Y-%m-%d %H:%M:%S") const;
+        [[nodiscard]] arrow::TimestampScalar timestamp(std::string const &format="%Y-%m-%d %H:%M:%S",
+            const std::string& tz="") const;
 
-        DateTime to_datetime(std::string const &format="%Y-%m-%d %H:%M:%S") const;
-        DateTime to_date(std::string const &format="%Y-%m-%d") const;
+        DateTime to_datetime(std::string const &format="%Y-%m-%d %H:%M:%S", const std::string& tz="") const;
+        DateTime to_date(std::string const &format="%Y-%m-%d", const std::string& tz="") const;
 
         [[nodiscard]] epoch_core::EpochDayOfWeek weekday() const;
 

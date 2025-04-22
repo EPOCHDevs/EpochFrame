@@ -253,8 +253,8 @@ namespace epoch_frame
 
         origin_timestamp += (m_options.offset ? m_options.offset->to_nanoseconds() : 0);
 
-        auto first_tz = first_dt.tz;
-        auto last_tz  = last_dt.tz;
+        auto first_tz = first_dt.tz();
+        auto last_tz  = last_dt.tz();
 
         if (!first_tz.empty())
         {
@@ -334,23 +334,23 @@ namespace epoch_frame
         const auto tick_handler = std::dynamic_pointer_cast<TickHandler>(m_options.freq);
         if (tick_handler)
         {
-            auto index_tz        = first.tz;
+            auto index_tz        = first.tz();
             auto origin          = m_options.origin;
             bool origin_is_value = std::holds_alternative<DateTime>(m_options.origin);
             if (origin_is_value)
             {
                 auto origin_value = std::get<DateTime>(m_options.origin);
-                AssertFalseFromStream((origin_value.tz == "") != (index_tz == ""),
+                AssertFalseFromStream((origin_value.tz() == "") != (index_tz == ""),
                                       "origin must have the same timezone as the index. origin: "
-                                          << origin_value.tz << "\tindex: " << index_tz);
+                                          << origin_value.tz() << "\tindex: " << index_tz);
             }
             else if (std::get<epoch_core::GrouperOrigin>(origin) ==
                      epoch_core::GrouperOrigin::Epoch)
             {
                 AssertFromStream(index_tz.empty(), "index must have a timezone if origin is Epoch");
                 origin = DateTime{
-                    .date = {std::chrono::year{1970}, std::chrono::month{1}, std::chrono::day{1}},
-                    .tz   = index_tz};
+                    Date{std::chrono::year{1970}, std::chrono::month{1}, std::chrono::day{1}},
+                    Time{.tz = index_tz}};
             }
 
             DateTime   first_dt = first;

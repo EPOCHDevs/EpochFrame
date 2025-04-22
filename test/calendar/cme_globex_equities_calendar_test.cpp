@@ -597,7 +597,7 @@ TEST_CASE("CME Globex Equities Calendar", "[calendar]")
                         auto   offset      = date_scalar.dt().is_dst().as_bool() ? 5.0 : 6.0;
                         auto   delta       = TimeDelta{{.hours = offset}};
                         Scalar day_ts{date + delta};
-                        auto   year = date.date.year;
+                        auto   year = date.date().year;
                         auto   schedule =
                             cal.schedule(Date{year, January, 1d},
                                          Date{year + years(1), January, 1d}, {.tz = CST});

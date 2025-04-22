@@ -104,10 +104,22 @@ namespace epoch_frame::calendar {
     using SpecialTimesAdHoc = std::vector<SpecialTimeAdHoc>;
     using MarketTimeVariant = std::variant<Time, epoch_core::MarketTimeType>;
 
+    inline static const RegularMarketTimes REGULAR_MARKET_TIMES{
+                {{epoch_core::MarketTimeType::MarketOpen, MarketTimes{MarketTime{Time{0h}}}},
+                 {epoch_core::MarketTimeType::MarketClose, MarketTimes{MarketTime{Time{23h}}}}}};
+
+    inline static const OpenCloseMap OPEN_CLOSE_MAP{
+                {{epoch_core::MarketTimeType::MarketOpen, epoch_core::OpenCloseType::True},
+                 {epoch_core::MarketTimeType::MarketClose, epoch_core::OpenCloseType::False},
+                 {epoch_core::MarketTimeType::BreakStart, epoch_core::OpenCloseType::False},
+                 {epoch_core::MarketTimeType::BreakEnd, epoch_core::OpenCloseType::True},
+                 {epoch_core::MarketTimeType::Pre, epoch_core::OpenCloseType::True},
+                 {epoch_core::MarketTimeType::Post, epoch_core::OpenCloseType::False}}};
+
     struct MarketCalendarOptions {
         std::string        name;
-        RegularMarketTimes regular_market_times;
-        OpenCloseMap       open_close_map{};
+        RegularMarketTimes regular_market_times{REGULAR_MARKET_TIMES};
+        OpenCloseMap       open_close_map{OPEN_CLOSE_MAP};
         std::string        tz{"UTC"};
 
         AbstractHolidayCalendarPtr regular_holidays{nullptr};

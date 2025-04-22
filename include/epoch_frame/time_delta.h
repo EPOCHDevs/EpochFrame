@@ -55,27 +55,27 @@ namespace epoch_frame
         explicit TimeDelta(const std::chrono::days& days) : days_(days.count()) {}
 
         explicit TimeDelta(const std::chrono::hours& hours)
-            : TimeDelta({.hours = static_cast<double>(hours.count())})
+            : TimeDelta(Components{.hours = static_cast<double>(hours.count())})
         {
         }
 
         explicit TimeDelta(const std::chrono::minutes& minutes)
-            : TimeDelta({.minutes = static_cast<double>(minutes.count())})
+            : TimeDelta(Components{.minutes = static_cast<double>(minutes.count())})
         {
         }
 
         explicit TimeDelta(const std::chrono::seconds& seconds)
-            : TimeDelta({.seconds = static_cast<double>(seconds.count())})
+            : TimeDelta(Components{.seconds = static_cast<double>(seconds.count())})
         {
         }
 
         explicit TimeDelta(const std::chrono::milliseconds& milliseconds)
-            : TimeDelta({.milliseconds = static_cast<double>(milliseconds.count())})
+            : TimeDelta(Components{.milliseconds = static_cast<double>(milliseconds.count())})
         {
         }
 
         explicit TimeDelta(const std::chrono::microseconds& microseconds)
-            : TimeDelta({.microseconds = static_cast<double>(microseconds.count())})
+            : TimeDelta(Components{.microseconds = static_cast<double>(microseconds.count())})
         {
         }
 
@@ -125,9 +125,9 @@ namespace epoch_frame
 
       private:
         // Core attributes matching Python's timedelta internal representation
-        int64_t days_;
-        int64_t seconds_;      // 0 <= seconds < 86400 (seconds in a day)
-        int64_t microseconds_; // 0 <= microseconds < 1000000
+        int64_t days_{0};
+        int64_t seconds_{0};      // 0 <= seconds < 86400 (seconds in a day)
+        int64_t microseconds_{0}; // 0 <= microseconds < 1000000
     };
 
 } // namespace epoch_frame

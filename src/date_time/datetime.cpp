@@ -1,12 +1,7 @@
 #include "epoch_frame/datetime.h"
-
+#include "epoch_frame/scalar.h"
 #include <epoch_core/macros.h>
 #include <methods/temporal.h>
-
-#include "arrow/compute/api.h"
-#include "common/asserts.h"
-#include "epoch_frame/factory/scalar_factory.h"
-#include "epoch_frame/scalar.h"
 
 namespace epoch_frame
 {
@@ -215,24 +210,66 @@ namespace epoch_frame
 
     chrono_time_point DateTime::to_time_point() const
     {
-        return date.to_time_point() + hour + minute + second + microsecond;
+        return chrono_time_point{m_nanoseconds};
+    }
+
+    DateTime::DateTime(chrono_year const& yr, chrono_month const& month, chrono_day const& day,
+                       chrono_hour const& hr, chrono_minute const& min, chrono_second const& sec,
+                       chrono_microsecond const& us, std::string const& tz)
+    {
+        auto timepoint = Date{yr, month, day}.to_time_point() + hr + min + sec + us;
+        if (!tz.empty() || tz == "UTC")
+        {
+            *this = DateTime{timepoint, tz};
+        }
+        else
+        {
+            m_date        = Date{yr, month, day};
+            m_time        = Time{hr, min, sec, us, tz};
+            m_nanoseconds = timepoint.time_since_epoch();
+        }
+    }
+
+    DateTime::DateTime(chrono_time_point const& time_point, const std::string& tz)
+    {
+        // For tz-aware datetimes, store the original UTC timepoint
+        // For tz-naive datetimes, store as-is
+        m_nanoseconds = time_point.time_since_epoch();
+
+        // Function to extract components from a timepoint
+        auto fn = [](auto const& timePoint)
+        {
+            auto ordinal = std::chrono::floor<std::chrono::days>(timePoint);
+            return std::tuple{year_month_day(ordinal), hh_mm_ss(timePoint - ordinal),
+                              timePoint.time_since_epoch()};
+        };
+
+        // If timezone is specified, extract local time components in that timezone
+        // If timezone is empty, use the timepoint directly
+        auto [ymd, timeOfDay, tp] = (!tz.empty() && tz != "UTC")
+                                        ? fn(zoned_time(tz, time_point).get_local_time())
+                                        : fn(time_point);
+
+        auto hours   = timeOfDay.hours().count();
+        auto minutes = timeOfDay.minutes().count();
+        auto seconds = timeOfDay.seconds().count();
+        auto microseconds =
+            (timeOfDay.subseconds().count() / 1000); // Convert from nanoseconds to microseconds
+
+        m_date = Date{ymd.year(), ymd.month(), ymd.day()};
+        m_time = Time{chrono_hour(hours), chrono_minute(minutes), chrono_second(seconds),
+                      chrono_microsecond(microseconds), tz};
     }
 
     DateTime DateTime::from_time_point(chrono_time_point const& time_point, const std::string& tz)
     {
-        auto ordinal          = std::chrono::floor<std::chrono::days>(time_point);
-        auto [ymd, timeOfDay] = std::pair{year_month_day(ordinal), hh_mm_ss(time_point - ordinal)};
-        return DateTime{Date::from_ymd(ymd),
-                        timeOfDay.hours(),
-                        timeOfDay.minutes(),
-                        timeOfDay.seconds(),
-                        chrono_microsecond(timeOfDay.subseconds().count() / 1000),
-                        tz};
+        return DateTime{time_point, tz};
     }
 
     arrow::TimestampScalar DateTime::timestamp() const
     {
-        return factory::scalar::from_time_point(to_time_point(), tz);
+        // TimestampScalar always represents UTC nanoseconds, with timezone metadata
+        return arrow::TimestampScalar(m_nanoseconds.count(), arrow::TimeUnit::NANO, m_time.tz);
     }
 
     int64_t Date::toordinal() const
@@ -250,21 +287,17 @@ namespace epoch_frame
     DateTime DateTime::fromordinal(int64_t ord)
     {
         auto ymd = _ord2ymd(ord);
-        return DateTime{{ymd.year(), ymd.month(), ymd.day()},
-                        chrono_hour{0},
-                        chrono_minute{0},
-                        chrono_second{0},
-                        chrono_microsecond{0}};
+        return DateTime{ymd.year(), ymd.month(), ymd.day()};
     }
 
     DateTime DateTime::operator+(const TimeDelta& other) const
     {
         TimeDelta delta{
             TimeDelta::Components{.days         = static_cast<double>(toordinal()),
-                                  .seconds      = static_cast<double>(second.count()),
-                                  .microseconds = static_cast<double>(microsecond.count()),
-                                  .minutes      = static_cast<double>(minute.count()),
-                                  .hours        = static_cast<double>(hour.count())}};
+                                  .seconds      = static_cast<double>(m_time.second.count()),
+                                  .microseconds = static_cast<double>(m_time.microsecond.count()),
+                                  .minutes      = static_cast<double>(m_time.minute.count()),
+                                  .hours        = static_cast<double>(m_time.hour.count())}};
         delta += other;
         auto [_hour, rem]       = divmod(delta.seconds(), 3600);
         auto [_minute, _second] = divmod(rem, 60);
@@ -272,7 +305,7 @@ namespace epoch_frame
         {
             return combine(Date::fromordinal(delta.days()),
                            Time{chrono_hour(_hour), chrono_minute(_minute), chrono_second(_second),
-                                chrono_microsecond(delta.microseconds()), tz});
+                                chrono_microsecond(delta.microseconds()), m_time.tz});
         }
         throw std::runtime_error("result out of range");
     }
@@ -296,7 +329,8 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_days& other) const
     {
-        return DateTime{date + other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date + other, m_time.replace_tz("")}.replace_tz(tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_days& other)
@@ -307,7 +341,8 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_days& other) const
     {
-        return DateTime{date - other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date - other, m_time.replace_tz("")}.replace_tz(tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_days& other)
@@ -318,7 +353,8 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_months& other) const
     {
-        return DateTime{date + other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date + other, m_time.replace_tz("")}.replace_tz(tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_months& other)
@@ -329,7 +365,8 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_months& other) const
     {
-        return DateTime{date - other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date - other, m_time.replace_tz("")}.replace_tz(tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_months& other)
@@ -340,7 +377,8 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_years& other) const
     {
-        return DateTime{date + other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date + other, m_time.replace_tz("")}.replace_tz(tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_years& other)
@@ -351,12 +389,19 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_years& other) const
     {
-        return DateTime{date - other, hour, minute, second, microsecond, tz};
+        auto tz = m_time.tz;
+        return DateTime{m_date - other, m_time.replace_tz("")}.replace_tz(tz);
+    }
+
+    DateTime& DateTime::operator-=(const chrono_years& other)
+    {
+        *this = *this - other;
+        return *this;
     }
 
     DateTime DateTime::operator+(const chrono_hours& other) const
     {
-        return from_time_point(to_time_point() + other, tz);
+        return from_time_point(to_time_point() + other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_hours& other)
@@ -367,7 +412,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_hours& other) const
     {
-        return from_time_point(to_time_point() - other, tz);
+        return from_time_point(to_time_point() - other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_hours& other)
@@ -378,7 +423,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_minutes& other) const
     {
-        return from_time_point(to_time_point() + other, tz);
+        return from_time_point(to_time_point() + other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_minutes& other)
@@ -389,7 +434,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_minutes& other) const
     {
-        return from_time_point(to_time_point() - other, tz);
+        return from_time_point(to_time_point() - other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_minutes& other)
@@ -400,7 +445,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_seconds& other) const
     {
-        return from_time_point(to_time_point() + other, tz);
+        return from_time_point(to_time_point() + other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_seconds& other)
@@ -411,7 +456,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_seconds& other) const
     {
-        return from_time_point(to_time_point() - other, tz);
+        return from_time_point(to_time_point() - other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_seconds& other)
@@ -422,7 +467,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const chrono_microseconds& other) const
     {
-        return from_time_point(to_time_point() + other, tz);
+        return from_time_point(to_time_point() + other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator+=(const chrono_microseconds& other)
@@ -433,7 +478,7 @@ namespace epoch_frame
 
     DateTime DateTime::operator-(const chrono_microseconds& other) const
     {
-        return from_time_point(to_time_point() - other, tz);
+        return from_time_point(to_time_point() - other, "").replace_tz(m_time.tz);
     }
 
     DateTime& DateTime::operator-=(const chrono_microseconds& other)
@@ -444,7 +489,9 @@ namespace epoch_frame
 
     DateTime DateTime::fromtimestamp(int64_t ts, const std::string& tz)
     {
-        return factory::scalar::to_datetime(arrow::TimestampScalar(ts, arrow::TimeUnit::NANO, tz));
+        // Create a new DateTime with the given timestamp (nanoseconds since epoch)
+        // The timestamp is always interpreted as UTC, but can be displayed in any timezone
+        return DateTime{chrono_time_point(chrono_nanoseconds(ts)), tz};
     }
 
     DateTime DateTime::now(const std::string& tz)
@@ -457,36 +504,69 @@ namespace epoch_frame
 
     TimeDelta DateTime::operator-(const DateTime& other) const
     {
-        if (tz != other.tz)
+        // Check that we're not mixing timezone-aware and naive datetimes
+        if (!m_time.tz.empty() && other.m_time.tz.empty())
         {
-            throw std::runtime_error("timezones are different" + tz + " and " + other.tz);
+            throw std::runtime_error("Cannot subtract naive datetime from aware datetime");
         }
-        auto days1    = toordinal();
-        auto days2    = other.toordinal();
-        auto seconds1 = second.count() + minute.count() * 60 + hour.count() * 3600;
-        auto seconds2 =
-            other.second.count() + other.minute.count() * 60 + other.hour.count() * 3600;
-        TimeDelta base{TimeDelta::Components{
+        if (m_time.tz.empty() && !other.m_time.tz.empty())
+        {
+            throw std::runtime_error("Cannot subtract aware datetime from naive datetime");
+        }
+
+        // If both are timezone-aware, we can simply subtract the UTC nanoseconds
+        if (!m_time.tz.empty() && !other.m_time.tz.empty())
+        {
+            // No need to check if timezones match - UTC is what matters
+            int64_t ns_diff = m_nanoseconds.count() - other.m_nanoseconds.count();
+
+            // Convert to appropriate TimeDelta components
+            auto days         = ns_diff / (24 * 3600 * 1000000000LL);
+            auto rem          = ns_diff % (24 * 3600 * 1000000000LL);
+            auto seconds      = rem / 1000000000LL;
+            auto microseconds = (rem % 1000000000LL) / 1000;
+
+            return TimeDelta{
+                TimeDelta::Components{.days         = static_cast<double>(days),
+                                      .seconds      = static_cast<double>(seconds),
+                                      .microseconds = static_cast<double>(microseconds)}};
+        }
+
+        // For naive datetimes, use the original component-based approach
+        auto days1 = toordinal();
+        auto days2 = other.toordinal();
+        auto seconds1 =
+            m_time.second.count() + m_time.minute.count() * 60 + m_time.hour.count() * 3600;
+        auto seconds2 = other.m_time.second.count() + other.m_time.minute.count() * 60 +
+                        other.m_time.hour.count() * 3600;
+
+        return TimeDelta{TimeDelta::Components{
             .days         = static_cast<double>(days1 - days2),
             .seconds      = static_cast<double>(seconds1 - seconds2),
-            .microseconds = static_cast<double>(microsecond.count() - other.microsecond.count())}};
-        return base;
+            .microseconds = static_cast<double>(m_time.microsecond.count() -
+                                                other.m_time.microsecond.count())}};
     }
 
     std::strong_ordering DateTime::operator<=>(const DateTime& other) const
     {
-        auto d1 = date;
-        auto d2 = other.date;
-        if (d1 != d2)
+        // If both datetimes have timezones, compare UTC timestamps
+        if (!m_time.tz.empty() && !other.m_time.tz.empty())
         {
-            return d1 <=> d2;
+            return m_nanoseconds <=> other.m_nanoseconds;
         }
-        return time() <=> other.time();
+
+        // If either datetime is timezone-naive, compare components
+        // This maintains compatibility with non-timezone-aware comparisons
+        if (m_date != other.m_date)
+        {
+            return m_date <=> other.m_date;
+        }
+        return m_time <=> other.m_time;
     }
 
     DateTime DateTime::combine(const Date& date, const Time& time)
     {
-        return DateTime{{date}, time.hour, time.minute, time.second, time.microsecond, time.tz};
+        return DateTime{date, time};
     }
 
     std::ostream& operator<<(std::ostream& os, const Date& dt)
@@ -501,32 +581,61 @@ namespace epoch_frame
 
     DateTime DateTime::tz_localize(const std::string& tz_) const
     {
-        if (tz_ == this->tz)
+        if (!m_time.tz.empty())
+        {
+            if (tz_ == "")
+            {
+                return replace_tz(tz_);
+            }
+            throw std::runtime_error(
+                "Cannot localize a tz-aware datetime. Use tz_convert instead.");
+        }
+        if (tz_ == "")
         {
             return *this;
         }
-        return Scalar{timestamp()}.dt().tz_localize(tz_).to_datetime();
+        else if (tz_ == "UTC")
+        {
+            return replace_tz(tz_);
+        }
+
+        // For naïve timestamps: keep the same local time but interpret as being in the new timezone
+        auto local_tp = m_date.to_time_point() + m_time.to_duration();
+
+        // Create a zoned_time to convert the local time to UTC in the new timezone
+        auto zt     = zoned_time(tz_, local_time<chrono_nanoseconds>(local_tp.time_since_epoch()));
+        auto utc_tp = zt.get_sys_time();
+
+        return DateTime{utc_tp, tz_};
     }
 
     DateTime DateTime::tz_convert(const std::string& tz_) const
     {
-        if (tz_ == this->tz)
+        if (m_time.tz.empty())
+        {
+            throw std::runtime_error(
+                "Cannot convert timezone on naive datetime. Use tz_localize first.");
+        }
+
+        if (tz_ == m_time.tz)
         {
             return *this;
         }
 
-        return Scalar{timestamp()}.dt().tz_convert(tz_).to_datetime();
+        // For timezone conversion: preserve the same UTC instant, just change display timezone
+        // The m_nanoseconds value stays the same but the components change
+        return DateTime{chrono_time_point(m_nanoseconds), tz_};
     }
 
-    DateTime DateTime::from_str(const std::string& str)
+    DateTime DateTime::from_str(const std::string& str, const std::string& tz)
     {
         Scalar scalar{str};
-        return scalar.to_datetime();
+        return scalar.to_datetime("%Y-%m-%d %H:%M:%S", tz);
     }
 
-    DateTime DateTime::from_date_str(const std::string& str)
+    DateTime DateTime::from_date_str(const std::string& str, const std::string& tz)
     {
         Scalar scalar{str};
-        return scalar.to_date();
+        return scalar.to_date("%Y-%m-%d", tz);
     }
 } // namespace epoch_frame

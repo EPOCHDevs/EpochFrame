@@ -32,7 +32,6 @@ namespace epoch_frame::calendar
                                    const MarketCalendarOptions&     options)
         : m_options(options)
     {
-
         // Then set custom open/close times if provided
         if (open_time)
         {
@@ -314,7 +313,7 @@ namespace epoch_frame::calendar
 
         auto timestamps =
             std::views::filter(*observed_dates, [&](DateTime const& date_time)
-                               { return s <= date_time.date && date_time.date <= e; }) |
+                               { return s <= date_time.date() && date_time.date() <= e; }) |
             epoch_core::ranges::to_vector_v;
 
         return factory::index::make_datetime_index(timestamps);
@@ -386,7 +385,7 @@ namespace epoch_frame::calendar
         auto concat_series = concat({.frames = indexes}).to_series();
         return concat_series.loc(
             {Scalar(start),
-             Scalar(DateTime{.date = end, .hour = 23h, .minute = 59min, .second = 59s})});
+             Scalar(DateTime{end, Time{.hour = 23h, .minute = 59min, .second = 59s}})});
     }
 
     arrow::SchemaPtr
@@ -471,8 +470,8 @@ namespace epoch_frame::calendar
         IndexPtr  open_adj, close_adj;
         DataFrame schedule;
 
-        auto start_date = days->at(0).to_datetime().date;
-        auto end_date   = days->at(-1).to_datetime().date;
+        auto start_date = days->at(0).to_datetime().date();
+        auto end_date   = days->at(-1).to_datetime().date();
 
         for (auto const& market_time : market_times)
         {

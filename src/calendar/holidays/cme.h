@@ -27,7 +27,7 @@ namespace epoch_frame::calendar
         inline static const Observance previous_workday_if_july_4th_is_tue_to_fri =
             [](const DateTime& dt) -> std::optional<DateTime>
         {
-            DateTime july4th{dt.date.year, std::chrono::July, 4d};
+            DateTime july4th{dt.date().year, std::chrono::July, 4d};
             int      weekday = july4th.weekday();
             if (weekday >= 1 && weekday <= 4)
             { // Tuesday to Friday
@@ -44,8 +44,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({1998y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1998y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData USMartinLutherKingJrAfter1998Before2015 = {
@@ -53,8 +53,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({1998y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2014y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1998y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2014y, std::chrono::December, 31d}),
         };
 
         const HolidayData USMartinLutherKingJrAfter2015 = {
@@ -62,7 +62,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({2015y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2015y, std::chrono::January, 1d}),
         };
 
         const HolidayData USMartinLutherKingJrAfter1998Before2016FridayBefore = {
@@ -70,8 +70,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {date_offset(MO(3)), date_offset(FR(-1))},
-            .start_date = DateTime({1998y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2015y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1998y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2015y, std::chrono::December, 31d}),
         };
 
         /*
@@ -82,8 +82,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::February,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData USPresidentsDayBefore2015 = {
@@ -91,8 +91,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::February,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2014y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2014y, std::chrono::December, 31d}),
         };
 
         const HolidayData USPresidentsDayAfter2015 = {
@@ -100,7 +100,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::February,
             .day        = 1d,
             .offset     = {date_offset(MO(3))},
-            .start_date = DateTime({2015y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2015y, std::chrono::January, 1d}),
         };
 
         const HolidayData USPresidentsDayBefore2016FridayBefore = {
@@ -108,8 +108,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::February,
             .day        = 1d,
             .offset     = {date_offset(MO(3)), date_offset(FR(-1))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2015y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2015y, std::chrono::December, 31d}),
         };
 
         /*
@@ -120,18 +120,18 @@ namespace epoch_frame::calendar
             .month    = std::chrono::January,
             .day      = 1d,
             .offset   = {easter_offset(), days(-2)},
-            .end_date = DateTime({2020y, std::chrono::December, 31d}),
+            .end_date = DateTime(Date{2020y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFridayBefore2021NotEarlyClose = {
             .name       = "Good Friday",
             .month      = std::chrono::January,
             .day        = 1d,
-            .end_date   = DateTime({2020y, std::chrono::December, 31d}),
+            .end_date   = DateTime(Date{2020y, std::chrono::December, 31d}),
             .observance = [](const DateTime& dt) -> std::optional<DateTime>
             {
                 static std::unordered_set<int> years{2010, 2012, 2015};
-                if (years.contains(static_cast<int>(dt.date.year)))
+                if (years.contains(static_cast<int>(dt.date().year)))
                 {
                     return std::nullopt;
                 }
@@ -144,8 +144,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-3)},
-            .start_date = DateTime({2009y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2009y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2009y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2009y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFriday2021 = {
@@ -153,8 +153,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2021y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2021y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFridayAfter2021 = {
@@ -162,7 +162,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2022y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
         };
 
         const HolidayData GoodFriday2022 = {
@@ -170,8 +170,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2022y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2022y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2022y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFridayAfter2022 = {
@@ -179,7 +179,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2023y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2023y, std::chrono::January, 1d}),
         };
 
         // Special early closes for equities
@@ -188,8 +188,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2010y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2010y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2010y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2010y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFriday2012 = {
@@ -197,8 +197,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2012y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2012y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2012y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2012y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFriday2015 = {
@@ -206,8 +206,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({2015y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2015y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{2015y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2015y, std::chrono::December, 31d}),
         };
 
         /*
@@ -218,8 +218,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::May,
             .day        = 25d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData USMemorialDay2013AndPrior = {
@@ -227,8 +227,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::May,
             .day        = 25d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2013y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2013y, std::chrono::December, 31d}),
         };
 
         const HolidayData USMemorialDayAfter2013 = {
@@ -236,7 +236,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::May,
             .day        = 25d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({2014y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2014y, std::chrono::January, 1d}),
         };
 
         const HolidayData USMemorialDay2015AndPriorFridayBefore = {
@@ -244,8 +244,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::May,
             .day        = 25d,
             .offset     = {date_offset(MO(1)), date_offset(FR(-1))},
-            .start_date = DateTime({1971y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2015y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2015y, std::chrono::December, 31d}),
         };
 
         /*
@@ -255,8 +255,8 @@ namespace epoch_frame::calendar
             .name       = "July 4th",
             .month      = std::chrono::July,
             .day        = 4d,
-            .start_date = DateTime({1954y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1954y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
             .observance = nearest_workday,
         };
 
@@ -264,8 +264,8 @@ namespace epoch_frame::calendar
             .name       = "July 4th",
             .month      = std::chrono::July,
             .day        = 4d,
-            .start_date = DateTime({1954y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2013y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1954y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2013y, std::chrono::December, 31d}),
             .observance = nearest_workday,
         };
 
@@ -273,7 +273,7 @@ namespace epoch_frame::calendar
             .name       = "July 4th",
             .month      = std::chrono::July,
             .day        = 4d,
-            .start_date = DateTime({2014y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2014y, std::chrono::January, 1d}),
             .observance = nearest_workday,
         };
 
@@ -281,7 +281,7 @@ namespace epoch_frame::calendar
             .name       = "July 4th",
             .month      = std::chrono::July,
             .day        = 4d,
-            .start_date = DateTime({1954y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1954y, std::chrono::January, 1d}),
             .observance = previous_workday_if_july_4th_is_tue_to_fri,
         };
 
@@ -293,8 +293,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::September,
             .day        = 1d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({1887y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1887y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData USLaborDayStarting1887Before2014 = {
@@ -302,8 +302,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::September,
             .day        = 1d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({1887y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2013y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1887y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2013y, std::chrono::December, 31d}),
         };
 
         const HolidayData USLaborDayStarting1887Before2015FridayBefore = {
@@ -311,8 +311,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::September,
             .day        = 1d,
             .offset     = {date_offset(MO(1)), date_offset(FR(-1))},
-            .start_date = DateTime({1887y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2014y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1887y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2014y, std::chrono::December, 31d}),
         };
 
         const HolidayData USLaborDayStarting1887After2014 = {
@@ -320,7 +320,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::September,
             .day        = 1d,
             .offset     = {date_offset(MO(1))},
-            .start_date = DateTime({2014y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2014y, std::chrono::January, 1d}),
         };
 
         /*
@@ -331,8 +331,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {date_offset(TH(4))},
-            .start_date = DateTime({1942y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2021y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1942y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2021y, std::chrono::December, 31d}),
         };
 
         const HolidayData USThanksgivingBefore2014 = {
@@ -340,8 +340,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {date_offset(TH(4))},
-            .start_date = DateTime({1942y, std::chrono::January, 1d}),
-            .end_date   = DateTime({2013y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1942y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{2013y, std::chrono::December, 31d}),
         };
 
         const HolidayData USThanksgivingAfter2014 = {
@@ -349,7 +349,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {date_offset(TH(4))},
-            .start_date = DateTime({2014y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2014y, std::chrono::January, 1d}),
         };
 
         // Thanksgiving Friday using custom observance for 4th Friday in November
@@ -368,7 +368,7 @@ namespace epoch_frame::calendar
             .name       = "ThanksgivingFriday",
             .month      = std::chrono::November,
             .day        = 1d,
-            .start_date = DateTime({1942y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1942y, std::chrono::January, 1d}),
             .observance = fri_after_4th_thu,
         };
 
@@ -376,7 +376,7 @@ namespace epoch_frame::calendar
             .name       = "ThanksgivingFriday",
             .month      = std::chrono::November,
             .day        = 1d,
-            .start_date = DateTime({2022y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
             .observance = fri_after_4th_thu,
         };
     };

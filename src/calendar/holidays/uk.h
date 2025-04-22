@@ -35,7 +35,7 @@ namespace epoch_frame::calendar
         .name       = "New Year's Day",
         .month      = std::chrono::January,
         .day        = 1d,
-        .start_date = DateTime({1871y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1871y, std::chrono::January, 1d}),
         .observance = next_monday_if_weekend,
     };
 
@@ -44,7 +44,7 @@ namespace epoch_frame::calendar
         .name     = "New Year's Day Bank Holiday",
         .month    = std::chrono::January,
         .day      = 1d,
-        .end_date = DateTime({1871y, std::chrono::January, 1d}),
+        .end_date = DateTime(Date{1871y, std::chrono::January, 1d}),
     };
 
     /*
@@ -75,7 +75,7 @@ namespace epoch_frame::calendar
         .month      = std::chrono::May,
         .day        = 1d,
         .offset     = {date_offset(MO(1))},
-        .start_date = DateTime({1978y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1978y, std::chrono::January, 1d}),
     };
 
     // VE Day related May Day exceptions
@@ -83,16 +83,16 @@ namespace epoch_frame::calendar
         .name       = "Early May Bank Holiday (VE day)",
         .month      = std::chrono::May,
         .day        = 8d,
-        .start_date = DateTime({1995y, std::chrono::January, 1d}),
-        .end_date   = DateTime({1995y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{1995y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{1995y, std::chrono::December, 31d}),
     };
 
     const HolidayData UKMayDay2020Exception = {
         .name       = "Early May Bank Holiday (VE day)",
         .month      = std::chrono::May,
         .day        = 8d,
-        .start_date = DateTime({2020y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2020y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2020y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2020y, std::chrono::December, 31d}),
     };
 
     /*
@@ -104,8 +104,8 @@ namespace epoch_frame::calendar
         .month      = std::chrono::January,
         .day        = 1d,
         .offset     = DateOffsetHandler({easter_offset(), day(50)}),
-        .start_date = DateTime({1967y, std::chrono::January, 1d}),
-        .end_date   = DateTime({1968y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{1967y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{1968y, std::chrono::December, 31d}),
     };
 
     // From 1969 through 1970, it was observed on the last Monday in May
@@ -114,8 +114,8 @@ namespace epoch_frame::calendar
         .month      = std::chrono::May,
         .day        = 31d,
         .offset     = {date_offset(MO(-1))},
-        .start_date = DateTime({1969y, std::chrono::January, 1d}),
-        .end_date   = DateTime({1970y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{1969y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{1970y, std::chrono::December, 31d}),
     };
 
     // From 1971 onwards, it's the last Monday in May
@@ -125,7 +125,7 @@ namespace epoch_frame::calendar
         .month      = std::chrono::May,
         .day        = 31d,
         .offset     = {date_offset(MO(-1))},
-        .start_date = DateTime({1971y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
     };
 
     // Special Holidays and Observances
@@ -133,24 +133,24 @@ namespace epoch_frame::calendar
         .name       = "Golden Jubilee Bank Holiday",
         .month      = std::chrono::June,
         .day        = 3d,
-        .start_date = DateTime({2002y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2002y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2002y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2002y, std::chrono::December, 31d}),
     };
 
     const HolidayData UKSpringBankHoliday2012Exception = {
         .name       = "Diamond Jubilee Bank Holiday",
         .month      = std::chrono::June,
         .day        = 4d,
-        .start_date = DateTime({2012y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2012y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2012y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2012y, std::chrono::December, 31d}),
     };
 
     const HolidayData UKSpringBankHoliday2022Exception = {
         .name       = "Platinum Jubilee Bank Holiday",
         .month      = std::chrono::June,
         .day        = 2d,
-        .start_date = DateTime({2022y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2022y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2022y, std::chrono::December, 31d}),
     };
 
     // The coronation of Charles III
@@ -158,8 +158,8 @@ namespace epoch_frame::calendar
         .name       = "Coronation Bank Holiday",
         .month      = std::chrono::May,
         .day        = 8d,
-        .start_date = DateTime({2023y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2023y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2023y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2023y, std::chrono::December, 31d}),
     };
 
     /*
@@ -171,7 +171,7 @@ namespace epoch_frame::calendar
         .month    = std::chrono::August,
         .day      = 1d,
         .offset   = {date_offset(MO(1))},
-        .end_date = DateTime({1965y, std::chrono::December, 31d}),
+        .end_date = DateTime(Date{1965y, std::chrono::December, 31d}),
     };
 
     // From 1965 through 1970, it was observed on the last Monday in August in England, Wales and
@@ -181,8 +181,8 @@ namespace epoch_frame::calendar
         .month      = std::chrono::August,
         .day        = 31d,
         .offset     = {date_offset(MO(-1))},
-        .start_date = DateTime({1965y, std::chrono::January, 1d}),
-        .end_date   = DateTime({1970y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{1965y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{1970y, std::chrono::December, 31d}),
     };
 
     // From 1971, it was formalized as the last Monday in August in England, Wales and Northern
@@ -192,7 +192,7 @@ namespace epoch_frame::calendar
         .month      = std::chrono::August,
         .day        = 31d,
         .offset     = {date_offset(MO(-1))},
-        .start_date = DateTime({1971y, std::chrono::January, 1d}),
+        .start_date = DateTime(Date{1971y, std::chrono::January, 1d}),
     };
 
     /*
@@ -236,8 +236,8 @@ namespace epoch_frame::calendar
         .name       = "Royal Wedding Bank Holiday",
         .month      = std::chrono::April,
         .day        = 29d,
-        .start_date = DateTime({2011y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2011y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2011y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2011y, std::chrono::December, 31d}),
     };
 
     // State Funeral of Queen Elizabeth II
@@ -245,8 +245,8 @@ namespace epoch_frame::calendar
         .name       = "Bank Holiday for the State Funeral of Queen Elizabeth II",
         .month      = std::chrono::September,
         .day        = 19d,
-        .start_date = DateTime({2022y, std::chrono::January, 1d}),
-        .end_date   = DateTime({2022y, std::chrono::December, 31d}),
+        .start_date = DateTime(Date{2022y, std::chrono::January, 1d}),
+        .end_date   = DateTime(Date{2022y, std::chrono::December, 31d}),
     };
 
 } // namespace epoch_frame::calendar

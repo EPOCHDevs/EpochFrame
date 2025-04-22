@@ -57,7 +57,7 @@ namespace epoch_frame
             {
                 columnBuilder = std::make_unique<arrow::TimestampBuilder>(
                     arrow::timestamp(arrow::TimeUnit::NANO,
-                                     column.empty() ? "" : column.front().tz),
+                                     column.empty() ? "" : column.front().tz()),
                     arrow::default_memory_pool());
             }
             else

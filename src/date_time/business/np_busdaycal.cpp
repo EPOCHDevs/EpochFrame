@@ -114,7 +114,7 @@ namespace epoch_frame::np
 
                     if (roll == BusDayOffsetRoll::ModifiedFollowing)
                     {
-                        if (start_date.date.month != date.date.month)
+                        if (start_date.date().month != date.date().month)
                         {
                             date = start_date;
                             day_of_week = start_day_of_week;
@@ -143,7 +143,7 @@ namespace epoch_frame::np
 
                     if (roll == BusDayOffsetRoll::ModifiedPreceding)
                     {
-                        if (start_date.date.month != date.date.month)
+                        if (start_date.date().month != date.date().month)
                         {
                             date = start_date;
                             day_of_week = start_day_of_week;

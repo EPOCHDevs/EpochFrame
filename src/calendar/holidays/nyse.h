@@ -113,7 +113,7 @@ namespace epoch_frame::calendar
             .name         = "Washington's Birthday",
             .month        = std::chrono::February,
             .day          = 22d,
-            .end_date     = DateTime({1952y, std::chrono::September, 28d}),
+            .end_date     = DateTime(Date{1952y, std::chrono::September, 28d}),
             .observance   = sunday_to_monday,
             .days_of_week = BUSINESS_DAYS_WITH_SATURDAY};
 
@@ -121,8 +121,8 @@ namespace epoch_frame::calendar
             .name         = "Washington's Birthday",
             .month        = std::chrono::February,
             .day          = 22d,
-            .start_date   = DateTime({1952y, std::chrono::September, 29d}),
-            .end_date     = DateTime({1963y, std::chrono::December, 31d}),
+            .start_date   = DateTime(Date{1952y, std::chrono::September, 29d}),
+            .end_date     = DateTime(Date{1963y, std::chrono::December, 31d}),
             .observance   = sunday_to_monday,
             .days_of_week = BUSINESS_DAYS};
 
@@ -130,8 +130,8 @@ namespace epoch_frame::calendar
             .name       = "Washington's Birthday",
             .month      = std::chrono::February,
             .day        = 22d,
-            .start_date = DateTime({1964y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1970y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1964y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1970y, std::chrono::December, 31d}),
             .observance = nearest_workday,
         };
 
@@ -149,8 +149,8 @@ namespace epoch_frame::calendar
             .name       = "Lincoln's Birthday",
             .month      = std::chrono::February,
             .day        = 12d,
-            .start_date = DateTime({1896y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1953y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1896y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1953y, std::chrono::December, 31d}),
             .observance = sunday_to_monday,
         };
 
@@ -173,7 +173,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({1908y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1908y, std::chrono::January, 1d}),
         };
 
         const HolidayData GoodFridayPre1898{
@@ -181,8 +181,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({1885y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1897y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1885y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1897y, std::chrono::December, 31d}),
         };
 
         const HolidayData GoodFriday1899to1905{
@@ -190,8 +190,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::January,
             .day        = 1d,
             .offset     = {easter_offset(), days(-2)},
-            .start_date = DateTime({1899y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1905y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1899y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1905y, std::chrono::December, 31d}),
         };
 
         // Not every Saturday after Good Friday is a holiday
@@ -205,11 +205,12 @@ namespace epoch_frame::calendar
             US Memorial Day (last Monday in May)
             Observed on Monday since 1971
         */
-        const HolidayData USMemorialDay{.name         = "Memorial Day",
-                                        .month        = std::chrono::May,
-                                        .day          = 25d,
-                                        .offset       = {{date_offset({.weekday = MO(1)})}},
-                                        .start_date   = DateTime({1971y, std::chrono::January, 1d}),
+        const HolidayData USMemorialDay{.name   = "Memorial Day",
+                                        .month  = std::chrono::May,
+                                        .day    = 25d,
+                                        .offset = {{date_offset({.weekday = MO(1)})}},
+                                        .start_date =
+                                            DateTime(Date{1971y, std::chrono::January, 1d}),
                                         .days_of_week = {
                                             epoch_core::EpochDayOfWeek::Monday,
                                             epoch_core::EpochDayOfWeek::Tuesday,
@@ -225,7 +226,7 @@ namespace epoch_frame::calendar
             .name         = "Memorial Day",
             .month        = std::chrono::May,
             .day          = 30d,
-            .end_date     = DateTime({1952y, std::chrono::September, 28d}),
+            .end_date     = DateTime(Date{1952y, std::chrono::September, 28d}),
             .observance   = sunday_to_monday,
             .days_of_week = {
                 epoch_core::EpochDayOfWeek::Monday,
@@ -240,8 +241,8 @@ namespace epoch_frame::calendar
             .name         = "Memorial Day",
             .month        = std::chrono::May,
             .day          = 30d,
-            .start_date   = DateTime({1952y, std::chrono::September, 29d}),
-            .end_date     = DateTime({1963y, std::chrono::December, 31d}),
+            .start_date   = DateTime(Date{1952y, std::chrono::September, 29d}),
+            .end_date     = DateTime(Date{1963y, std::chrono::December, 31d}),
             .observance   = sunday_to_monday,
             .days_of_week = BUSINESS_DAYS};
 
@@ -249,8 +250,8 @@ namespace epoch_frame::calendar
             .name       = "Memorial Day",
             .month      = std::chrono::May,
             .day        = 30d,
-            .start_date = DateTime({1964y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1969y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1964y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1969y, std::chrono::December, 31d}),
             .observance = nearest_workday,
         };
 
@@ -274,7 +275,7 @@ namespace epoch_frame::calendar
             .name       = "Juneteenth",
             .month      = std::chrono::June,
             .day        = 19d,
-            .start_date = DateTime({2022y, std::chrono::June, 19d}),
+            .start_date = DateTime(Date{2022y, std::chrono::June, 19d}),
             .observance = nearest_workday,
         };
 
@@ -285,7 +286,7 @@ namespace epoch_frame::calendar
                                             .month = std::chrono::July,
                                             .day   = 4d,
                                             .start_date =
-                                                DateTime({1954y, std::chrono::January, 1d}),
+                                                DateTime(Date{1954y, std::chrono::January, 1d}),
                                             .observance   = nearest_workday,
                                             .days_of_week = {
                                                 epoch_core::EpochDayOfWeek::Monday,
@@ -299,7 +300,7 @@ namespace epoch_frame::calendar
             .name         = "Independence Day",
             .month        = std::chrono::July,
             .day          = 4d,
-            .end_date     = DateTime({1952y, std::chrono::September, 28d}),
+            .end_date     = DateTime(Date{1952y, std::chrono::September, 28d}),
             .observance   = sunday_to_monday,
             .days_of_week = BUSINESS_DAYS_WITH_SATURDAY};
 
@@ -307,8 +308,8 @@ namespace epoch_frame::calendar
             .name         = "Independence Day",
             .month        = std::chrono::July,
             .day          = 4d,
-            .start_date   = DateTime({1952y, std::chrono::September, 29d}),
-            .end_date     = DateTime({1953y, std::chrono::December, 31d}),
+            .start_date   = DateTime(Date{1952y, std::chrono::September, 29d}),
+            .end_date     = DateTime(Date{1953y, std::chrono::December, 31d}),
             .observance   = sunday_to_monday,
             .days_of_week = BUSINESS_DAYS};
 
@@ -318,7 +319,7 @@ namespace epoch_frame::calendar
             .name         = "Mondays, Tuesdays, and Thursdays Before Independence Day",
             .month        = std::chrono::July,
             .day          = 3d,
-            .start_date   = DateTime({1995y, std::chrono::January, 1d}),
+            .start_date   = DateTime(Date{1995y, std::chrono::January, 1d}),
             .days_of_week = {
                 epoch_core::EpochDayOfWeek::Monday,
                 epoch_core::EpochDayOfWeek::Tuesday,
@@ -330,8 +331,8 @@ namespace epoch_frame::calendar
             .name         = "Fridays after Independence Day prior to 2013",
             .month        = std::chrono::July,
             .day          = 5d,
-            .start_date   = DateTime({1996y, std::chrono::January, 1d}),
-            .end_date     = DateTime({2012y, std::chrono::December, 31d}),
+            .start_date   = DateTime(Date{1996y, std::chrono::January, 1d}),
+            .end_date     = DateTime(Date{2012y, std::chrono::December, 31d}),
             .days_of_week = {
                 epoch_core::EpochDayOfWeek::Friday,
             }};
@@ -341,7 +342,7 @@ namespace epoch_frame::calendar
             .name         = "Wednesdays Before Independence Day including and after 2013",
             .month        = std::chrono::July,
             .day          = 3d,
-            .start_date   = DateTime({2013y, std::chrono::January, 1d}),
+            .start_date   = DateTime(Date{2013y, std::chrono::January, 1d}),
             .days_of_week = {
                 epoch_core::EpochDayOfWeek::Wednesday,
             }};
@@ -373,7 +374,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::September,
             .day        = 1d,
             .offset     = {{date_offset({.weekday = MO(1)})}},
-            .start_date = DateTime({1887y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1887y, std::chrono::January, 1d}),
         };
 
         // Not every Saturday before Labor Day is observed
@@ -394,8 +395,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 2d,
             .offset     = {{date_offset({.weekday = TU(1)})}},
-            .start_date = DateTime({1848y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1967y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1848y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1967y, std::chrono::December, 31d}),
         };
 
         const std::vector<DateTime> USElectionDay1968to1980Adhoc = {
@@ -410,7 +411,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {{date_offset({.weekday = TH(4)})}},
-            .start_date = DateTime({1942y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1942y, std::chrono::January, 1d}),
         };
 
         const HolidayData USThanksgivingDayBefore1939{
@@ -418,8 +419,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 30d,
             .offset     = {{date_offset({.weekday = TH(-1)})}},
-            .start_date = DateTime({1864y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1938y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1864y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1938y, std::chrono::December, 31d}),
         };
 
         const HolidayData USThanksgivingDay1939to1941{
@@ -427,8 +428,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 30d,
             .offset     = {{date_offset({.weekday = TH(-2)})}},
-            .start_date = DateTime({1939y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1941y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1939y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1941y, std::chrono::December, 31d}),
         };
 
         // Black Friday early closures
@@ -437,8 +438,8 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {date_offset({.weekday = TH(4)}), days(1)},
-            .start_date = DateTime({1992y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1993y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1992y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1993y, std::chrono::January, 1d}),
         };
 
         const HolidayData DayAfterThanksgiving1pmEarlyCloseInOrAfter1993{
@@ -446,7 +447,7 @@ namespace epoch_frame::calendar
             .month      = std::chrono::November,
             .day        = 1d,
             .offset     = {date_offset({.weekday = TH(4)}), days(1)},
-            .start_date = DateTime({1993y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1993y, std::chrono::January, 1d}),
         };
 
         const std::vector<DateTime> FridayAfterThanksgivingAdhoc = {"1888-11-30"__date};
@@ -459,7 +460,7 @@ namespace epoch_frame::calendar
             .name       = "Christmas",
             .month      = std::chrono::December,
             .day        = 25d,
-            .start_date = DateTime({1999y, std::chrono::January, 1d}),
+            .start_date = DateTime(Date{1999y, std::chrono::January, 1d}),
             .observance = nearest_workday,
         };
 
@@ -470,8 +471,8 @@ namespace epoch_frame::calendar
             .name       = "Christmas",
             .month      = std::chrono::December,
             .day        = 25d,
-            .start_date = DateTime({1954y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1998y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1954y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1998y, std::chrono::December, 31d}),
             .observance = nearest_workday,
         };
 
@@ -482,7 +483,7 @@ namespace epoch_frame::calendar
             .name       = "Christmas",
             .month      = std::chrono::December,
             .day        = 25d,
-            .end_date   = DateTime({1953y, std::chrono::December, 31d}),
+            .end_date   = DateTime(Date{1953y, std::chrono::December, 31d}),
             .observance = sunday_to_monday,
         };
 
@@ -500,7 +501,7 @@ namespace epoch_frame::calendar
             .name         = "Mondays, Tuesdays, Wednesdays, and Thursdays Before Christmas",
             .month        = std::chrono::December,
             .day          = 24d,
-            .start_date   = DateTime({1999y, std::chrono::January, 1d}),
+            .start_date   = DateTime(Date{1999y, std::chrono::January, 1d}),
             .days_of_week = {
                 epoch_core::EpochDayOfWeek::Monday,
                 epoch_core::EpochDayOfWeek::Tuesday,
@@ -534,8 +535,8 @@ namespace epoch_frame::calendar
             .name       = "Veteran Day",
             .month      = std::chrono::November,
             .day        = 11d,
-            .start_date = DateTime({1934y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1953y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1934y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1953y, std::chrono::December, 31d}),
             .observance = sunday_to_monday,
         };
         // TODO: Fix this typo
@@ -545,8 +546,8 @@ namespace epoch_frame::calendar
             .name       = "Columbus Day",
             .month      = std::chrono::October,
             .day        = 12d,
-            .start_date = DateTime({1909y, std::chrono::January, 1d}),
-            .end_date   = DateTime({1953y, std::chrono::December, 31d}),
+            .start_date = DateTime(Date{1909y, std::chrono::January, 1d}),
+            .end_date   = DateTime(Date{1953y, std::chrono::December, 31d}),
             .observance = sunday_to_monday,
         };
 
@@ -608,8 +609,8 @@ namespace epoch_frame::calendar
             .name       = "Funeral of Grover Cleveland 1908 1pm Close",
             .month      = std::chrono::June,
             .day        = 26d,
-            .start_date = DateTime({1908y, std::chrono::June, 26d}),
-            .end_date   = DateTime({1908y, std::chrono::June, 26d})};
+            .start_date = DateTime(Date{1908y, std::chrono::June, 26d}),
+            .end_date   = DateTime(Date{1908y, std::chrono::June, 26d})};
 
         // 1909
         const std::vector<DateTime> HudsonFultonCelebration1909 = {"1909-09-25"__date};
@@ -619,15 +620,15 @@ namespace epoch_frame::calendar
             .name       = "King Edward VII Death May 7, 1910",
             .month      = std::chrono::May,
             .day        = 7d,
-            .start_date = DateTime({1910y, std::chrono::May, 7d}),
-            .end_date   = DateTime({1910y, std::chrono::May, 7d})};
+            .start_date = DateTime(Date{1910y, std::chrono::May, 7d}),
+            .end_date   = DateTime(Date{1910y, std::chrono::May, 7d})};
 
         const HolidayData KingEdwardFuneral12pmOpen1910{
             .name       = "King Edward VII Funeral 12pm late open May 20, 1910",
             .month      = std::chrono::May,
             .day        = 20d,
-            .start_date = DateTime({1910y, std::chrono::May, 20d}),
-            .end_date   = DateTime({1910y, std::chrono::May, 20d})};
+            .start_date = DateTime(Date{1910y, std::chrono::May, 20d}),
+            .end_date   = DateTime(Date{1910y, std::chrono::May, 20d})};
 
         // 1912
         const std::vector<DateTime> JamesShermanFuneral1912 = {"1912-11-02"__date};
@@ -637,15 +638,15 @@ namespace epoch_frame::calendar
             .name       = "JP Morgan Funeral 12pm late open April 14, 1913",
             .month      = std::chrono::April,
             .day        = 14d,
-            .start_date = DateTime({1913y, std::chrono::April, 14d}),
-            .end_date   = DateTime({1913y, std::chrono::April, 14d})};
+            .start_date = DateTime(Date{1913y, std::chrono::April, 14d}),
+            .end_date   = DateTime(Date{1913y, std::chrono::April, 14d})};
 
         const HolidayData WilliamGaynorFuneral12pmOpen1913{
             .name       = "Mayor William J. Gaynor Funeral 12pm late open Sept 22, 1913",
             .month      = std::chrono::September,
             .day        = 22d,
-            .start_date = DateTime({1913y, std::chrono::September, 22d}),
-            .end_date   = DateTime({1913y, std::chrono::September, 22d})};
+            .start_date = DateTime(Date{1913y, std::chrono::September, 22d}),
+            .end_date   = DateTime(Date{1913y, std::chrono::September, 22d})};
 
         // 1914 - WWI Related Closings
         const std::vector<DateTime> OnsetOfWWI1914 =
@@ -666,15 +667,15 @@ namespace epoch_frame::calendar
             .name       = "Parade of National Guard 12pm Early Close Aug 29, 1917",
             .month      = std::chrono::August,
             .day        = 29d,
-            .start_date = DateTime({1917y, std::chrono::August, 29d}),
-            .end_date   = DateTime({1917y, std::chrono::August, 29d})};
+            .start_date = DateTime(Date{1917y, std::chrono::August, 29d}),
+            .end_date   = DateTime(Date{1917y, std::chrono::August, 29d})};
 
         const HolidayData LibertyDay12pmEarlyClose1917{
             .name       = "Liberty Day 12pm Early Close Oct 24, 1917",
             .month      = std::chrono::October,
             .day        = 24d,
-            .start_date = DateTime({1917y, std::chrono::October, 24d}),
-            .end_date   = DateTime({1917y, std::chrono::October, 24d})};
+            .start_date = DateTime(Date{1917y, std::chrono::October, 24d}),
+            .end_date   = DateTime(Date{1917y, std::chrono::October, 24d})};
 
         // 1918
         const std::vector<DateTime> WeatherNoHeatClosing1918 = {
@@ -684,8 +685,8 @@ namespace epoch_frame::calendar
             .name       = "Liberty Day 12pm Early Close April 26, 1918",
             .month      = std::chrono::April,
             .day        = 26d,
-            .start_date = DateTime({1918y, std::chrono::April, 26d}),
-            .end_date   = DateTime({1918y, std::chrono::April, 26d})};
+            .start_date = DateTime(Date{1918y, std::chrono::April, 26d}),
+            .end_date   = DateTime(Date{1918y, std::chrono::April, 26d})};
 
         const std::vector<DateTime> DraftRegistrationDay1918 = {"1918-09-12"__date};
 
@@ -693,8 +694,8 @@ namespace epoch_frame::calendar
             .name       = "False Armistice Report 2:30pm Early Close Nov 7, 1918",
             .month      = std::chrono::November,
             .day        = 7d,
-            .start_date = DateTime({1918y, std::chrono::November, 7d}),
-            .end_date   = DateTime({1918y, std::chrono::November, 7d})};
+            .start_date = DateTime(Date{1918y, std::chrono::November, 7d}),
+            .end_date   = DateTime(Date{1918y, std::chrono::November, 7d})};
 
         const std::vector<DateTime> ArmisticeSigned1918 = {"1918-11-11"__date};
 
@@ -703,8 +704,8 @@ namespace epoch_frame::calendar
             .name       = "Former President Roosevelt funeral 12:30pm Early Close Jan 7, 1919",
             .month      = std::chrono::January,
             .day        = 7d,
-            .start_date = DateTime({1919y, std::chrono::January, 7d}),
-            .end_date   = DateTime({1919y, std::chrono::January, 7d})};
+            .start_date = DateTime(Date{1919y, std::chrono::January, 7d}),
+            .end_date   = DateTime(Date{1919y, std::chrono::January, 7d})};
 
         const std::vector<DateTime> Homecoming27Division1919 = {"1919-03-25"__date};
 
@@ -719,8 +720,8 @@ namespace epoch_frame::calendar
             .name       = "Traffic Block 10:30am late open Dec. 30, 1919",
             .month      = std::chrono::December,
             .day        = 30d,
-            .start_date = DateTime({1919y, std::chrono::December, 30d}),
-            .end_date   = DateTime({1919y, std::chrono::December, 30d})};
+            .start_date = DateTime(Date{1919y, std::chrono::December, 30d}),
+            .end_date   = DateTime(Date{1919y, std::chrono::December, 30d})};
 
         // Continue with other years...
 
@@ -732,16 +733,16 @@ namespace epoch_frame::calendar
             .name       = "Moment of silence for terrorist attacks on 9/11",
             .month      = std::chrono::September,
             .day        = 17d,
-            .start_date = DateTime({2001y, std::chrono::September, 17d}),
-            .end_date   = DateTime({2001y, std::chrono::September, 17d})};
+            .start_date = DateTime(Date{2001y, std::chrono::September, 17d}),
+            .end_date   = DateTime(Date{2001y, std::chrono::September, 17d})};
 
         // 2002
         const HolidayData Sept11Anniversary12pmLateOpen2002{
             .name       = "1 year anniversary of terrorist attacks on 9/11",
             .month      = std::chrono::September,
             .day        = 11d,
-            .start_date = DateTime({2002y, std::chrono::September, 11d}),
-            .end_date   = DateTime({2002y, std::chrono::September, 11d})};
+            .start_date = DateTime(Date{2002y, std::chrono::September, 11d}),
+            .end_date   = DateTime(Date{2002y, std::chrono::September, 11d})};
 
         // 2012 - Hurricane Sandy
         const std::vector<DateTime> HurricaneSandyClosings2012 = {"2012-10-29"__date,
@@ -764,8 +765,8 @@ namespace epoch_frame::calendar
             .name       = "Woodrow Wilson Funeral 12:30pm Early Close Feb 6, 1924",
             .month      = std::chrono::February,
             .day        = 6d,
-            .start_date = DateTime({1924y, std::chrono::February, 6d}),
-            .end_date   = DateTime({1924y, std::chrono::February, 6d})};
+            .start_date = DateTime(Date{1924y, std::chrono::February, 6d}),
+            .end_date   = DateTime(Date{1924y, std::chrono::February, 6d})};
 
         // 1927
         const std::vector<DateTime> LindberghParade1927 = {"1927-06-13"__date};
@@ -781,8 +782,8 @@ namespace epoch_frame::calendar
             .name       = "Taft Funeral 12:30pm Early Close Mar 11, 1930",
             .month      = std::chrono::March,
             .day        = 11d,
-            .start_date = DateTime({1930y, std::chrono::March, 11d}),
-            .end_date   = DateTime({1930y, std::chrono::March, 11d})};
+            .start_date = DateTime(Date{1930y, std::chrono::March, 11d}),
+            .end_date   = DateTime(Date{1930y, std::chrono::March, 11d})};
 
         // 1933
         const std::vector<DateTime> CoolidgeFuneral1933 = {"1933-01-07"__date};
@@ -799,8 +800,8 @@ namespace epoch_frame::calendar
             .name       = "Gas Fumes on Trading Floor 12:30pm Early Close Aug 4, 1933",
             .month      = std::chrono::August,
             .day        = 4d,
-            .start_date = DateTime({1933y, std::chrono::August, 4d}),
-            .end_date   = DateTime({1933y, std::chrono::August, 4d})};
+            .start_date = DateTime(Date{1933y, std::chrono::August, 4d}),
+            .end_date   = DateTime(Date{1933y, std::chrono::August, 4d})};
 
         // 1933
         const std::vector<DateTime> HeavyVolume1933 = {"1933-07-29"__date, "1933-08-05"__date,
@@ -814,8 +815,8 @@ namespace epoch_frame::calendar
             .name       = "NRA Demonstration 12pm Early Close Sep 13, 1933",
             .month      = std::chrono::September,
             .day        = 13d,
-            .start_date = DateTime({1933y, std::chrono::September, 13d}),
-            .end_date   = DateTime({1933y, std::chrono::September, 13d})};
+            .start_date = DateTime(Date{1933y, std::chrono::September, 13d}),
+            .end_date   = DateTime(Date{1933y, std::chrono::September, 13d})};
 
         // 1944
         const std::vector<DateTime> SatClosings1944 = {"1944-08-19"__date, "1944-08-26"__date,
@@ -954,16 +955,16 @@ namespace epoch_frame::calendar
             .name       = "Wall Street Explosion 12pm Early Close Sep 16, 1920",
             .month      = std::chrono::September,
             .day        = 16d,
-            .start_date = DateTime({1920y, std::chrono::September, 16d}),
-            .end_date   = DateTime({1920y, std::chrono::September, 16d})};
+            .start_date = DateTime(Date{1920y, std::chrono::September, 16d}),
+            .end_date   = DateTime(Date{1920y, std::chrono::September, 16d})};
 
         // 1925
         const HolidayData CromwellFuneral1430EarlyClose1925{
             .name       = "Seymour L. Cromwell Funeral 2:30pm Early Close Sep 18, 1925",
             .month      = std::chrono::September,
             .day        = 18d,
-            .start_date = DateTime({1925y, std::chrono::September, 18d}),
-            .end_date   = DateTime({1925y, std::chrono::September, 18d})};
+            .start_date = DateTime(Date{1925y, std::chrono::September, 18d}),
+            .end_date   = DateTime(Date{1925y, std::chrono::September, 18d})};
 
         // 1928
         const std::vector<DateTime> BacklogRelief2pmEarlyClose1928 =
@@ -992,16 +993,16 @@ namespace epoch_frame::calendar
             .name       = "President Kennedy Assassination 2:07pm Early Close Nov 22, 1963",
             .month      = std::chrono::November,
             .day        = 22d,
-            .start_date = DateTime({1963y, std::chrono::November, 22d}),
-            .end_date   = DateTime({1963y, std::chrono::November, 22d})};
+            .start_date = DateTime(Date{1963y, std::chrono::November, 22d}),
+            .end_date   = DateTime(Date{1963y, std::chrono::November, 22d})};
 
         // 1964
         const HolidayData HooverFuneral1400EarlyClose1964{
             .name       = "Former President Herbert C. Hoover Funeral 2pm Early Close Oct 23, 1964",
             .month      = std::chrono::October,
             .day        = 23d,
-            .start_date = DateTime({1964y, std::chrono::October, 23d}),
-            .end_date   = DateTime({1964y, std::chrono::October, 23d})};
+            .start_date = DateTime(Date{1964y, std::chrono::October, 23d}),
+            .end_date   = DateTime(Date{1964y, std::chrono::October, 23d})};
 
         // 1966
         const std::vector<DateTime> TransitStrike2pmEarlyClose1966 = {
@@ -1013,8 +1014,8 @@ namespace epoch_frame::calendar
             .name       = "Snowstorm 2pm Early Close Feb 7, 1967",
             .month      = std::chrono::February,
             .day        = 7d,
-            .start_date = DateTime({1967y, std::chrono::February, 7d}),
-            .end_date   = DateTime({1967y, std::chrono::February, 7d})};
+            .start_date = DateTime(Date{1967y, std::chrono::February, 7d}),
+            .end_date   = DateTime(Date{1967y, std::chrono::February, 7d})};
 
         const std::vector<DateTime> Backlog2pmEarlyCloses1967 = {
             "1967-08-08"__date, "1967-08-09"__date, "1967-08-10"__date,
@@ -1061,39 +1062,39 @@ namespace epoch_frame::calendar
             .name       = "Snowstorm 2:30pm Early Close Feb 12, 1975",
             .month      = std::chrono::February,
             .day        = 12d,
-            .start_date = DateTime({1975y, std::chrono::February, 12d}),
-            .end_date   = DateTime({1975y, std::chrono::February, 12d})};
+            .start_date = DateTime(Date{1975y, std::chrono::February, 12d}),
+            .end_date   = DateTime(Date{1975y, std::chrono::February, 12d})};
 
         // 1976
         const HolidayData HurricaneWatch3pmEarlyClose1976{
             .name       = "Hurricane Watch 3pm Early Close Aug 9, 1976",
             .month      = std::chrono::August,
             .day        = 9d,
-            .start_date = DateTime({1976y, std::chrono::August, 9d}),
-            .end_date   = DateTime({1976y, std::chrono::August, 9d})};
+            .start_date = DateTime(Date{1976y, std::chrono::August, 9d}),
+            .end_date   = DateTime(Date{1976y, std::chrono::August, 9d})};
 
         // 1978
         const HolidayData Snow2pmEarlyClose1978{
             .name       = "Snowstorm 2pm Early Close Feb 6, 1978",
             .month      = std::chrono::February,
             .day        = 6d,
-            .start_date = DateTime({1978y, std::chrono::February, 6d}),
-            .end_date   = DateTime({1978y, std::chrono::February, 6d})};
+            .start_date = DateTime(Date{1978y, std::chrono::February, 6d}),
+            .end_date   = DateTime(Date{1978y, std::chrono::February, 6d})};
 
         // 1981
         const HolidayData ReaganAssassAttempt317pmEarlyClose1981{
             .name       = "President Reagan Assassination Attempt 3:17pm Early Close Mar 30, 1981",
             .month      = std::chrono::March,
             .day        = 30d,
-            .start_date = DateTime({1981y, std::chrono::March, 30d}),
-            .end_date   = DateTime({1981y, std::chrono::March, 30d})};
+            .start_date = DateTime(Date{1981y, std::chrono::March, 30d}),
+            .end_date   = DateTime(Date{1981y, std::chrono::March, 30d})};
 
         const HolidayData ConEdPowerFail328pmEarlyClose1981{
             .name       = "Con Edison Power Failure 3:28pm Early Close Sep 9, 1981",
             .month      = std::chrono::September,
             .day        = 9d,
-            .start_date = DateTime({1981y, std::chrono::September, 9d}),
-            .end_date   = DateTime({1981y, std::chrono::September, 9d})};
+            .start_date = DateTime(Date{1981y, std::chrono::September, 9d}),
+            .end_date   = DateTime(Date{1981y, std::chrono::September, 9d})};
 
         // 1987
         const std::vector<DateTime> Backlog2pmEarlyCloses1987 = {
@@ -1114,55 +1115,55 @@ namespace epoch_frame::calendar
             .name       = "Snowstorm 2:30pm Early Close Feb 11, 1994",
             .month      = std::chrono::February,
             .day        = 11d,
-            .start_date = DateTime({1994y, std::chrono::February, 11d}),
-            .end_date   = DateTime({1994y, std::chrono::February, 11d})};
+            .start_date = DateTime(Date{1994y, std::chrono::February, 11d}),
+            .end_date   = DateTime(Date{1994y, std::chrono::February, 11d})};
 
         // 1996
         const HolidayData Snow2pmEarlyClose1996{
             .name       = "Snowstorm 2pm Early Close Jan 8, 1996",
             .month      = std::chrono::January,
             .day        = 8d,
-            .start_date = DateTime({1996y, std::chrono::January, 8d}),
-            .end_date   = DateTime({1996y, std::chrono::January, 8d})};
+            .start_date = DateTime(Date{1996y, std::chrono::January, 8d}),
+            .end_date   = DateTime(Date{1996y, std::chrono::January, 8d})};
 
         // 1997
         const HolidayData CircuitBreakerTriggered330pmEarlyClose1997{
             .name       = "Circuit Breaker Triggered 3:30pm Early Close Oct 27, 1997",
             .month      = std::chrono::October,
             .day        = 27d,
-            .start_date = DateTime({1997y, std::chrono::October, 27d}),
-            .end_date   = DateTime({1997y, std::chrono::October, 27d})};
+            .start_date = DateTime(Date{1997y, std::chrono::October, 27d}),
+            .end_date   = DateTime(Date{1997y, std::chrono::October, 27d})};
 
         // 2005
         const HolidayData SystemProb356pmEarlyClose2005{
             .name       = "System Communication Problem 3:56pm Early Close Jun 1, 2005",
             .month      = std::chrono::June,
             .day        = 1d,
-            .start_date = DateTime({2005y, std::chrono::June, 1d}),
-            .end_date   = DateTime({2005y, std::chrono::June, 1d})};
+            .start_date = DateTime(Date{2005y, std::chrono::June, 1d}),
+            .end_date   = DateTime(Date{2005y, std::chrono::June, 1d})};
 
         // 1936
         const HolidayData KingGeorgeVFuneral11amLateOpen1936{
             .name       = "King George V Funeral 11am late open Jan 28, 1936",
             .month      = std::chrono::January,
             .day        = 28d,
-            .start_date = DateTime({1936y, std::chrono::January, 28d}),
-            .end_date   = DateTime({1936y, std::chrono::January, 28d})};
+            .start_date = DateTime(Date{1936y, std::chrono::January, 28d}),
+            .end_date   = DateTime(Date{1936y, std::chrono::January, 28d})};
 
         // 1960
         const HolidayData Snow11amLateOpening1960{
             .name       = "Severe Snowstorm 11am late open Dec 12, 1960",
             .month      = std::chrono::December,
             .day        = 12d,
-            .start_date = DateTime({1960y, std::chrono::December, 12d}),
-            .end_date   = DateTime({1960y, std::chrono::December, 12d})};
+            .start_date = DateTime(Date{1960y, std::chrono::December, 12d}),
+            .end_date   = DateTime(Date{1960y, std::chrono::December, 12d})};
 
         // 1965
         const HolidayData PowerFail1105LateOpen{
             .name       = "Power Failure 11:05am late open Nov 10, 1965",
             .month      = std::chrono::November,
             .day        = 10d,
-            .start_date = DateTime({1965y, std::chrono::November, 10d}),
+            .start_date = DateTime(Date{1965y, std::chrono::November, 10d}),
         };
 
         // 1989
@@ -1170,16 +1171,16 @@ namespace epoch_frame::calendar
             .name       = "Electrical Fire 11am late open Nov 10, 1989",
             .month      = std::chrono::November,
             .day        = 10d,
-            .start_date = DateTime({1989y, std::chrono::November, 10d}),
-            .end_date   = DateTime({1989y, std::chrono::November, 10d})};
+            .start_date = DateTime(Date{1989y, std::chrono::November, 10d}),
+            .end_date   = DateTime(Date{1989y, std::chrono::November, 10d})};
 
         // 1990
         const HolidayData ConEdXformer931amLateOpen1990{
             .name       = "Con Edison Transformer Explosion 9:31am late open Dec 27, 1990",
             .month      = std::chrono::December,
             .day        = 27d,
-            .start_date = DateTime({1990y, std::chrono::December, 27d}),
-            .end_date   = DateTime({1990y, std::chrono::December, 27d})};
+            .start_date = DateTime(Date{1990y, std::chrono::December, 27d}),
+            .end_date   = DateTime(Date{1990y, std::chrono::December, 27d})};
 
         // 1991
         const std::vector<DateTime> TroopsInGulf931LateOpens1991 = {"1991-01-17"__date,
@@ -1190,48 +1191,48 @@ namespace epoch_frame::calendar
             .name       = "Computer System Troubles 10:30am late open Dec 18, 1995",
             .month      = std::chrono::December,
             .day        = 18d,
-            .start_date = DateTime({1995y, std::chrono::December, 18d}),
-            .end_date   = DateTime({1995y, std::chrono::December, 18d})};
+            .start_date = DateTime(Date{1995y, std::chrono::December, 18d}),
+            .end_date   = DateTime(Date{1995y, std::chrono::December, 18d})};
 
         // 1996
         const HolidayData Snow11amLateOpen1996{
             .name       = "Snowstorm 11am late open Jan 8, 1996",
             .month      = std::chrono::January,
             .day        = 8d,
-            .start_date = DateTime({1996y, std::chrono::January, 8d}),
-            .end_date   = DateTime({1996y, std::chrono::January, 8d})};
+            .start_date = DateTime(Date{1996y, std::chrono::January, 8d}),
+            .end_date   = DateTime(Date{1996y, std::chrono::January, 8d})};
 
         // 2001
         const HolidayData EnduringFreedomMomentSilence931amLateOpen2001{
             .name       = "Moment of silence for troops in Operation Enduring Freedom",
             .month      = std::chrono::October,
             .day        = 8d,
-            .start_date = DateTime({2001y, std::chrono::October, 8d}),
-            .end_date   = DateTime({2001y, std::chrono::October, 8d})};
+            .start_date = DateTime(Date{2001y, std::chrono::October, 8d}),
+            .end_date   = DateTime(Date{2001y, std::chrono::October, 8d})};
 
         // 2003
         const HolidayData IraqiFreedom932amLateOpen2003{
             .name       = "Moment of silence for troops in Operation Iraqi Freedom",
             .month      = std::chrono::March,
             .day        = 20d,
-            .start_date = DateTime({2003y, std::chrono::March, 20d}),
-            .end_date   = DateTime({2003y, std::chrono::March, 20d})};
+            .start_date = DateTime(Date{2003y, std::chrono::March, 20d}),
+            .end_date   = DateTime(Date{2003y, std::chrono::March, 20d})};
 
         // 2004
         const HolidayData ReaganMomentSilence932amLateOpen2004{
             .name       = "Moment of silence for former President Ronald Reagan",
             .month      = std::chrono::June,
             .day        = 7d,
-            .start_date = DateTime({2004y, std::chrono::June, 7d}),
-            .end_date   = DateTime({2004y, std::chrono::June, 7d})};
+            .start_date = DateTime(Date{2004y, std::chrono::June, 7d}),
+            .end_date   = DateTime(Date{2004y, std::chrono::June, 7d})};
 
         // 2006
         const HolidayData FordMomentSilence932amLateOpen2006{
             .name       = "Moment of silence for former President Gerald Ford",
             .month      = std::chrono::December,
             .day        = 27d,
-            .start_date = DateTime({2006y, std::chrono::December, 27d}),
-            .end_date   = DateTime({2006y, std::chrono::December, 27d})};
+            .start_date = DateTime(Date{2006y, std::chrono::December, 27d}),
+            .end_date   = DateTime(Date{2006y, std::chrono::December, 27d})};
     };
 
 } // namespace epoch_frame::calendar

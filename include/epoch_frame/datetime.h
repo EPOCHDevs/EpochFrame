@@ -19,6 +19,18 @@ namespace epoch_frame
         chrono_microsecond microsecond{0};
         std::string        tz{""};
 
+        Time replace_tz(std::string const& _tz) const
+        {
+            auto time = *this;
+            time.tz   = _tz;
+            return time;
+        }
+
+        chrono_nanoseconds to_duration() const
+        {
+            return hour + minute + second + microsecond;
+        }
+
         bool                 operator==(const Time& other) const = default;
         friend std::ostream& operator<<(std::ostream& os, Time const& time)
         {
@@ -38,6 +50,7 @@ namespace epoch_frame
 
         std::strong_ordering operator<=>(const Time& other) const;
     };
+
     struct Date
     {
         chrono_year  year;
@@ -87,29 +100,59 @@ namespace epoch_frame
         }
     };
 
-    struct DateTime
+    class DateTime
     {
-        Date               date;
-        chrono_hour        hour{0};
-        chrono_minute      minute{0};
-        chrono_second      second{0};
-        chrono_microsecond microsecond{0};
-        std::string        tz{""};
 
+      public:
         arrow::TimestampScalar timestamp() const;
-        Time                   time() const noexcept
+
+        Date date() const noexcept
         {
-            return Time{hour, minute, second, microsecond, tz};
+            return m_date;
+        }
+
+        Time time() const noexcept
+        {
+            return m_time;
+        }
+
+        explicit DateTime(chrono_time_point const& time_point, const std::string& tz = "");
+        explicit DateTime(int64_t nanoseconds, const std::string& tz = "")
+            : DateTime(chrono_time_point(chrono_nanosecond(nanoseconds)), tz)
+        {
+        }
+        DateTime() : DateTime(0, "") {}
+
+        DateTime(chrono_year const& yr, chrono_month const& month, chrono_day const& day,
+                 chrono_hour const& hr = 0h, chrono_minute const& min = 0min,
+                 chrono_second const& sec = 0s, chrono_microsecond const& us = 0us,
+                 std::string const& tz = "");
+
+        DateTime(Date const& date, Time const& time = {})
+            : DateTime(date.to_time_point() + time.to_duration(), time.tz)
+        {
         }
 
         DateTime normalize() const
         {
-            return DateTime{date, 0h, 0min, 0s, 0us, tz};
+            return DateTime{m_date};
         }
 
         DateTime replace_tz(std::string const& _tz) const
         {
-            return DateTime{date, hour, minute, second, microsecond, _tz};
+            auto dt = *this;
+            dt.m_time.tz = _tz;
+            return dt;
+        }
+
+        std::string tz() const
+        {
+            return m_time.tz;
+        }
+
+        DateTime set_date(Date const& date) const
+        {
+            return DateTime{date, m_time};
         }
 
         bool operator==(const DateTime& other) const = default;
@@ -142,6 +185,57 @@ namespace epoch_frame
         DateTime& operator--()
         {
             *this -= TimeDelta{{.days = 1.0}};
+            return *this;
+        }
+
+        template <typename T> DateTime& replace(T const& x)
+        {
+            if constexpr (std::is_same_v<T, Date>)
+            {
+                m_date = x;
+            }
+            else if constexpr (std::is_same_v<T, Time>)
+            {
+                m_time = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_year>)
+            {
+                m_date.year = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_month>)
+            {
+                m_date.month = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_day>)
+            {
+                m_date.day = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_hour>)
+            {
+                m_time.hour = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_minute>)
+            {
+                m_time.minute = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_second>)
+            {
+                m_time.second = x;
+            }
+            else if constexpr (std::is_same_v<T, chrono_microsecond>)
+            {
+                m_time.microsecond = x;
+            }
+            else if constexpr (std::is_same_v<T, std::string>)
+            {
+                m_time.tz = x;
+            }
+            else
+            {
+                static_assert(std::is_same_v<T, nanoseconds>);
+                m_nanoseconds = x;
+            }
+
             return *this;
         }
 
@@ -215,22 +309,25 @@ namespace epoch_frame
 
         std::string repr() const
         {
-            return std::format("{}-{}-{} {}:{}:{} {}", date.year, date.month, date.day, hour,
-                               minute, second, tz);
+            return std::format("{}-{}-{} {}", m_date.year, m_date.month, m_date.day, m_time.repr());
         }
 
         int64_t toordinal() const
         {
-            return date.toordinal();
+            return m_date.toordinal();
         }
 
         int8_t weekday() const
         {
-            return date.weekday();
+            return m_date.weekday();
         }
 
-        static DateTime from_str(const std::string& str);
-        static DateTime from_date_str(const std::string& str);
+        static DateTime from_str(const std::string& str, const std::string& tz = "");
+        static DateTime from_date_str(const std::string& str, const std::string& tz = "");
+
+        Date        m_date;
+        Time        m_time;
+        nanoseconds m_nanoseconds{0};
     };
 
     inline DateTime operator""__dt(const char* str, size_t len)

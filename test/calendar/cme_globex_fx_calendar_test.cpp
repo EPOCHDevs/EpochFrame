@@ -28,7 +28,7 @@ TEST_CASE("CME Globex FX Calendar", "[calendar]")
     SECTION("test_sunday_opens")
     {
         // Test that the market opens on Sunday evening
-        auto schedule = cal.schedule("2020-01-12"__date.date, "2020-01-31"__date.date, {});
+        auto schedule = cal.schedule("2020-01-12"__date.date(), "2020-01-31"__date.date(), {});
 
         // Monday's session should open on Sunday at 5 PM Chicago time
         auto expected = schedule.loc(Scalar{"2020-01-13"_date}, "MarketOpen");
@@ -167,7 +167,8 @@ TEST_CASE("CME Globex FX Calendar", "[calendar]")
             // 2023 Good Friday (7 = Friday)
             {"2023-04-07"__date, Time{10h, 15min}}};
 
-        auto schedule = cal.schedule("2020-01-01"__date.date, "2023-04-28"__date.date, {.tz = CST});
+        auto schedule =
+            cal.schedule("2020-01-01"__date.date(), "2023-04-28"__date.date(), {.tz = CST});
         for (const auto& [date_, market_time] : test_cases)
         {
             std::visit(

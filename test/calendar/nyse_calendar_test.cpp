@@ -20,8 +20,8 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_custom_open_close")
     {
         NYSEExchangeCalendar custom_cal{MarketTime{Time{9h}}, MarketTime{Time{10h}}};
-        auto                 sched =
-            custom_cal.schedule(Date{2024y, August, 16d}, Date{2024y, August, 16d}, ScheduleOptions{});
+        auto sched = custom_cal.schedule(Date{2024y, August, 16d}, Date{2024y, August, 16d},
+                                         ScheduleOptions{});
 
         REQUIRE(sched.iloc(0, "MarketOpen").to_datetime() ==
                 "2024-08-16 13:00:00"__dt.replace_tz(UTC));
@@ -39,10 +39,10 @@ TEST_CASE("NYSE Calendar", "[calendar]")
 
         std::vector<TestCase> test_cases = {
             TestCase{
-                {"1984-12-30"__date.date, "1985-01-03"__date.date},
+                {"1984-12-30"__date.date(), "1985-01-03"__date.date()},
                 {"1984-12-31 10:00:00"__dt, "1985-01-02 09:30:00"__dt, "1985-01-03 09:30:00"__dt}},
             TestCase{
-                {"1901-12-13"__date.date, "1901-12-16"__date.date},
+                {"1901-12-13"__date.date(), "1901-12-16"__date.date()},
                 {"1901-12-13 10:00:00"__dt, "1901-12-14 10:00:00"__dt, "1901-12-16 10:00:00"__dt}}};
 
         for (const auto& [dates, expected] : test_cases)
@@ -71,16 +71,16 @@ TEST_CASE("NYSE Calendar", "[calendar]")
 
         std::vector<TestCase> test_cases = {
             TestCase{
-                {"1952-09-26"__date.date, "1952-09-30"__date.date},
+                {"1952-09-26"__date.date(), "1952-09-30"__date.date()},
                 {"1952-09-26 15:00:00"__dt, "1952-09-29 15:30:00"__dt, "1952-09-30 15:30:00"__dt}},
             TestCase{
-                {"1973-12-28"__date.date, "1974-01-02"__date.date},
+                {"1973-12-28"__date.date(), "1974-01-02"__date.date()},
                 {"1973-12-28 15:30:00"__dt, "1973-12-31 15:30:00"__dt, "1974-01-02 16:00:00"__dt}},
             TestCase{
-                {"1952-05-23"__date.date, "1952-05-26"__date.date},
+                {"1952-05-23"__date.date(), "1952-05-26"__date.date()},
                 {"1952-05-23 15:00:00"__dt, "1952-05-24 12:00:00"__dt, "1952-05-26 15:00:00"__dt}},
             TestCase{
-                {"1901-12-13"__date.date, "1901-12-16"__date.date},
+                {"1901-12-13"__date.date(), "1901-12-16"__date.date()},
                 {"1901-12-13 15:00:00"__dt, "1901-12-14 12:00:00"__dt, "1901-12-16 15:00:00"__dt}}};
 
         for (const auto& [dates, expected] : test_cases)
@@ -103,20 +103,20 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_days_at_time_custom")
     {
         // Test all three market closes
-        auto valid        = cal.valid_days("1952-09-26"__date.date, "1974-01-02"__date.date);
+        auto valid        = cal.valid_days("1952-09-26"__date.date(), "1974-01-02"__date.date());
         auto at_close     = cal.days_at_time(valid, epoch_core::MarketTimeType::MarketClose);
         auto cal_tz_close = at_close.dt().tz_convert(cal.tz());
 
         // Check specific timestamps
-        REQUIRE(cal_tz_close[0].to_datetime() == "1952-09-26 15:00:00"__dt.replace_tz(cal.tz()));
-        REQUIRE(cal_tz_close[1].to_datetime() == "1952-09-29 15:30:00"__dt.replace_tz(cal.tz()));
-        REQUIRE(cal_tz_close[-2].to_datetime() == "1973-12-31 15:30:00"__dt.replace_tz(cal.tz()));
-        REQUIRE(cal_tz_close[-1].to_datetime() == "1974-01-02 16:00:00"__dt.replace_tz(cal.tz()));
+        REQUIRE(cal_tz_close[0].to_datetime() == "1952-09-26 15:00:00"__dt.tz_localize(cal.tz()));
+        REQUIRE(cal_tz_close[1].to_datetime() == "1952-09-29 15:30:00"__dt.tz_localize(cal.tz()));
+        REQUIRE(cal_tz_close[-2].to_datetime() == "1973-12-31 15:30:00"__dt.tz_localize(cal.tz()));
+        REQUIRE(cal_tz_close[-1].to_datetime() == "1974-01-02 16:00:00"__dt.tz_localize(cal.tz()));
 
         // Check if custom close time is kept
         NYSEExchangeCalendar custom_close_cal(std::nullopt, MarketTime{Time{10h}});
         auto                 custom_valid =
-            custom_close_cal.valid_days("1901-12-13"__date.date, "1901-12-16"__date.date);
+            custom_close_cal.valid_days("1901-12-13"__date.date(), "1901-12-16"__date.date());
         auto custom_at_close =
             custom_close_cal.days_at_time(custom_valid, epoch_core::MarketTimeType::MarketClose);
 
@@ -134,7 +134,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
         // Check if custom open time is kept
         NYSEExchangeCalendar custom_open_cal(MarketTime{Time{9h}}, std::nullopt);
         auto                 custom_open_valid =
-            custom_open_cal.valid_days("1901-12-13"__date.date, "1901-12-16"__date.date);
+            custom_open_cal.valid_days("1901-12-13"__date.date(), "1901-12-16"__date.date());
         auto custom_at_open =
             custom_open_cal.days_at_time(custom_open_valid, epoch_core::MarketTimeType::MarketOpen);
 
@@ -153,29 +153,30 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_valid_days")
     {
         // Basic valid_days checks
-        auto valid_days1 = cal.valid_days("1999-01-01"__date.date, "2014-01-01"__date.date);
+        auto valid_days1 = cal.valid_days("1999-01-01"__date.date(), "2014-01-01"__date.date());
         REQUIRE(valid_days1 != nullptr);
         REQUIRE(valid_days1->size() > 0);
 
         // Check valid_days with timezone parameter
-        auto valid_days_tz = cal.valid_days("1999-01-01"__date.date, "2014-01-01"__date.date, "");
+        auto valid_days_tz =
+            cal.valid_days("1999-01-01"__date.date(), "2014-01-01"__date.date(), "");
         REQUIRE(valid_days_tz != nullptr);
         REQUIRE(valid_days_tz->size() > 0);
 
         // Check special_dates calls
         auto special_dates1 =
-            cal.special_dates(epoch_core::MarketTimeType::MarketClose, "1999-01-01"__date.date,
-                              "2014-01-01"__date.date, false);
+            cal.special_dates(epoch_core::MarketTimeType::MarketClose, "1999-01-01"__date.date(),
+                              "2014-01-01"__date.date(), false);
         REQUIRE(special_dates1.size() > 0);
 
         // Check special_dates with filter_holidays=true (calls valid_days internally)
         auto special_dates2 =
-            cal.special_dates(epoch_core::MarketTimeType::MarketClose, "1999-01-01"__date.date,
-                              "2014-01-01"__date.date, true);
+            cal.special_dates(epoch_core::MarketTimeType::MarketClose, "1999-01-01"__date.date(),
+                              "2014-01-01"__date.date(), true);
         REQUIRE(special_dates2.size() > 0);
 
         // Test different timezone specifications
-        Date start{"2000-01-01"__date.date}, end{"2000-01-30"__date.date};
+        Date start{"2000-01-01"__date.date()}, end{"2000-01-30"__date.date()};
         auto valid_utc = cal.valid_days(start, end, "UTC")->tz_localize("");
 
         std::vector<std::string> timezones = {"America/New_York", "Europe/Berlin", ""};
@@ -189,12 +190,12 @@ TEST_CASE("NYSE Calendar", "[calendar]")
 
     SECTION("test_valid_days_tz_aware")
     {
-        DateTime             data_date{"2025-01-21 00:00:00"__dt};
+        DateTime data_date{"2025-01-21 00:00:00"__dt};
         data_date = data_date.replace_tz("UTC");
 
         // Get valid days for a week
         auto actual =
-            cal.valid_days(data_date.date, (data_date + TimeDelta{{.days = 7}}).date, "UTC");
+            cal.valid_days(data_date.date(), (data_date + TimeDelta{{.days = 7}}).date(), "UTC");
 
         // Create expected bdate_range (business day range) with 6 periods
         auto bday_offset = factory::offset::cbday(
@@ -242,7 +243,8 @@ TEST_CASE("NYSE Calendar", "[calendar]")
                                                "2012-11-22 00:00:00"__dt.replace_tz("UTC"),
                                                "2012-12-25 00:00:00"__dt.replace_tz("UTC")};
 
-        auto valid_days_2012 = nyse.valid_days("2012-01-01"__date.date, "2012-12-31"__date.date);
+        auto valid_days_2012 =
+            nyse.valid_days("2012-01-01"__date.date(), "2012-12-31"__date.date());
 
         // Check all expected holidays are not in valid days
         for (const auto& holiday : holidays_2012)
@@ -254,7 +256,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_special_holidays")
     {
         NYSEExchangeCalendar nyse;
-        auto good_dates = nyse.valid_days("1985-01-01"__date.date, "2016-12-31"__date.date);
+        auto good_dates = nyse.valid_days("1985-01-01"__date.date(), "2016-12-31"__date.date());
 
         // 9/11 - Sept 11, 12, 13, 14 2001
         REQUIRE_FALSE(good_dates->contains(Scalar("2001-09-11 00:00:00"__dt.replace_tz("UTC"))));
@@ -283,7 +285,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_new_years")
     {
         NYSEExchangeCalendar nyse;
-        auto good_dates = nyse.valid_days("2001-01-01"__date.date, "2016-12-31"__date.date);
+        auto good_dates = nyse.valid_days("2001-01-01"__date.date(), "2016-12-31"__date.date());
 
         // If New Years falls on a weekend, the Monday after is a holiday.
         // Jan 2, 2012 (New Year's was on Sunday)
@@ -302,7 +304,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_thanksgiving")
     {
         NYSEExchangeCalendar nyse;
-        auto good_dates = nyse.valid_days("2001-01-01"__date.date, "2016-12-31"__date.date);
+        auto good_dates = nyse.valid_days("2001-01-01"__date.date(), "2016-12-31"__date.date());
 
         // If Nov has 4 Thursdays, Thanksgiving is the last Thursday.
         REQUIRE_FALSE(good_dates->contains(Scalar("2005-11-24 00:00:00"__dt.replace_tz("UTC"))));
@@ -317,7 +319,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_juneteenth")
     {
         NYSEExchangeCalendar nyse;
-        auto good_dates = nyse.valid_days("2020-01-01"__date.date, "2023-12-31"__date.date);
+        auto good_dates = nyse.valid_days("2020-01-01"__date.date(), "2023-12-31"__date.date());
 
         // Test <2021 no holiday
         REQUIRE(good_dates->contains(Scalar("2020-06-19 00:00:00"__dt.replace_tz("UTC"))));
@@ -332,7 +334,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     SECTION("test_day_after_thanksgiving")
     {
         NYSEExchangeCalendar nyse;
-        auto good_dates = nyse.schedule("2001-01-01"__date.date, "2016-12-31"__date.date, {});
+        auto good_dates = nyse.schedule("2001-01-01"__date.date(), "2016-12-31"__date.date(), {});
 
         // Check Nov 23, 2012 - fourth Friday early close
         DateTime fourth_friday_open = "2012-11-23 16:00:00"__dt.replace_tz(EST);
@@ -360,7 +362,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
     //     // Prior to 2013, the market closed early the Friday after Independence Day on Thursday.
     //     // Since and including 2013, the early close is on Wednesday.
     //     NYSEExchangeCalendar nyse;
-    //     auto schedule = nyse.schedule("2001-01-01"__date.date, "2019-12-31"__date.date, {});
+    //     auto schedule = nyse.schedule("2001-01-01"__date.date(), "2019-12-31"__date.date(), {});
 
     //     // July 2002
     //     {
@@ -412,7 +414,7 @@ TEST_CASE("NYSE Calendar", "[calendar]")
         NYSEExchangeCalendar nyse;
 
         // 1956-12-24 is a full day holiday and also will show as early close
-        auto actual = nyse.schedule("1956-12-20"__date.date, "1956-12-30"__date.date, {});
+        auto actual = nyse.schedule("1956-12-20"__date.date(), "1956-12-30"__date.date(), {});
 
         std::vector<DateTime> expected_dates = {
             "1956-12-20 00:00:00"__dt, "1956-12-21 00:00:00"__dt, "1956-12-26 00:00:00"__dt,

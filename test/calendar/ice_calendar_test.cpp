@@ -1,5 +1,5 @@
-#include "epoch_frame/calendar_common.h"
 #include "calendar/calendars/all.h"
+#include "epoch_frame/calendar_common.h"
 #include "epoch_frame/datetime.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/factory/scalar_factory.h"
@@ -25,7 +25,7 @@ TEST_CASE("ICE Calendar", "[calendar]")
 
     SECTION("test_hurricane_sandy_one_day")
     {
-        auto dates_open = ice.valid_days("2012-10-01"__date.date, "2012-11-01"__date.date);
+        auto dates_open = ice.valid_days("2012-10-01"__date.date(), "2012-11-01"__date.date());
 
         // Closed first day of hurricane sandy
         REQUIRE_FALSE(dates_open->contains(Scalar("2012-10-29 00:00:00"__dt.replace_tz("UTC"))));
@@ -41,7 +41,7 @@ TEST_CASE("ICE Calendar", "[calendar]")
         // good friday: 2016-03-25
         // christmas (observed): 2016-12-26
 
-        auto good_dates = ice.valid_days("2016-01-01"__date.date, "2016-12-31"__date.date);
+        auto good_dates = ice.valid_days("2016-01-01"__date.date(), "2016-12-31"__date.date());
 
         std::vector<DateTime> holidays = {"2016-01-01 00:00:00"__dt, "2016-03-25 00:00:00"__dt,
                                           "2016-12-26 00:00:00"__dt};
@@ -64,7 +64,7 @@ TEST_CASE("ICE Calendar", "[calendar]")
         // labor: 2016-09-05
         // thanksgiving: 2016-11-24
 
-        auto schedule = ice.schedule("2016-01-01"__date.date, "2016-12-31"__date.date, {});
+        auto schedule = ice.schedule("2016-01-01"__date.date(), "2016-12-31"__date.date(), {});
 
         std::vector<std::string> early_close_dates = {"2016-01-18", "2016-02-15", "2016-05-30",
                                                       "2016-07-04", "2016-09-05", "2016-11-24"};

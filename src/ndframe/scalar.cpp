@@ -341,10 +341,11 @@ namespace epoch_frame {
         return StringOperation<false>(*this);
     }
 
-    arrow::TimestampScalar Scalar::timestamp(std::string const &format) const {
+    arrow::TimestampScalar Scalar::timestamp(std::string const &format, const std::string& tz) const {
         if (arrow::is_string(m_scalar->type->id())) {
-            auto result = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::Strptime(m_scalar, arrow::compute::StrptimeOptions{format, arrow::TimeUnit::NANO}));
-            return result;
+            arrow::TimestampScalar utc{0, arrow::timestamp(arrow::TimeUnit::NANO, tz)};
+            utc.value = AssertCastScalarResultIsOk<arrow::TimestampScalar>(arrow::compute::Strptime(m_scalar, arrow::compute::StrptimeOptions{format, arrow::TimeUnit::NANO})).value;
+            return utc;
         }
         auto scalarPtr = std::dynamic_pointer_cast<arrow::TimestampScalar>(m_scalar);
         if (!scalarPtr) {
@@ -353,12 +354,12 @@ namespace epoch_frame {
         return *scalarPtr;
     }
 
-    DateTime Scalar::to_datetime(std::string const &format) const {
-        return factory::scalar::to_datetime(timestamp(format));
+    DateTime Scalar::to_datetime(std::string const &format, const std::string& tz) const {
+        return factory::scalar::to_datetime(timestamp(format, tz));
     }
 
-    DateTime Scalar::to_date(std::string const &format) const {
-        return factory::scalar::to_datetime(timestamp(format));
+    DateTime Scalar::to_date(std::string const &format, const std::string& tz) const {
+        return factory::scalar::to_datetime(timestamp(format, tz));
     }
 
     epoch_core::EpochDayOfWeek Scalar::weekday() const {

@@ -1,16 +1,16 @@
 //
 // Created by adesola on 4/8/25.
 //
-#include "epoch_frame/factory/calendar_factory.h"
-#include "epoch_frame/calendar_utils.h"
 #include "calendar/calendars/all.h"
-#include "epoch_frame/time_delta.h"
+#include "epoch_frame/calendar_utils.h"
+#include "epoch_frame/factory/calendar_factory.h"
 #include "epoch_frame/factory/dataframe_factory.h"
 #include "epoch_frame/factory/date_offset_factory.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/factory/scalar_factory.h"
 #include "epoch_frame/scalar.h"
 #include "epoch_frame/series.h"
+#include "epoch_frame/time_delta.h"
 #include <catch.hpp>
 
 using namespace epoch_frame::factory;
@@ -40,9 +40,9 @@ TEST_CASE_METHOD(CalendarUtilsTest, "Merge Schedules Test")
         // Generate schedules for two different calendars
         // NYSE is closed on July 4th, FX trades on July 4th
         auto nyse_schedule =
-            nyse_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            nyse_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
         auto fx_schedule =
-            fx_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            fx_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
 
         INFO("NYSE Schedule:");
         INFO(nyse_schedule.repr());
@@ -73,9 +73,9 @@ TEST_CASE_METHOD(CalendarUtilsTest, "Merge Schedules Test")
     {
         // Generate schedules for two different calendars
         auto nyse_schedule =
-            nyse_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            nyse_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
         auto fx_schedule =
-            fx_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            fx_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
 
         // Merge with inner join - should only include dates common to both calendars
         auto merged_inner = utils::merge_schedules({nyse_schedule, fx_schedule}, false);
@@ -99,9 +99,9 @@ TEST_CASE_METHOD(CalendarUtilsTest, "Merge Schedules Test")
     {
         // NYSE has lunch breaks, FX doesn't
         auto nyse_schedule =
-            nyse_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            nyse_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
         auto fx_schedule =
-            fx_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            fx_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
 
         // Add break columns to NYSE schedule for testing
         Series break_start = nyse_schedule["MarketOpen"] + Scalar{TimeDelta{{.hours = 2}}};
@@ -134,9 +134,9 @@ TEST_CASE_METHOD(CalendarUtilsTest, "Merge Schedules Test")
     {
         // Merging the same calendar should return identical schedule
         auto schedule1 =
-            nyse_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            nyse_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
         auto schedule2 =
-            nyse_calendar->schedule("2023-07-03"__date.date, "2023-07-07"__date.date, {});
+            nyse_calendar->schedule("2023-07-03"__date.date(), "2023-07-07"__date.date(), {});
 
         auto merged = utils::merge_schedules({schedule1, schedule2}, false);
 

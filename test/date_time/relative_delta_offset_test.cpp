@@ -32,10 +32,10 @@ TEST_CASE("RelativeDeltaOffset", "[date_time]") {
             {"months", RelativeDeltaOption{.months = 1}, DateTime{{2008y, February, 2d}}},
             {"weeks", RelativeDeltaOption{.weeks = 1}, DateTime{{2008y, January, 9d}}},
             {"days", RelativeDeltaOption{.days = 1}, DateTime{{2008y, January, 3d}}},
-            {"hours", RelativeDeltaOption{.hours = 1}, DateTime{date, 1h}},
-            {"minutes", RelativeDeltaOption{.minutes = 1}, DateTime{.date=date, .minute=1min}},
-            {"seconds", RelativeDeltaOption{.seconds = 1}, DateTime{.date=date, .second=1s}},
-            {"microseconds", RelativeDeltaOption{.microseconds = 1}, DateTime{.date=date, .microsecond=1us}}
+            {"hours", RelativeDeltaOption{.hours = 1}, DateTime{date, {1h}}},
+            {"minutes", RelativeDeltaOption{.minutes = 1}, DateTime{date, {.minute=1min}}},
+            {"seconds", RelativeDeltaOption{.seconds = 1}, DateTime{date, {.second=1s}}},
+            {"microseconds", RelativeDeltaOption{.microseconds = 1}, DateTime{date, {.microsecond=1us}}}
         };
 
         for (auto && [offset, delta, expected] : params) {
@@ -53,8 +53,8 @@ TEST_CASE("RelativeDeltaOffset", "[date_time]") {
     }
 
     SECTION("apply with tz") {
-        DateTime sdt{{2011y, January, 1d}, 9h};
-        DateTime expected{{2011y, January, 2d}, 9h};
+        DateTime sdt{{2011y, January, 1d}, {9h}};
+        DateTime expected{{2011y, January, 2d}, {9h}};
 
         RelativeDeltaOffsetHandler offset{1, RelativeDelta{RelativeDeltaOption{.days = 1}}};
         auto result = offset.add(sdt.timestamp());
@@ -62,10 +62,10 @@ TEST_CASE("RelativeDeltaOffset", "[date_time]") {
 
         for (auto const& tz : std::vector<std::string>{"UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Tokyo"}) {
             auto expected_localize = expected.tz_localize(tz);
-            REQUIRE(expected_localize.tz == tz);
+            REQUIRE(expected_localize.tz() == tz);
 
             auto sdt_localize = sdt.tz_localize(tz);
-            REQUIRE(sdt_localize.tz == tz);
+            REQUIRE(sdt_localize.tz() == tz);
 
             const auto result = offset.add(sdt_localize.timestamp());
             REQUIRE(to_datetime(result) == expected_localize);

@@ -156,7 +156,7 @@ TEST_CASE("market calendar", "[calendar]")
             cal.remove_time(epoch_core::MarketTimeType::MarketOpen);
             REQUIRE_THROWS_AS(cal.open_time(), std::runtime_error);
             REQUIRE_THROWS_AS(
-                cal.get_time_on(epoch_core::MarketTimeType::Pre, "1900-01-01"__date.date),
+                cal.get_time_on(epoch_core::MarketTimeType::Pre, "1900-01-01"__date.date()),
                 std::runtime_error);
         }
     }
@@ -183,8 +183,8 @@ TEST_CASE("market calendar", "[calendar]")
         SECTION("Special market open dates")
         {
             auto special_dates =
-                cal.special_dates(epoch_core::MarketTimeType::MarketOpen, "2016-12-10"__date.date,
-                                  "2016-12-31"__date.date);
+                cal.special_dates(epoch_core::MarketTimeType::MarketOpen, "2016-12-10"__date.date(),
+                                  "2016-12-31"__date.date());
             REQUIRE(special_dates.size() == 1);
             REQUIRE(special_dates.iloc(0).to_datetime() ==
                     "2016-12-13 03:20:00"__dt.replace_tz(tz));
@@ -193,8 +193,8 @@ TEST_CASE("market calendar", "[calendar]")
         SECTION("Special market open dates including holidays")
         {
             auto special_dates =
-                cal.special_dates(epoch_core::MarketTimeType::MarketOpen, "2016-12-10"__date.date,
-                                  "2016-12-31"__date.date, false);
+                cal.special_dates(epoch_core::MarketTimeType::MarketOpen, "2016-12-10"__date.date(),
+                                  "2016-12-31"__date.date(), false);
             REQUIRE(special_dates.size() == 2);
             REQUIRE(special_dates.iloc(0).to_datetime() ==
                     "2016-12-13 03:20:00"__dt.replace_tz(tz));
@@ -229,78 +229,68 @@ TEST_CASE("market calendar", "[calendar]")
                                                 const std::string& expected)
         {
             // Create days index
-            auto days =
-                factory::index::make_datetime_index({DateTime{.date = day, .tz = cal.tz()}});
-            auto expected_dt = DateTime::from_str(expected).replace_tz(cal.tz());
-            DYNAMIC_SECTION(day << " expected " << expected_dt << " with time_offset "
+            auto days = factory::index::make_datetime_index({DateTime{day, Time{.tz = cal.tz()}}});
+            DYNAMIC_SECTION(day << " expected " << expected << " with time_offset "
                                 << time_offset)
             {
-                Series  result;
                 int64_t offset = day_offset.value_or(0);
-
-                if constexpr (std::same_as<T, Time>)
-                {
-                    result = cal.days_at_time(days, time_offset, offset);
-                }
-                else
-                {
-                    result = cal.days_at_time(days, time_offset, offset);
-                }
+                const auto result = cal.days_at_time(days, time_offset, offset).iloc(0);
+                auto expected_dt = DateTime::from_str(expected, cal.tz()).tz_convert("UTC");
 
                 // Check if result matches expected
-                REQUIRE(result.iloc(0).to_datetime().tz_convert(cal.tz()) == expected_dt);
+                REQUIRE(result.to_datetime() == expected_dt);
             }
         };
 
         // Test cases similar to Python test
 
         // NYSE standard day
-        test_days_at_time("2016-07-19"__date.date, 0, Time{9h, 31min}, new_york,
+        test_days_at_time("2016-07-19"__date.date(), 0, Time{9h, 31min}, new_york,
                           "2016-07-19 9:31:00");
 
         // CME standard day
-        test_days_at_time("2016-07-19"__date.date, -1, Time{17h, 1min}, chicago,
+        test_days_at_time("2016-07-19"__date.date(), -1, Time{17h, 1min}, chicago,
                           "2016-07-18 17:01:00");
 
         // CME day after DST start
-        test_days_at_time("2004-04-05"__date.date, -1, Time{17h, 1min}, chicago,
+        test_days_at_time("2004-04-05"__date.date(), -1, Time{17h, 1min}, chicago,
                           "2004-04-04 17:01:00");
 
         // ICE day after DST start
-        test_days_at_time("1990-04-02"__date.date, -1, Time{19h, 1min}, chicago,
+        test_days_at_time("1990-04-02"__date.date(), -1, Time{19h, 1min}, chicago,
                           "1990-04-01 19:01:00");
 
         // Built-in times - market_open in New York
-        test_days_at_time("2016-07-19"__date.date, std::nullopt,
+        test_days_at_time("2016-07-19"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketOpen, new_york, "2016-07-19 12:00:00");
 
         // CME standard day - market_open
-        test_days_at_time("2016-07-19"__date.date, std::nullopt,
+        test_days_at_time("2016-07-19"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketOpen, chicago, "2016-07-19 10:00:00");
 
         // CME day after DST start - with_offset
-        test_days_at_time("2004-04-05"__date.date, std::nullopt,
+        test_days_at_time("2004-04-05"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::InternalUseOnly, chicago,
                           "2004-04-04 10:30:00");
 
         // ICE day after DST start - market_open
-        test_days_at_time("1990-04-02"__date.date, std::nullopt,
+        test_days_at_time("1990-04-02"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketOpen, chicago, "1990-04-02 10:00:00");
 
         // New York - market_close
-        test_days_at_time("2016-07-19"__date.date, std::nullopt,
+        test_days_at_time("2016-07-19"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketClose, new_york, "2016-07-19 13:00:00");
 
         // CME standard day - market_close
-        test_days_at_time("2016-07-19"__date.date, std::nullopt,
+        test_days_at_time("2016-07-19"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketClose, chicago, "2016-07-19 11:00:00");
 
         // CME day after DST start - market_close
-        test_days_at_time("2004-04-05"__date.date, std::nullopt,
+        test_days_at_time("2004-04-05"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::MarketClose, chicago, "2004-04-05 11:00:00");
 
         // ICE day after DST start - with_offset
-        test_days_at_time("1990-04-02"__date.date, std::nullopt,
+        test_days_at_time("1990-04-02"__date.date(), std::nullopt,
                           epoch_core::MarketTimeType::InternalUseOnly, chicago,
                           "1990-04-01 10:30:00");
     }
@@ -324,20 +314,20 @@ TEST_CASE("market calendar", "[calendar]")
     {
         auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
-        auto holidays = cal.holidays()->holidays();
-
-        REQUIRE(std::ranges::count(holidays, "2016-12-26"__date) == 1); // Christmas Day observed
-        REQUIRE(std::ranges::count(holidays, "2012-01-02"__date) == 1); // New Year's Day observed
-        REQUIRE(std::ranges::count(holidays, "2012-12-25"__date) == 1); // Christmas Day
-        REQUIRE(std::ranges::count(holidays, "2012-10-29"__date) == 1); // Hurricane Sandy
-        REQUIRE(std::ranges::count(holidays, "2012-10-30"__date) == 1); // Hurricane Sandy
+        auto holidays = factory::index::make_datetime_index(cal.holidays()->holidays());
+        INFO(holidays->repr());
+        REQUIRE(holidays->contains(Scalar{"2016-12-26"__date}));
+        REQUIRE(holidays->contains(Scalar{"2012-01-02"__date}));
+        REQUIRE(holidays->contains(Scalar{"2012-12-25"__date}));
+        REQUIRE(holidays->contains(Scalar{"2012-10-29"__date}));
+        REQUIRE(holidays->contains(Scalar{"2012-10-30"__date}));
     }
 
     SECTION("Valid dates between range")
     {
         auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
-        auto valid_days = cal.valid_days("2016-12-23"__date.date, "2017-01-03"__date.date);
+        auto valid_days = cal.valid_days("2016-12-23"__date.date(), "2017-01-03"__date.date());
         auto expected   = factory::index::make_datetime_index(
             {
                 "2016-12-23"__date,
@@ -374,11 +364,11 @@ TEST_CASE("market calendar", "[calendar]")
             auto        expected = make_dataframe(index, std::vector{market_open, market_close},
                                                   {"MarketOpen", "MarketClose"});
 
-            auto actual = cal.schedule("2016-12-01"__date.date, "2016-12-02"__date.date, {});
+            auto actual = cal.schedule("2016-12-01"__date.date(), "2016-12-02"__date.date(), {});
             INFO(actual);
             REQUIRE(actual.equals(expected));
 
-            auto results = cal.schedule("2016-12-01"__date.date, "2016-12-31"__date.date, {});
+            auto results = cal.schedule("2016-12-01"__date.date(), "2016-12-31"__date.date(), {});
             REQUIRE(results.num_rows() == 21);
 
             SECTION("Series calendar at loc 0")
@@ -414,7 +404,7 @@ TEST_CASE("market calendar", "[calendar]")
                 expected     = make_dataframe(index, std::vector{market_open, market_close},
                                               {"MarketOpen", "MarketClose"});
 
-                results = cal.schedule("2016-12-01"__date.date, "2016-12-01"__date.date, {});
+                results = cal.schedule("2016-12-01"__date.date(), "2016-12-01"__date.date(), {});
                 INFO(results);
                 REQUIRE(results.equals(expected));
             }
@@ -430,7 +420,7 @@ TEST_CASE("market calendar", "[calendar]")
                 expected     = make_dataframe(index, std::vector{market_open, market_close},
                                               {"MarketOpen", "MarketClose"});
 
-                results = cal.schedule("2016-12-01"__date.date, "2016-12-01"__date.date,
+                results = cal.schedule("2016-12-01"__date.date(), "2016-12-01"__date.date(),
                                        {.tz = "US/Eastern"});
 
                 INFO(results);
@@ -448,7 +438,7 @@ TEST_CASE("market calendar", "[calendar]")
         cal.add_time(epoch_core::MarketTimeType::Post, {MarketTime{Time{13h}}});
 
         // Test default schedule behavior
-        auto schedule = cal.schedule("2016-12-23"__date.date, "2016-12-31"__date.date, {});
+        auto schedule = cal.schedule("2016-12-23"__date.date(), "2016-12-31"__date.date(), {});
         auto expected_cols =
             std::vector<std::string>{"MarketOpen", "BreakStart", "BreakEnd", "MarketClose"};
         REQUIRE(schedule.column_names() == expected_cols);
@@ -469,7 +459,7 @@ TEST_CASE("market calendar", "[calendar]")
 
         // Test custom start and end
         auto schedule_custom_start_end =
-            cal.schedule("2016-12-23"__date.date, "2016-12-31"__date.date,
+            cal.schedule("2016-12-23"__date.date(), "2016-12-31"__date.date(),
                          {.start = epoch_core::MarketTimeType::Pre,
                           .end   = epoch_core::MarketTimeType::BreakEnd});
         expected_cols = std::vector<std::string>{"Pre", "MarketOpen", "BreakStart", "BreakEnd"};
@@ -491,7 +481,7 @@ TEST_CASE("market calendar", "[calendar]")
 
         // Test custom market times
         auto schedule_custom_market_times =
-            cal.schedule("2016-12-23"__date.date, "2016-12-31"__date.date,
+            cal.schedule("2016-12-23"__date.date(), "2016-12-31"__date.date(),
                          {.market_times = std::vector<epoch_core::MarketTimeType>{
                               epoch_core::MarketTimeType::Post, epoch_core::MarketTimeType::Pre}});
         expected_cols = std::vector<std::string>{"Post", "Pre"};
@@ -510,7 +500,7 @@ TEST_CASE("market calendar", "[calendar]")
 
         // Only adjust column itself (force_special_times=false)
         auto schedule_no_force =
-            cal.schedule("2016-12-23"__date.date, "2016-12-31"__date.date,
+            cal.schedule("2016-12-23"__date.date(), "2016-12-31"__date.date(),
                          {.force_special_times = epoch_core::BooleanEnum::False});
         expected_cols =
             std::vector<std::string>{"MarketOpen", "BreakStart", "BreakEnd", "MarketClose"};
@@ -532,7 +522,7 @@ TEST_CASE("market calendar", "[calendar]")
 
         // Ignore special times completely (force_special_times=nullopt)
         auto schedule_ignore_special =
-            cal.schedule("2016-12-23"__date.date, "2016-12-31"__date.date,
+            cal.schedule("2016-12-23"__date.date(), "2016-12-31"__date.date(),
                          {.force_special_times = epoch_core::BooleanEnum::Null});
         expected_cols =
             std::vector<std::string>{"MarketOpen", "BreakStart", "BreakEnd", "MarketClose"};
@@ -585,13 +575,13 @@ TEST_CASE("market calendar", "[calendar]")
             {"MarketOpen", "BreakStart", "BreakEnd", "MarketClose"});
 
         {
-            auto actual = cal.schedule("2016-12-01"__date.date, "2016-12-02"__date.date, {});
+            auto actual = cal.schedule("2016-12-01"__date.date(), "2016-12-02"__date.date(), {});
             INFO(actual);
             REQUIRE(actual.equals(expected));
         }
 
         // Test full month schedule
-        auto results = cal.schedule("2016-12-01"__date.date, "2016-12-31"__date.date, {});
+        auto results = cal.schedule("2016-12-01"__date.date(), "2016-12-31"__date.date(), {});
         REQUIRE(results.num_rows() == 21);
 
         // Check first day
@@ -639,7 +629,7 @@ TEST_CASE("market calendar", "[calendar]")
                 dates_index, std::vector{market_open, break_start, break_end, market_close},
                 {"MarketOpen", "BreakStart", "BreakEnd", "MarketClose"});
 
-            auto actual_ny_tz = cal.schedule("2016-12-28"__date.date, "2016-12-28"__date.date,
+            auto actual_ny_tz = cal.schedule("2016-12-28"__date.date(), "2016-12-28"__date.date(),
                                              {.tz = "America/New_York"});
 
             INFO(actual_ny_tz << "\n!=\n" << expected_ny_tz);
@@ -665,7 +655,7 @@ TEST_CASE("market calendar", "[calendar]")
                 Time{.hour = 13h, .minute = 13min, .tz = cal.tz()});
 
         // Test the schedule for the month
-        auto results = cal.schedule("2016-12-01"__date.date, "2016-12-31"__date.date, {});
+        auto results = cal.schedule("2016-12-01"__date.date(), "2016-12-31"__date.date(), {});
         REQUIRE(results.num_rows() == 21);
 
         // Check first day
@@ -692,15 +682,15 @@ TEST_CASE("market calendar", "[calendar]")
         auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
         // Interruptions should throw as they are not implemented
-        REQUIRE_THROWS_AS(
-            cal.schedule("2010-01-08"__date.date, "2010-01-14"__date.date, {.interruptions = true}),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(cal.schedule("2010-01-08"__date.date(), "2010-01-14"__date.date(),
+                                       {.interruptions = true}),
+                          std::runtime_error);
     }
 
     SECTION("test_regular_holidays")
     {
         auto cal     = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
-        auto results = cal.schedule("2016-12-01"__date.date, "2017-01-05"__date.date, {});
+        auto results = cal.schedule("2016-12-01"__date.date(), "2017-01-05"__date.date(), {});
         auto days    = results.index();
 
         REQUIRE(days->contains(Scalar("2016-12-23"__date)));
@@ -712,7 +702,7 @@ TEST_CASE("market calendar", "[calendar]")
     SECTION("test_adhoc_holidays")
     {
         auto cal     = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
-        auto results = cal.schedule("2012-10-15"__date.date, "2012-11-15"__date.date, {});
+        auto results = cal.schedule("2012-10-15"__date.date(), "2012-11-15"__date.date(), {});
         auto days    = results.index();
 
         REQUIRE(days->contains(Scalar("2012-10-26"__date)));
@@ -725,7 +715,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test schedule for first week of July 2012
-    //     auto results = cal.schedule("2012-07-01"__date.date, "2012-07-06"__date.date, {});
+    //     auto results = cal.schedule("2012-07-01"__date.date(), "2012-07-06"__date.date(), {});
     //     Series market_opens = results["MarketOpen"];
 
     //     // Convert expected timestamps to UTC
@@ -742,7 +732,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     REQUIRE(std::ranges::find(opens_vector, july_4th_open) != opens_vector.end());
 
     //     // Test for Sept 11 Anniversary special open in 2002
-    //     auto results_sept = cal.schedule("2002-09-10"__date.date, "2002-09-12"__date.date, {
+    //     auto results_sept = cal.schedule("2002-09-10"__date.date(), "2002-09-12"__date.date(), {
     //         .tz = "Asia/Ulaanbaatar"
     //     });
 
@@ -767,7 +757,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test schedule for Dec 10-20, 2016
-    //     auto results = cal.schedule("2016-12-10"__date.date, "2016-12-20"__date.date, {});
+    //     auto results = cal.schedule("2016-12-10"__date.date(), "2016-12-20"__date.date(), {});
     //     auto market_opens = results["MarketOpen"];
 
     //     // Convert expected timestamps to UTC
@@ -784,7 +774,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     REQUIRE(std::ranges::find(opens_vector, dec_14th_open) != opens_vector.end());
 
     //     // Test for Dec 6-10, 2016 with special adhoc opens
-    //     auto results_dec = cal.schedule("2016-12-06"__date.date, "2016-12-10"__date.date, {
+    //     auto results_dec = cal.schedule("2016-12-06"__date.date(), "2016-12-10"__date.date(), {
     //         .tz = "Asia/Ulaanbaatar"
     //     });
 
@@ -810,7 +800,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test schedule for first week of July 2012
-    //     auto results = cal.schedule("2012-07-01"__date.date, "2012-07-06"__date.date, {});
+    //     auto results = cal.schedule("2012-07-01"__date.date(), "2012-07-06"__date.date(), {});
     //     auto market_closes = results["MarketClose"];
 
     //     // Convert expected timestamps to UTC
@@ -827,25 +817,25 @@ TEST_CASE("market calendar", "[calendar]")
     //     REQUIRE(std::ranges::find(closes_vector, july_4th_close) != closes_vector.end());
 
     //     // Early close first date
-    //     auto results_first = cal.schedule("2012-07-03"__date.date, "2012-07-04"__date.date, {});
-    //     market_closes = results_first["MarketClose"];
-    //     auto expected_first = std::vector<DateTime>{
+    //     auto results_first = cal.schedule("2012-07-03"__date.date(), "2012-07-04"__date.date(),
+    //     {}); market_closes = results_first["MarketClose"]; auto expected_first =
+    //     std::vector<DateTime>{
     //         "2012-07-03 11:30:00"__dt.replace_tz("Asia/Ulaanbaatar").tz_convert("UTC"),
     //         "2012-07-04 11:49:00"__dt.replace_tz("Asia/Ulaanbaatar").tz_convert("UTC")
     //     };
     //     REQUIRE(market_closes.contiguous_array().to_vector<DateTime>() == expected_first);
 
     //     // Early close last date
-    //     auto results_last = cal.schedule("2012-07-02"__date.date, "2012-07-03"__date.date, {});
-    //     market_closes = results_last["MarketClose"];
-    //     auto expected_last = std::vector<DateTime>{
+    //     auto results_last = cal.schedule("2012-07-02"__date.date(), "2012-07-03"__date.date(),
+    //     {}); market_closes = results_last["MarketClose"]; auto expected_last =
+    //     std::vector<DateTime>{
     //         "2012-07-02 11:49:00"__dt.replace_tz("Asia/Ulaanbaatar").tz_convert("UTC"),
     //         "2012-07-03 11:30:00"__dt.replace_tz("Asia/Ulaanbaatar").tz_convert("UTC")
     //     };
     //     REQUIRE(market_closes.contiguous_array().to_vector<DateTime>() == expected_last);
 
     //     // Test for Sept 11 Anniversary special close in 2002
-    //     auto results_sept = cal.schedule("2002-09-10"__date.date, "2002-09-12"__date.date, {
+    //     auto results_sept = cal.schedule("2002-09-10"__date.date(), "2002-09-12"__date.date(), {
     //         .tz = "Asia/Ulaanbaatar"
     //     });
 
@@ -870,7 +860,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test schedule for Dec 10-20, 2016
-    //     auto results = cal.schedule("2016-12-10"__date.date, "2016-12-20"__date.date, {});
+    //     auto results = cal.schedule("2016-12-10"__date.date(), "2016-12-20"__date.date(), {});
     //     auto market_closes = results["MarketClose"];
 
     //     // Convert expected timestamps to UTC
@@ -887,8 +877,8 @@ TEST_CASE("market calendar", "[calendar]")
     //     REQUIRE(std::ranges::find(closes_vector, dec_15th_close) != closes_vector.end());
 
     //     // Test with early close as end date
-    //     auto results_end = cal.schedule("2016-12-13"__date.date, "2016-12-14"__date.date, {});
-    //     market_closes = results_end["MarketClose"];
+    //     auto results_end = cal.schedule("2016-12-13"__date.date(), "2016-12-14"__date.date(),
+    //     {}); market_closes = results_end["MarketClose"];
 
     //     auto expected_end = std::vector<DateTime>{
     //         "2016-12-13 11:49:00"__dt.replace_tz("Asia/Ulaanbaatar").tz_convert("UTC"),
@@ -897,7 +887,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     REQUIRE(market_closes.contiguous_array().to_vector<DateTime>() == expected_end);
 
     //     // Test for Dec 13-19, 2016 with special adhoc closes
-    //     auto results_dec = cal.schedule("2016-12-13"__date.date, "2016-12-19"__date.date, {
+    //     auto results_dec = cal.schedule("2016-12-13"__date.date(), "2016-12-19"__date.date(), {
     //         .tz = "Asia/Ulaanbaatar"
     //     });
 
@@ -925,15 +915,15 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test early closes detection for 2014-2016
-    //     auto schedule = cal.schedule("2014-01-01"__date.date, "2016-12-31"__date.date, {});
+    //     auto schedule = cal.schedule("2014-01-01"__date.date(), "2016-12-31"__date.date(), {});
     //     auto early_closes = cal.early_closes(schedule);
 
     //     REQUIRE(early_closes.index()->contains(Scalar("2014-07-03"__date)));
     //     REQUIRE(early_closes.index()->contains(Scalar("2016-12-14"__date)));
 
     //     // Test early closes for period when there shouldn't be any
-    //     auto schedule_empty = cal.schedule("1901-02-01"__date.date, "1901-02-05"__date.date, {});
-    //     auto early_closes_empty = cal.early_closes(schedule_empty);
+    //     auto schedule_empty = cal.schedule("1901-02-01"__date.date(), "1901-02-05"__date.date(),
+    //     {}); auto early_closes_empty = cal.early_closes(schedule_empty);
 
     //     REQUIRE(early_closes_empty.is_empty());
     // }
@@ -942,7 +932,7 @@ TEST_CASE("market calendar", "[calendar]")
     //     auto cal = MarketCalendar(std::nullopt, std::nullopt, FAKE_CALENDAR);
 
     //     // Test late opens detection for period when there shouldn't be any
-    //     auto schedule = cal.schedule("1902-03-01"__date.date, "1902-03-06"__date.date, {});
+    //     auto schedule = cal.schedule("1902-03-01"__date.date(), "1902-03-06"__date.date(), {});
     //     auto late_opens = cal.late_opens(schedule);
 
     //     REQUIRE(late_opens.is_empty());

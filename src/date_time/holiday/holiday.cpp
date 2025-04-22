@@ -124,7 +124,7 @@ namespace epoch_frame::calendar
                         return Scalar{observance->timestamp()};
                     }
                     return Scalar{
-                        arrow::MakeNullScalar(arrow::timestamp(arrow::TimeUnit::NANO, dt.tz))};
+                        arrow::MakeNullScalar(arrow::timestamp(arrow::TimeUnit::NANO, dt.tz()))};
                 });
 
             filter = filter[filter.is_not_null()];
