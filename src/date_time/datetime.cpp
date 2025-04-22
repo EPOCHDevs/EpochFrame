@@ -118,6 +118,15 @@ namespace epoch_frame
         return hms1 <=> hms2;
     }
 
+    std::string Time::repr() const
+    {
+        auto str = std::format("{:0>2}{:0>2}{:0>2}", hour, minute, second);
+        if (tz.empty()) {
+            return str;
+        }
+        return std::format("{}{}", str, tz == "UTC" ? "Z" : tz);
+    }
+
     int8_t Date::weekday() const
     {
         return (toordinal() + 6) % 7;

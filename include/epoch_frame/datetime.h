@@ -43,10 +43,7 @@ namespace epoch_frame
             return *this;
         }
 
-        std::string repr() const
-        {
-            return std::format("{}:{}:{} {}", hour, minute, second, tz);
-        }
+        std::string repr() const;
 
         std::strong_ordering operator<=>(const Time& other) const;
     };
@@ -96,7 +93,7 @@ namespace epoch_frame
 
         std::string repr() const
         {
-            return std::format("{}-{}-{}", year, month, day);
+            return std::format("{}-{:0>2}-{:0>2}", year, static_cast<uint32_t>(month), day);
         }
     };
 
@@ -309,7 +306,7 @@ namespace epoch_frame
 
         std::string repr() const
         {
-            return std::format("{}-{}-{} {}", m_date.year, m_date.month, m_date.day, m_time.repr());
+            return std::format("{}T{}", m_date.repr(), m_time.repr());
         }
 
         int64_t toordinal() const
