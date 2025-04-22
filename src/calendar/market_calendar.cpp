@@ -213,9 +213,10 @@ namespace epoch_frame::calendar
         {
             return {};
         }
-        auto iter = std::find_if(times.begin(), times.end() - 1,
-                                 [&](auto const& t) { return t.date < date; });
-        if (iter == times.end())
+        auto view = times | std::views::reverse;
+        auto iter = std::ranges::find_if(view,
+                                 [&](auto const& t) { return !t.date || t.date.value() < date; });
+        if (iter == view.end())
         {
             return {};
         }
