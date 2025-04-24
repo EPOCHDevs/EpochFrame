@@ -120,7 +120,7 @@ namespace epoch_frame
 
     std::string Time::repr() const
     {
-        auto str = std::format("{:0>2}{:0>2}{:0>2}", hour.count(), minute.count(), second.count());
+        auto str = std::format("{:0>2}:{:0>2}:{:0>2}", hour.count(), minute.count(), second.count());
         if (tz.empty()) {
             return str;
         }
