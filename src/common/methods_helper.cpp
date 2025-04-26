@@ -234,7 +234,41 @@ namespace epoch_frame
             std::format("IIndex type mismatch. Source index type: {}, Target index type: {}",
                         left_type->ToString(), right_type->ToString()));
 
-        constexpr auto    series_name      = "series_name";
+        constexpr auto series_name = "series_name";
+        if (left_table_.second.get_table(series_name)->num_rows() == 0)
+        {
+            // Handle the empty source table case
+            arrow::TablePtr empty_result;
+            auto            schema = left_table_.second.get_table(series_name)->schema();
+
+            // Create a new table with the right number of rows
+            if (schema->num_fields() > 0)
+            {
+                arrow::ChunkedArrayVector arrays;
+                for (int i = 0; i < schema->num_fields(); i++)
+                {
+                    auto field      = schema->field(i);
+                    auto null_array = arrow::MakeArrayOfNull(field->type(), new_index_->size());
+                    arrays.push_back(
+                        arrow::ChunkedArray::Make({null_array.ValueOrDie()}).ValueOrDie());
+                }
+                empty_result = arrow::Table::Make(schema, arrays);
+
+                if (fillValue.is_valid())
+                {
+                    empty_result = AssertTableResultIsOk(
+                        arrow_utils::call_compute_fill_null_table(empty_result, fillValue.value()));
+                }
+            }
+            else
+            {
+                // Handle the case of empty schema
+                empty_result = factory::table::make_null_table(schema, new_index_->size());
+            }
+
+            return factory::table::make_table_or_array(empty_result, series_name);
+        }
+
         const std::string index_name       = "index";
         constexpr auto    left_suffix      = "_l";
         constexpr auto    right_suffix     = "_r";
@@ -256,11 +290,12 @@ namespace epoch_frame
         ac::Declaration hashjoin{
             "hashjoin", {std::move(left), std::move(right)}, std::move(join_opts)};
 
-        cp::Expression  filter_expr = cp::is_valid(cp::field_ref(right_index_name));
-        ac::Declaration filter{
-            "filter", {std::move(hashjoin)}, ac::FilterNodeOptions(std::move(filter_expr))};
+        // cp::Expression  filter_expr = cp::is_valid(cp::field_ref(right_index_name));
+        // ac::Declaration filter{
+        //     "filter", {std::move(hashjoin)}, ac::FilterNodeOptions(std::move(filter_expr))};
 
-        arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(filter));
+        // arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(filter));
+        arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(hashjoin));
 
         auto right_index_pos = merged->schema()->GetFieldIndex(right_index_name);
         auto left_index_pos  = merged->schema()->GetFieldIndex(left_index_name);
@@ -288,6 +323,10 @@ namespace epoch_frame
                 arrow_utils::call_compute_fill_null_table(new_table, fillValue.value()));
         }
 
+        AssertFromStream(new_table->num_rows() == static_cast<int64_t>(new_index_->size()),
+                         "Alignment error: Result size (" << new_table->num_rows()
+                                                          << ") doesn't match index size ("
+                                                          << new_index_->size() << ")");
         return factory::table::make_table_or_array(new_table, series_name);
     }
 
@@ -324,9 +363,9 @@ namespace epoch_frame
     DataFrame concat_column_unsafe(std::vector<FrameOrSeries> const& objs, IndexPtr const& newIndex,
                                    bool ignore_index)
     {
-        arrow::ChunkedArrayVector arrays;
-        arrow::FieldVector        fields;
-        int64_t                   i = 0;
+        arrow::ChunkedArrayVector       arrays;
+        arrow::FieldVector              fields;
+        int64_t                         i = 0;
         std::unordered_set<std::string> names;
         for (auto const& obj : objs)
         {
@@ -345,7 +384,8 @@ namespace epoch_frame
                         {
                             n = std::to_string(i++);
                         }
-                        else if (names.contains(n.value())) {
+                        else if (names.contains(n.value()))
+                        {
                             n = n.value() + "_" + std::to_string(i++);
                         }
                         names.insert(n.value());
@@ -387,7 +427,8 @@ namespace epoch_frame
         return concat_column_unsafe(aligned_frames, newIndex, ignore_index);
     }
 
-    DataFrame concat_row(std::vector<FrameOrSeries> const& objs, bool ignore_index, bool intersect) {
+    DataFrame concat_row(std::vector<FrameOrSeries> const& objs, bool ignore_index, bool intersect)
+    {
         constexpr const char* indexName = "__index__";
 
         std::vector<arrow::TablePtr> tables(objs.size());

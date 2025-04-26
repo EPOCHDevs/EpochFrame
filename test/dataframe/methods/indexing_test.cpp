@@ -589,6 +589,49 @@ TEST_CASE("Indexing Test")
             REQUIRE(result.num_rows() == 0);
             REQUIRE_THROWS(result.iloc(2, "A")); // Since original frame is empty
         }
+
+        SECTION("Reindexing with duplicate values in the new index")
+        {
+            // Create an index with duplicate values
+            auto duplicate_index =
+                make_range(std::vector<uint64_t>{0, 1, 1, 2, 3}, MonotonicDirection::Increasing);
+
+            DataFrame result = default_frame.reindex(duplicate_index, Scalar(100));
+
+            // The result should have the same number of rows as the duplicate_index
+            REQUIRE(result.num_rows() == 5);
+
+            // Row 0 should match original frame value
+            REQUIRE(result.iloc(0, "A").value<int>() == 1);
+
+            // Both rows 1 and 2 should match the value from row 1 in original frame
+            REQUIRE(result.iloc(1, "A").value<int>() == 2);
+            REQUIRE(result.iloc(2, "A").value<int>() == 2);
+
+            // Row 3 should match original frame value
+            REQUIRE(result.iloc(3, "A").value<int>() == 3);
+
+            // Row 4 should match original frame value
+            REQUIRE(result.iloc(4, "A").value<int>() == 4);
+        }
+
+        SECTION("Reindexing when the original frame is empty")
+        {
+            // Create a DataFrame with columns but no rows
+            auto empty_df = make_dataframe(from_range(0), std::vector<std::vector<int>>{{}, {}, {}},
+                                           {"A", "B", "C"});
+
+            auto      new_index = from_range(0, 5);
+            DataFrame result    = empty_df.reindex(new_index, Scalar(42));
+
+            // Result should have 5 rows to match new_index
+            REQUIRE(result.num_rows() == 5);
+            REQUIRE(result.num_cols() == 3); // Original columns preserved
+
+            // All values should be the fill value
+            REQUIRE(result.iloc(0, "A").value<int>() == 42);
+            REQUIRE(result.iloc(4, "C").value<int>() == 42);
+        }
     }
 
     SECTION("where")
