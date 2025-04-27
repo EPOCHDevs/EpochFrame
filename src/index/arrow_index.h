@@ -198,6 +198,13 @@ namespace epoch_frame
             return get_indexer();
         }
 
+        IndexPtr drop_duplicates() const final;
+
+        bool has_duplicates() const final
+        {
+            return m_has_duplicates;
+        }
+
         std::vector<Scalar> index_list() const
         {
             return get_index_list();
@@ -231,6 +238,7 @@ namespace epoch_frame
         const Array                                 m_array;
         mutable ScalarMapping<std::vector<int64_t>> m_indexer;
         mutable std::vector<Scalar>                 m_index_list;
+        mutable bool                                m_has_duplicates{false};
         MonotonicDirection                          m_monotonic_direction;
 
         ScalarMapping<std::vector<int64_t>>& get_indexer() const;

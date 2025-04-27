@@ -118,7 +118,9 @@ namespace epoch_frame
             return Make(AssertResultIsOk(MakeArrayFromScalar(*at(loc).value(), 1)));
         }
         /// Return true if 'label' is in the index
-        virtual bool contains(Scalar const& label) const = 0;
+        virtual bool     contains(Scalar const& label) const = 0;
+        virtual IndexPtr drop_duplicates() const             = 0;
+        virtual bool     has_duplicates() const              = 0;
 
         /// Return the integer location of 'label' in the index (like Pandas .get_loc())
         /// Could throw if not found

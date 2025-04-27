@@ -82,6 +82,8 @@ namespace epoch_frame
         //--------------------------------------------------------------------------
         // 8) Indexing ops
         //--------------------------------------------------------------------------
+        using NDFrame::drop;
+        using NDFrame::drop_null;
         using NDFrame::iloc; // for the IntegerSlice version
         using NDFrame::loc;  // for the array/Series/callable/slice versions
 

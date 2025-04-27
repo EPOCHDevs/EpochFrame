@@ -20,6 +20,7 @@ namespace epoch_frame
             m_indexer[s].emplace_back(i);
             m_index_list.push_back(std::move(s));
         }
+        m_has_duplicates      = m_indexer.size() != m_index_list.size();
         m_monotonic_direction = MonotonicDirection::Increasing;
     }
 

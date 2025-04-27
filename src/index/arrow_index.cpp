@@ -3,7 +3,8 @@
 //
 
 #include "arrow_index.h"
-#include <fmt/format.h>
+#include <arrow/array/util.h>
+#include <epoch_frame/factory/index_factory.h>
 
 #include <epoch_core/common_utils.h>
 
@@ -33,11 +34,7 @@ namespace epoch_frame
         {
             return m_index_list;
         }
-        m_index_list.reserve(m_array.length());
-        for (int i = 0; i < m_array.length(); ++i)
-        {
-            m_index_list.emplace_back(m_array[i]);
-        }
+        get_indexer();
         return m_index_list;
     }
 
@@ -48,10 +45,13 @@ namespace epoch_frame
         {
             return m_indexer;
         }
+        m_index_list.reserve(m_array.length());
         for (int i = 0; i < m_array.length(); ++i)
         {
             m_indexer[m_array[i]].push_back(i);
+            m_index_list.emplace_back(m_array[i]);
         }
+        m_has_duplicates = m_indexer.size() != m_index_list.size();
         return m_indexer;
     }
 
@@ -141,6 +141,13 @@ namespace epoch_frame
         return Make(m_array[indexes].value());
     }
 
+    template <bool IsMonotonic> IndexPtr ArrowIndex<IsMonotonic>::drop_duplicates() const
+    {
+        return m_has_duplicates ? Make(AssertContiguousArrayResultIsOk(
+                                      arrow::compute::Unique(arrow::Datum{m_array.value()})))
+                                : Make(m_array.value());
+    }
+
     /** get_loc(label) */
     template <bool IsMonotonic>
     std::vector<int64_t> ArrowIndex<IsMonotonic>::get_loc(Scalar const& label) const
@@ -164,10 +171,11 @@ namespace epoch_frame
     std::vector<int64_t> ArrowIndex<IsMonotonic>::get_loc(IndexPtr const& other) const
     {
         AssertFromStream(other, "Index is null");
+        auto unique_index = other->drop_duplicates();
 
         std::vector<int64_t> newIndexArray;
         newIndexArray.reserve(other->size());
-        for (auto const& scalar : other->index_list())
+        for (auto const& scalar : unique_index->index_list())
         {
             auto pos = get_loc(scalar);
             AssertFalseFromStream(pos.empty(), "Index not found");
@@ -275,42 +283,162 @@ namespace epoch_frame
     template <bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::union_(IndexPtr const& other) const
     {
-        std::vector<Scalar> union_array;
-        std::ranges::set_union(index_list(), other->index_list(), std::back_inserter(union_array));
-        return Make(factory::array::make_contiguous_array(union_array, m_array->type()));
+        // All elements from this
+        auto array = m_array.value();
+
+        // For elements from other, check if they're already in this
+        std::vector<Scalar> additional_elements;
+        const auto&         indexer = get_indexer();
+
+        for (auto const& scalar : other->index_list())
+        {
+            if (indexer.find(scalar) == indexer.end())
+            {
+                additional_elements.push_back(scalar);
+            }
+        }
+
+        if (additional_elements.empty())
+        {
+            // Just return a copy of this index instead of shared_from_this
+            return Make(array);
+        }
+
+        // Concatenate this array with the additional elements
+        auto additional_array =
+            factory::array::make_contiguous_array(additional_elements, array->type());
+
+        auto concat_result = arrow::Concatenate({array, additional_array});
+        return Make(concat_result.ValueOrDie());
     }
 
     /** intersection => elements in both (like a set intersection) */
     template <bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::intersection(IndexPtr const& other) const
     {
-        std::vector<Scalar> intersection_array;
-        std::ranges::set_intersection(index_list(), other->index_list(),
-                                      std::back_inserter(intersection_array));
+        std::vector<bool> keep_positions(size(), false);
 
-        return Make(factory::array::make_contiguous_array(intersection_array, m_array->type()));
+        const auto& indexer = get_indexer();
+        for (auto const& scalar : other->index_list())
+        {
+            auto it = indexer.find(scalar);
+            if (it != indexer.end())
+            {
+                for (int64_t pos : it->second)
+                {
+                    keep_positions[pos] = true;
+                }
+            }
+        }
+
+        std::vector<int64_t> indices;
+        indices.reserve(size());
+        for (size_t i = 0; i < keep_positions.size(); i++)
+        {
+            if (keep_positions[i])
+                indices.push_back(i);
+        }
+
+        return take(Array(factory::array::make_contiguous_array(indices)), false);
     }
 
     /** difference => elements in this but not in other */
     template <bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::difference(IndexPtr const& other) const
     {
-        std::vector<Scalar> diff_array;
-        std::ranges::set_difference(index_list(), other->index_list(),
-                                    std::back_inserter(diff_array));
+        std::vector<bool> keep_positions(size(), true);
 
-        return Make(factory::array::make_contiguous_array(diff_array, m_array->type()));
+        const auto& indexer = get_indexer();
+        for (auto const& scalar : other->index_list())
+        {
+            auto it = indexer.find(scalar);
+            if (it != indexer.end())
+            {
+                for (int64_t pos : it->second)
+                {
+                    keep_positions[pos] = false;
+                }
+            }
+        }
+
+        std::vector<int64_t> indices;
+        indices.reserve(size());
+        for (size_t i = 0; i < keep_positions.size(); i++)
+        {
+            if (keep_positions[i])
+                indices.push_back(i);
+        }
+
+        return take(Array(factory::array::make_contiguous_array(indices)), false);
     }
 
     /** symmetric_difference => union_ - intersection */
     template <bool IsMonotonic>
     IndexPtr ArrowIndex<IsMonotonic>::symmetric_difference(IndexPtr const& other) const
     {
-        std::vector<Scalar> sym_diff_array;
-        std::ranges::set_symmetric_difference(index_list(), other->index_list(),
-                                              std::back_inserter(sym_diff_array));
+        // Track which values from this to keep
+        std::vector<bool>   keep_positions_this(size(), true);
+        std::vector<Scalar> elements_from_other;
 
-        return Make(factory::array::make_contiguous_array(sym_diff_array, m_array->type()));
+        // Mark elements from this that are also in other
+        const auto& indexer = get_indexer();
+
+        for (auto const& scalar : other->index_list())
+        {
+            auto it = indexer.find(scalar);
+            if (it != indexer.end())
+            {
+                // Element exists in both - mark all instances for removal
+                for (int64_t pos : it->second)
+                {
+                    keep_positions_this[pos] = false;
+                }
+            }
+            else
+            {
+                // Element only in other - add it
+                elements_from_other.push_back(scalar);
+            }
+        }
+
+        // Get indices from this to keep
+        std::vector<int64_t> indices_this;
+        indices_this.reserve(size());
+        for (size_t i = 0; i < keep_positions_this.size(); i++)
+        {
+            if (keep_positions_this[i])
+                indices_this.push_back(i);
+        }
+
+        // Get elements from this that are not in other
+        auto elements_from_this =
+            take(Array(factory::array::make_contiguous_array(indices_this)), false);
+
+        // If no elements from either side, return empty array
+        if (indices_this.empty() && elements_from_other.empty())
+        {
+            // Use an appropriate factory method for creating an empty index
+            return Make(AssertContiguousArrayResultIsOk(arrow::MakeEmptyArray(m_array->type())));
+        }
+
+        // If only elements from this, return them
+        if (elements_from_other.empty())
+        {
+            return elements_from_this;
+        }
+
+        // If only elements from other, convert to index
+        if (indices_this.empty())
+        {
+            return Make(
+                factory::array::make_contiguous_array(elements_from_other, m_array->type()));
+        }
+
+        // Combine elements from this and other
+        auto other_array =
+            factory::array::make_contiguous_array(elements_from_other, m_array->type());
+        auto concat_result = arrow::Concatenate({elements_from_this->array().value(), other_array});
+        return Make(concat_result.ValueOrDie());
     }
 
     template <bool IsMonotonic>

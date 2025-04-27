@@ -167,6 +167,27 @@ TEMPLATE_TEST_CASE("ArrowIndex - drop(labels)", "[arrow_index][drop]", TEST_CASE
         // {10,30} remain
         REQUIRE(dropped->size() == 2);
     }
+
+    SECTION("drop with duplicate index values")
+    {
+        // Create an index with duplicates
+        std::vector<CType> duplicateData{10, 20, 20, 30, 30, 30, 40};
+        auto               duplicateArr =
+            epoch_frame::factory::array::make_contiguous_array<CType>(duplicateData);
+        auto duplicateIdx = std::make_shared<TestType>(duplicateArr);
+
+        // Drop 20 and 30 (which have duplicates)
+        std::vector<CType> toDrop{20, 30};
+        auto dropArr = epoch_frame::factory::array::make_contiguous_array<CType>(toDrop);
+        auto dropped = duplicateIdx->drop(Array(dropArr));
+
+        // Should only have 10 and 40 left
+        REQUIRE(dropped->size() == 2);
+        REQUIRE(dropped->contains(Scalar(static_cast<CType>(10))));
+        REQUIRE(dropped->contains(Scalar(static_cast<CType>(40))));
+        REQUIRE_FALSE(dropped->contains(Scalar(static_cast<CType>(20))));
+        REQUIRE_FALSE(dropped->contains(Scalar(static_cast<CType>(30))));
+    }
 }
 
 //------------------------------------------------------------------------------

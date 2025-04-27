@@ -193,6 +193,8 @@ namespace epoch_frame
             return assign(s.index(), s.array());
         }
 
+        using NDFrame::drop;
+        using NDFrame::drop_null;
         using NDFrame::from_base;
 
       private:

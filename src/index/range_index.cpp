@@ -71,6 +71,7 @@ namespace epoch_frame
     {
         initialize_index(array, m_index_list, m_indexer, m_monotonic_direction,
                          monotonic_direction);
+        m_has_duplicates = m_indexer.size() != m_index_list.size();
     }
 
     RangeIndex::RangeIndex(std::shared_ptr<arrow::Array> const& array,

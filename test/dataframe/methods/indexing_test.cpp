@@ -945,3 +945,108 @@ TEST_CASE("Series Indexing Ops", "[Series][Indexing]")
         REQUIRE_THROWS(emptySeries.loc(Scalar(0)));
     }
 }
+
+TEST_CASE("DataFrame drop with duplicate index values", "[dataframe][indexing][drop]")
+{
+    // Create a DataFrame with duplicate index values
+    auto idx =
+        make_range(std::vector<uint64_t>{0, 1, 1, 2, 2, 2, 3}, MonotonicDirection::Increasing);
+
+    // Create data for the DataFrame: 7 rows with duplicated indices
+    std::vector<int> colA{10, 20, 21, 30, 31, 32, 40};
+    std::vector<int> colB{100, 200, 201, 300, 301, 302, 400};
+
+    auto a_array = factory::array::make_contiguous_array(colA);
+    auto b_array = factory::array::make_contiguous_array(colB);
+
+    arrow::SchemaPtr schema = arrow::schema({
+        arrow::field("A", arrow::int32()),
+        arrow::field("B", arrow::int32()),
+    });
+
+    arrow::TablePtr table = arrow::Table::Make(schema, {a_array, b_array}, 7);
+
+    DataFrame df(idx, table);
+
+    SECTION("drop with duplicate index values")
+    {
+        // Create index to drop: values 1 and 2 which have duplicates
+        auto drop_idx = make_range(std::vector<uint64_t>{1, 2}, MonotonicDirection::Increasing);
+
+        // This should work correctly despite duplicates
+        auto result = df.drop(drop_idx);
+
+        // Should only have indices 0 and 3 left
+        INFO("Result:\n" << result);
+        REQUIRE(result.size() == 2);
+        REQUIRE(result.index()->contains(Scalar(0UL)));
+        REQUIRE(result.index()->contains(Scalar(3UL)));
+        REQUIRE_FALSE(result.index()->contains(Scalar(1UL)));
+        REQUIRE_FALSE(result.index()->contains(Scalar(2UL)));
+
+        // Check that values are correct
+        REQUIRE(result.iloc(0, "A").value<int>() == 10);
+        REQUIRE(result.iloc(1, "A").value<int>() == 40);
+        REQUIRE(result.iloc(0, "B").value<int>() == 100);
+        REQUIRE(result.iloc(1, "B").value<int>() == 400);
+    }
+
+    SECTION("drop index has duplicate values")
+    {
+        // Create index to drop: values 1 and 2 which have duplicates
+        auto drop_idx = make_range(std::vector<uint64_t>{1, 1, 2}, MonotonicDirection::Increasing);
+
+        // This should work correctly despite duplicates
+        auto result = df.drop(drop_idx);
+
+        // Should only have indices 0 and 3 left
+        INFO("Result:\n" << result);
+        REQUIRE(result.size() == 2);
+        REQUIRE(result.index()->contains(Scalar(0UL)));
+        REQUIRE(result.index()->contains(Scalar(3UL)));
+        REQUIRE_FALSE(result.index()->contains(Scalar(1UL)));
+        REQUIRE_FALSE(result.index()->contains(Scalar(2UL)));
+
+        // Check that values are correct
+        REQUIRE(result.iloc(0, "A").value<int>() == 10);
+        REQUIRE(result.iloc(1, "A").value<int>() == 40);
+        REQUIRE(result.iloc(0, "B").value<int>() == 100);
+        REQUIRE(result.iloc(1, "B").value<int>() == 400);
+    }
+
+    SECTION("Reproducing assertion failure with drop and duplicates")
+    {
+        // We'll now create a special case that would trigger the assertion error:
+        // A DataFrame with duplicates that would have different number of index and data elements
+
+        auto idx2 =
+            make_range(std::vector<uint64_t>{0, 1, 1, 2, 2, 2}, MonotonicDirection::Increasing);
+        std::vector<int> colA2{10, 20, 21, 30, 31, 32};
+        std::vector<int> colB2{100, 200, 201, 300, 301, 302};
+
+        auto a_array2 = factory::array::make_contiguous_array(colA2);
+        auto b_array2 = factory::array::make_contiguous_array(colB2);
+
+        arrow::TablePtr table2 = arrow::Table::Make(schema, {a_array2, b_array2}, 6);
+
+        DataFrame df2(idx2, table2);
+
+        // Create index with value 1 (which has 2 occurrences)
+        auto drop_idx2 = make_range(std::vector<uint64_t>{1}, MonotonicDirection::Increasing);
+
+        // In a real scenario, without proper handling, this would cause an assertion failure:
+        // - difference() creates an index with just values 0 and 2 (2 unique values)
+        // - But the actual data would have 4 rows (1 for index 0, 3 for index 2)
+        // - This mismatch causes the assertion failure in NDFrame constructor
+
+        // We expect this to work without throwing an assertion error
+        auto result2 = df2.drop(drop_idx2);
+        INFO("Result:\n" << result2);
+
+        // Verify result has the correct structure
+        REQUIRE(result2.size() == 4); // 1 row with index 0 + 3 rows with index 2
+        REQUIRE(result2.index()->contains(Scalar(0UL)));
+        REQUIRE(result2.index()->contains(Scalar(2UL)));
+        REQUIRE_FALSE(result2.index()->contains(Scalar(1UL)));
+    }
+}
