@@ -76,41 +76,50 @@ namespace epoch_frame
     // Function declarations for different I/O operations
 
     // CSV operations
-    DataFrame read_csv(const std::string& csv_content, const CSVReadOptions& options = {});
-    DataFrame read_csv_file(const std::string& file_path, const CSVReadOptions& options = {});
-    void      write_csv(const FrameOrSeries& data, std::string& output,
-                        const CSVWriteOptions& options = {});
-    void      write_csv_file(const FrameOrSeries& data, const std::string& file_path,
-                             const CSVWriteOptions& options = {});
+    arrow::Result<DataFrame> read_csv(const std::string&    csv_content,
+                                      const CSVReadOptions& options = {});
+    arrow::Result<DataFrame> read_csv_file(const std::string&    file_path,
+                                           const CSVReadOptions& options = {});
+    arrow::Status            write_csv(const FrameOrSeries& data, std::string& output,
+                                       const CSVWriteOptions& options = {});
+    arrow::Status            write_csv_file(const FrameOrSeries& data, const std::string& file_path,
+                                            const CSVWriteOptions& options = {});
 
     // JSON operations
     // Arrow implementation
-    DataFrame read_json(const std::string& json_content, const JSONReadOptions& options = {});
-    DataFrame read_json_file(const std::string& file_path, const JSONReadOptions& options = {});
+    arrow::Result<DataFrame> read_json(const std::string&     json_content,
+                                       const JSONReadOptions& options = {});
+    arrow::Result<DataFrame> read_json_file(const std::string&     file_path,
+                                            const JSONReadOptions& options = {});
 
     // Parquet operations
-    DataFrame read_parquet(const std::string& file_path, const ParquetReadOptions& options = {});
-    void      write_parquet(const FrameOrSeries& data, const std::string& file_path,
-                            const ParquetWriteOptions& options = {});
+    arrow::Result<DataFrame> read_parquet(const std::string&        file_path,
+                                          const ParquetReadOptions& options = {});
+    arrow::Status            write_parquet(const FrameOrSeries& data, const std::string& file_path,
+                                           const ParquetWriteOptions& options = {});
 
     // Binary operations
-    DataFrame read_binary(const std::vector<uint8_t>& data, const BinaryReadOptions& options = {});
-    DataFrame read_buffer(const std::shared_ptr<arrow::Buffer>& buffer,
-                          const BinaryReadOptions&              options = {});
-    void      write_binary(const FrameOrSeries& data, std::vector<uint8_t>& output,
-                           const BinaryWriteOptions& options = {});
-    void      write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buffer,
-                           const BinaryWriteOptions& options = {});
-    void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::ResizableBuffer>& buffer,
-                      const BinaryWriteOptions& options = {});
+    arrow::Result<DataFrame> read_binary(const std::vector<uint8_t>& data,
+                                         const BinaryReadOptions&    options = {});
+    arrow::Result<DataFrame> read_buffer(const std::shared_ptr<arrow::Buffer>& buffer,
+                                         const BinaryReadOptions&              options = {});
+    arrow::Status            write_binary(const FrameOrSeries& data, std::vector<uint8_t>& output,
+                                          const BinaryWriteOptions& options = {});
+    arrow::Status write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buffer,
+                               const BinaryWriteOptions& options = {});
+    arrow::Status write_buffer(const FrameOrSeries&                     data,
+                               std::shared_ptr<arrow::ResizableBuffer>& buffer,
+                               const BinaryWriteOptions&                options = {});
 
     // Utility functions
     bool                                                  is_s3_path(const std::string& path);
     arrow::Result<std::shared_ptr<arrow::fs::FileSystem>> get_s3_filesystem();
     std::pair<std::string, std::string>                   parse_s3_path(const std::string& path);
 
-    std::shared_ptr<arrow::io::RandomAccessFile> get_input_stream(const std::string& path);
-    std::shared_ptr<arrow::io::OutputStream>     get_output_stream(const std::string& path);
+    arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>>
+    get_input_stream(const std::string& path);
+    arrow::Result<std::shared_ptr<arrow::io::OutputStream>>
+    get_output_stream(const std::string& path);
 
     struct ScopedS3
     {

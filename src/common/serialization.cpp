@@ -1,7 +1,10 @@
 #include "epoch_frame/serialization.h"
 #include "common/asserts.h"
 #include "epoch_frame/factory/index_factory.h"
+#include <arrow/buffer.h>
 #include <arrow/filesystem/s3fs.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
 #include <atomic>
 #include <fmt/format.h>
 #include <mutex>
@@ -109,14 +112,7 @@ namespace epoch_frame
         }
 
         // Create filesystem
-        auto s3fs_result = arrow::fs::S3FileSystem::Make(options);
-        if (!s3fs_result.ok())
-        {
-            return s3fs_result.status();
-        }
-
-        s3fs_ = s3fs_result.ValueOrDie();
-        return s3fs_;
+        return arrow::fs::S3FileSystem::Make(options);
     }
 
     // Utility functions
@@ -172,83 +168,54 @@ namespace epoch_frame
         }
     }
 
-    std::shared_ptr<arrow::io::RandomAccessFile> get_input_stream(const std::string& path)
+    arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>>
+    get_input_stream(const std::string& path)
     {
         if (is_s3_path(path))
         {
             // Get S3 filesystem using the S3Manager
-            auto fs_result = get_s3_filesystem();
-            if (!fs_result.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to get S3 filesystem: {}.", fs_result.status().ToString()));
-            }
-            auto s3fs = fs_result.ValueOrDie();
+
+            ARROW_ASSIGN_OR_RAISE(auto s3fs, get_s3_filesystem());
 
             // Parse the S3 URI to get bucket and key
             auto [bucket, key] = parse_s3_path(path);
 
             // Open the file
-            auto file_result = s3fs->OpenInputFile(bucket + "/" + key);
-            if (!file_result.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to open S3 file: {}.", file_result.status().ToString()));
-            }
+            std::shared_ptr<arrow::io::RandomAccessFile> file;
+            ARROW_ASSIGN_OR_RAISE(file, s3fs->OpenInputFile(bucket + "/" + key));
 
-            return file_result.ValueOrDie();
+            return file;
         }
         else
         {
             // Local file
-            auto file_result = arrow::io::ReadableFile::Open(path);
-            if (!file_result.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to open local file: {}.", file_result.status().ToString()));
-            }
-
-            return file_result.ValueOrDie();
+            std::shared_ptr<arrow::io::RandomAccessFile> file;
+            ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(path));
+            return file;
         }
     }
 
-    std::shared_ptr<arrow::io::OutputStream> get_output_stream(const std::string& path)
+    arrow::Result<std::shared_ptr<arrow::io::OutputStream>>
+    get_output_stream(const std::string& path)
     {
         if (is_s3_path(path))
         {
             // Get S3 filesystem using the S3Manager
-            auto fs_result = get_s3_filesystem();
-            if (!fs_result.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to get S3 filesystem: {}.", fs_result.status().ToString()));
-            }
-            auto s3fs = fs_result.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(auto s3fs, get_s3_filesystem());
 
             // Parse the S3 URI to get bucket and key
             auto [bucket, key] = parse_s3_path(path);
 
             // Open the file
-            auto file_result = s3fs->OpenOutputStream(bucket + "/" + key);
-            if (!file_result.ok())
-            {
-                throw std::runtime_error(std::format("Failed to open S3 file for writing: {}.",
-                                                     file_result.status().ToString()));
-            }
+            ARROW_ASSIGN_OR_RAISE(auto file_result, s3fs->OpenOutputStream(bucket + "/" + key));
 
-            return file_result.ValueOrDie();
+            return file_result;
         }
         else
         {
             // Local file
-            auto file_result = arrow::io::FileOutputStream::Open(path);
-            if (!file_result.ok())
-            {
-                throw std::runtime_error(std::format("Failed to open local file for writing: {}.",
-                                                     file_result.status().ToString()));
-            }
-
-            return file_result.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(auto file_result, arrow::io::FileOutputStream::Open(path));
+            return file_result;
         }
     }
 
@@ -307,7 +274,7 @@ namespace epoch_frame
     }
 
     // CSV Operations
-    DataFrame read_csv(const std::string& csv_content, const CSVReadOptions& options)
+    arrow::Result<DataFrame> read_csv(const std::string& csv_content, const CSVReadOptions& options)
     {
         // Create memory input stream from the CSV content
         auto buffer = std::make_shared<arrow::Buffer>(
@@ -337,26 +304,12 @@ namespace epoch_frame
         }
 
         // Create CSV reader
-        auto csv_reader_result = arrow::csv::TableReader::Make(
-            arrow::io::default_io_context(), input, read_options, parse_options, convert_options);
-
-        if (!csv_reader_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to create CSV reader: {}",
-                                                 csv_reader_result.status().ToString()));
-        }
-
-        auto csv_reader = csv_reader_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto csv_reader, arrow::csv::TableReader::Make(
+                                                   arrow::io::default_io_context(), input,
+                                                   read_options, parse_options, convert_options));
 
         // Read the CSV data
-        auto table_result = csv_reader->Read();
-        if (!table_result.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to read CSV data: {}", table_result.status().ToString()));
-        }
-
-        auto table = table_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto table, csv_reader->Read());
 
         // Extract index column if specified
         arrow::ArrayPtr index_array = nullptr;
@@ -379,9 +332,10 @@ namespace epoch_frame
         }
     }
 
-    DataFrame read_csv_file(const std::string& file_path, const CSVReadOptions& options)
+    arrow::Result<DataFrame> read_csv_file(const std::string&    file_path,
+                                           const CSVReadOptions& options)
     {
-        auto input = get_input_stream(file_path);
+        ARROW_ASSIGN_OR_RAISE(auto input, get_input_stream(file_path));
 
         // Configure CSV reading options
         arrow::csv::ReadOptions read_options   = arrow::csv::ReadOptions::Defaults();
@@ -406,26 +360,12 @@ namespace epoch_frame
         }
 
         // Create CSV reader
-        auto csv_reader_result = arrow::csv::TableReader::Make(
-            arrow::io::default_io_context(), input, read_options, parse_options, convert_options);
-
-        if (!csv_reader_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to create CSV reader: {}",
-                                                 csv_reader_result.status().ToString()));
-        }
-
-        auto csv_reader = csv_reader_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto csv_reader, arrow::csv::TableReader::Make(
+                                                   arrow::io::default_io_context(), input,
+                                                   read_options, parse_options, convert_options));
 
         // Read the CSV data
-        auto table_result = csv_reader->Read();
-        if (!table_result.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to read CSV data: {}", table_result.status().ToString()));
-        }
-
-        auto table = table_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto table, csv_reader->Read());
 
         // Extract index column if specified
         arrow::ArrayPtr index_array = nullptr;
@@ -448,7 +388,8 @@ namespace epoch_frame
         }
     }
 
-    void write_csv(const FrameOrSeries& data, std::string& output, const CSVWriteOptions& options)
+    arrow::Status write_csv(const FrameOrSeries& data, std::string& output,
+                            const CSVWriteOptions& options)
     {
         // Convert to DataFrame if Series
         auto df = data.is_frame() ? data.frame() : data.series().to_frame();
@@ -494,28 +435,19 @@ namespace epoch_frame
         write_options.delimiter      = options.delimiter;
 
         // Write the table to CSV
-        auto status = arrow::csv::WriteCSV(*table_to_write, write_options, output_stream.get());
-        if (!status.ok())
-        {
-            throw std::runtime_error(std::format("Failed to write CSV: {}", status.ToString()));
-        }
+        ARROW_RETURN_NOT_OK(
+            arrow::csv::WriteCSV(*table_to_write, write_options, output_stream.get()));
 
         // Finish writing and get the buffer
-        status = output_stream->Close();
-        if (!status.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to close output stream: {}", status.ToString()));
-        }
-
-        auto buffer = output_stream->Finish().ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto buffer, output_stream->Finish());
 
         // Convert buffer to string and assign to output
         output.assign(reinterpret_cast<const char*>(buffer->data()), buffer->size());
+        return arrow::Status::OK();
     }
 
-    void write_csv_file(const FrameOrSeries& data, const std::string& file_path,
-                        const CSVWriteOptions& options)
+    arrow::Status write_csv_file(const FrameOrSeries& data, const std::string& file_path,
+                                 const CSVWriteOptions& options)
     {
         // Convert to DataFrame if Series
         auto df = data.is_frame() ? data.frame() : data.series().to_frame();
@@ -541,7 +473,7 @@ namespace epoch_frame
         }
 
         // Get output stream for the file
-        auto output_stream = get_output_stream(file_path);
+        ARROW_ASSIGN_OR_RAISE(auto output_stream, get_output_stream(file_path));
 
         // Configure CSV writing options
         arrow::csv::WriteOptions write_options;
@@ -549,25 +481,18 @@ namespace epoch_frame
         write_options.delimiter      = options.delimiter;
 
         // Write the table to CSV
-        auto status = arrow::csv::WriteCSV(*table_to_write, write_options, output_stream.get());
-        if (!status.ok())
-        {
-            throw std::runtime_error(std::format("Failed to write CSV: {}", status.ToString()));
-        }
+        ARROW_RETURN_NOT_OK(
+            arrow::csv::WriteCSV(*table_to_write, write_options, output_stream.get()));
 
         // Close the output stream
-        status = output_stream->Close();
-        if (!status.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to close output stream: {}", status.ToString()));
-        }
+        return output_stream->Close();
     }
 
     // JSON Operations
 
     // New implementation using Arrow's JSON parser
-    DataFrame read_json(const std::string& json_content, const JSONReadOptions& options)
+    arrow::Result<DataFrame> read_json(const std::string&     json_content,
+                                       const JSONReadOptions& options)
     {
         if (json_content.empty())
         {
@@ -589,26 +514,12 @@ namespace epoch_frame
             parse_options.newlines_in_values = false;
 
             // Create JSON reader
-            auto maybe_reader = arrow::json::TableReader::Make(arrow::default_memory_pool(), input,
-                                                               read_options, parse_options);
-
-            if (!maybe_reader.ok())
-            {
-                throw std::runtime_error(std::format("Failed to create JSON reader: {}",
-                                                     maybe_reader.status().ToString()));
-            }
-
-            auto reader = maybe_reader.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(
+                auto reader, arrow::json::TableReader::Make(arrow::default_memory_pool(), input,
+                                                            read_options, parse_options));
 
             // Read the JSON data
-            auto maybe_table = reader->Read();
-            if (!maybe_table.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to read JSON data: {}", maybe_table.status().ToString()));
-            }
-
-            auto table = maybe_table.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(auto table, reader->Read());
 
             // Extract index column if specified
             arrow::ArrayPtr index_array = nullptr;
@@ -626,22 +537,21 @@ namespace epoch_frame
                 auto index = factory::index::make_index(index_array, std::nullopt, "");
                 return DataFrame(index, table);
             }
-            else
-            {
-                return DataFrame(table);
-            }
+            return DataFrame(table);
         }
         catch (const std::exception& e)
         {
-            throw std::runtime_error(std::format("Failed to read JSON with Arrow: {}", e.what()));
+            return arrow::Status::Invalid(
+                std::format("Failed to read JSON with Arrow: {}", e.what()));
         }
     }
 
-    DataFrame read_json_file(const std::string& file_path, const JSONReadOptions& options)
+    arrow::Result<DataFrame> read_json_file(const std::string&     file_path,
+                                            const JSONReadOptions& options)
     {
         try
         {
-            auto input = get_input_stream(file_path);
+            ARROW_ASSIGN_OR_RAISE(auto input, get_input_stream(file_path));
 
             // Configure JSON reading options
             arrow::json::ReadOptions read_options = arrow::json::ReadOptions::Defaults();
@@ -651,26 +561,12 @@ namespace epoch_frame
             parse_options.newlines_in_values        = true;
 
             // Create JSON reader
-            auto maybe_reader = arrow::json::TableReader::Make(arrow::default_memory_pool(), input,
-                                                               read_options, parse_options);
-
-            if (!maybe_reader.ok())
-            {
-                throw std::runtime_error(std::format("Failed to create JSON reader: {}",
-                                                     maybe_reader.status().ToString()));
-            }
-
-            auto reader = maybe_reader.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(
+                auto reader, arrow::json::TableReader::Make(arrow::default_memory_pool(), input,
+                                                            read_options, parse_options));
 
             // Read the JSON data
-            auto maybe_table = reader->Read();
-            if (!maybe_table.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to read JSON data: {}", maybe_table.status().ToString()));
-            }
-
-            auto table = maybe_table.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(auto table, reader->Read());
 
             // Extract index column if specified
             arrow::ArrayPtr index_array = nullptr;
@@ -695,45 +591,30 @@ namespace epoch_frame
         }
         catch (const std::exception& e)
         {
-            throw std::runtime_error(
+            return arrow::Status::Invalid(
                 std::format("Failed to read JSON file with Arrow: {}", e.what()));
         }
     }
 
     // Parquet Operations
-    DataFrame read_parquet(const std::string& file_path, const ParquetReadOptions& options)
+    arrow::Result<DataFrame> read_parquet(const std::string&        file_path,
+                                          const ParquetReadOptions& options)
     {
-        auto input = get_input_stream(file_path);
+        ARROW_ASSIGN_OR_RAISE(auto input, get_input_stream(file_path));
 
         // Configure parquet reader
-        std::unique_ptr<parquet::arrow::FileReader> parquet_reader;
-        auto reader_result = parquet::arrow::OpenFile(input, arrow::default_memory_pool());
-        if (!reader_result.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to open Parquet file: {}", reader_result.status().ToString()));
-        }
-        parquet_reader = reader_result.MoveValueUnsafe();
+        ARROW_ASSIGN_OR_RAISE(auto parquet_reader,
+                              parquet::arrow::OpenFile(input, arrow::default_memory_pool()));
 
         // Read the full table or selected columns
         std::shared_ptr<arrow::Table> table;
         if (options.columns)
         {
-            auto status = parquet_reader->ReadTable(*options.columns, &table);
-            if (!status.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to read Parquet table columns: {}", status.ToString()));
-            }
+            ARROW_RETURN_NOT_OK(parquet_reader->ReadTable(*options.columns, &table));
         }
         else
         {
-            auto status = parquet_reader->ReadTable(&table);
-            if (!status.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to read Parquet table: {}", status.ToString()));
-            }
+            ARROW_RETURN_NOT_OK(parquet_reader->ReadTable(&table));
         }
 
         // Extract index column if specified
@@ -757,8 +638,8 @@ namespace epoch_frame
         }
     }
 
-    void write_parquet(const FrameOrSeries& data, const std::string& file_path,
-                       const ParquetWriteOptions& options)
+    arrow::Status write_parquet(const FrameOrSeries& data, const std::string& file_path,
+                                const ParquetWriteOptions& options)
     {
         // Convert to DataFrame if Series
         auto df = data.is_frame() ? data.frame() : data.series().to_frame();
@@ -784,73 +665,41 @@ namespace epoch_frame
         }
 
         // Get output stream for the file
-        auto output_stream = get_output_stream(file_path);
+        ARROW_ASSIGN_OR_RAISE(auto output_stream, get_output_stream(file_path));
 
         // Configure parquet writing options
         std::shared_ptr<parquet::WriterProperties> props =
             parquet::WriterProperties::Builder().compression(options.compression)->build();
 
         // Write the table to parquet
-        auto status = parquet::arrow::WriteTable(*table_to_write, arrow::default_memory_pool(),
-                                                 output_stream, table_to_write->num_rows());
-        if (!status.ok())
-        {
-            throw std::runtime_error(std::format("Failed to write Parquet: {}", status.ToString()));
-        }
+        ARROW_RETURN_NOT_OK(parquet::arrow::WriteTable(*table_to_write,
+                                                       arrow::default_memory_pool(), output_stream,
+                                                       table_to_write->num_rows()));
 
         // Close the output stream
-        status = output_stream->Close();
-        if (!status.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to close output stream: {}", status.ToString()));
-        }
+        return output_stream->Close();
     }
 
     // Binary Operations
-    DataFrame read_binary(const std::vector<uint8_t>& data, const BinaryReadOptions& options)
+    arrow::Result<DataFrame> read_binary(const std::vector<uint8_t>& data,
+                                         const BinaryReadOptions&    options)
     {
         auto buffer = std::make_shared<arrow::Buffer>(data.data(), data.size());
         return read_buffer(buffer, options);
     }
 
-    DataFrame read_buffer(const std::shared_ptr<arrow::Buffer>& buffer,
-                          const BinaryReadOptions&              options)
+    arrow::Result<DataFrame> read_buffer(const std::shared_ptr<arrow::Buffer>& buffer,
+                                         const BinaryReadOptions&              options)
     {
         auto buffer_reader = std::make_shared<arrow::io::BufferReader>(buffer);
 
         // Open the IPC stream reader
-        auto reader_result = arrow::ipc::RecordBatchStreamReader::Open(buffer_reader);
-        if (!reader_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to open IPC stream reader: {}",
-                                                 reader_result.status().ToString()));
-        }
-        auto reader = reader_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto reader,
+                              arrow::ipc::RecordBatchStreamReader::Open(buffer_reader));
 
         // Read all record batches
         std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-        auto                                             batches_result = reader->ToRecordBatches();
-        if (!batches_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to read record batches: {}",
-                                                 batches_result.status().ToString()));
-        }
-        batches = batches_result.ValueOrDie();
-
-        if (batches.empty())
-        {
-            throw std::runtime_error("No record batches found in binary data");
-        }
-
-        // Convert to table
-        auto table_result = arrow::Table::FromRecordBatches(batches);
-        if (!table_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to convert record batches to table: {}",
-                                                 table_result.status().ToString()));
-        }
-        auto table = table_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto table, reader->ToTable());
 
         // Extract index column if specified
         arrow::ArrayPtr index_array = nullptr;
@@ -864,7 +713,8 @@ namespace epoch_frame
         // Create and return the DataFrame
         if (index_array)
         {
-            auto index = factory::index::make_index(index_array, std::nullopt, "");
+            auto index =
+                factory::index::make_index(index_array, std::nullopt, options.index_column.value());
             return DataFrame(index, table);
         }
         else
@@ -873,39 +723,37 @@ namespace epoch_frame
         }
     }
 
-    void write_binary(const FrameOrSeries& data, std::vector<uint8_t>& output,
-                      const BinaryWriteOptions& options)
+    arrow::Status write_binary(const FrameOrSeries& data, std::vector<uint8_t>& output,
+                               const BinaryWriteOptions& options)
     {
         // Create a buffer to write to
-        auto buffer_result = arrow::AllocateResizableBuffer(0);
-        if (!buffer_result.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to allocate buffer: {}", buffer_result.status().ToString()));
-        }
+        std::shared_ptr<arrow::ResizableBuffer> buffer;
+        ARROW_ASSIGN_OR_RAISE(buffer, arrow::AllocateResizableBuffer(0));
 
         // Convert from unique_ptr to shared_ptr
-        std::shared_ptr<arrow::ResizableBuffer> buffer = std::move(buffer_result).ValueOrDie();
-        write_buffer(data, buffer, options);
+        ARROW_RETURN_NOT_OK(write_buffer(data, buffer, options));
 
         // Copy data to output vector
         output.resize(buffer->size());
         std::memcpy(output.data(), buffer->data(), buffer->size());
+        return arrow::Status::OK();
     }
 
     // Add this overload for ResizableBuffer
-    void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::ResizableBuffer>& buffer,
-                      const BinaryWriteOptions& options)
+    arrow::Status write_buffer(const FrameOrSeries&                     data,
+                               std::shared_ptr<arrow::ResizableBuffer>& buffer,
+                               const BinaryWriteOptions&                options)
     {
         // ResizableBuffer is-a Buffer, so we can just cast and call the other version
         std::shared_ptr<arrow::Buffer> buf = buffer;
-        write_buffer(data, buf, options);
+        ARROW_RETURN_NOT_OK(write_buffer(data, buf, options));
         // The buffer may have been replaced, so update the input parameter
         buffer = std::dynamic_pointer_cast<arrow::ResizableBuffer>(buf);
+        return arrow::Status::OK();
     }
 
-    void write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buffer,
-                      const BinaryWriteOptions& options)
+    arrow::Status write_buffer(const FrameOrSeries& data, std::shared_ptr<arrow::Buffer>& buffer,
+                               const BinaryWriteOptions& options)
     {
         // Convert to DataFrame if Series
         auto df = data.is_frame() ? data.frame() : data.series().to_frame();
@@ -921,7 +769,8 @@ namespace epoch_frame
             fields.insert(fields.begin(), arrow::field(index_name, index_array->type()));
 
             arrow::ChunkedArrayVector columns = df.table()->columns();
-            columns.insert(columns.begin(), arrow::ChunkedArray::Make({index_array}).ValueOrDie());
+            ARROW_ASSIGN_OR_RAISE(auto array, arrow::ChunkedArray::Make({index_array}));
+            columns.insert(columns.begin(), array);
 
             table_to_write = arrow::Table::Make(arrow::schema(fields), columns);
         }
@@ -934,15 +783,9 @@ namespace epoch_frame
         auto resizable_buffer = std::dynamic_pointer_cast<arrow::ResizableBuffer>(buffer);
         if (!resizable_buffer)
         {
-            auto new_buffer_result = arrow::AllocateResizableBuffer(0);
-            if (!new_buffer_result.ok())
-            {
-                throw std::runtime_error(std::format("Failed to allocate buffer: {}",
-                                                     new_buffer_result.status().ToString()));
-            }
+            ARROW_ASSIGN_OR_RAISE(buffer, arrow::AllocateResizableBuffer(0));
 
             // Convert from unique_ptr to shared_ptr
-            buffer           = std::move(new_buffer_result).ValueOrDie();
             resizable_buffer = std::dynamic_pointer_cast<arrow::ResizableBuffer>(buffer);
         }
 
@@ -969,13 +812,7 @@ namespace epoch_frame
             schema = schema->WithMetadata(kv_metadata);
         }
 
-        auto writer_result = arrow::ipc::MakeStreamWriter(output_stream, schema);
-        if (!writer_result.ok())
-        {
-            throw std::runtime_error(std::format("Failed to create IPC stream writer: {}",
-                                                 writer_result.status().ToString()));
-        }
-        auto writer = writer_result.ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(auto writer, arrow::ipc::MakeStreamWriter(output_stream, schema));
 
         // Convert table to record batches for writing
         arrow::TableBatchReader reader(table_to_write);
@@ -983,45 +820,24 @@ namespace epoch_frame
         std::shared_ptr<arrow::RecordBatch> batch;
         while (true)
         {
-            auto batch_result = reader.Next();
-            if (!batch_result.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to read next batch: {}", batch_result.status().ToString()));
-            }
-
-            batch = batch_result.ValueOrDie();
+            ARROW_ASSIGN_OR_RAISE(batch, reader.Next());
             if (batch == nullptr)
             {
                 break; // No more batches
             }
 
-            auto status = writer->WriteRecordBatch(*batch);
-            if (!status.ok())
-            {
-                throw std::runtime_error(
-                    std::format("Failed to write record batch: {}", status.ToString()));
-            }
+            ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*batch));
         }
 
         // Close the writer
-        auto status = writer->Close();
-        if (!status.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to close IPC stream writer: {}", status.ToString()));
-        }
+        ARROW_RETURN_NOT_OK(writer->Close());
 
         // Close the output stream
-        status = output_stream->Close();
-        if (!status.ok())
-        {
-            throw std::runtime_error(
-                std::format("Failed to close output stream: {}", status.ToString()));
-        }
+        ARROW_RETURN_NOT_OK(output_stream->Close());
 
         // Update the buffer with the finished stream
-        buffer = output_stream->Finish().ValueOrDie();
+        ARROW_ASSIGN_OR_RAISE(buffer, output_stream->Finish());
+        return arrow::Status::OK();
     }
 
     ScopedS3::ScopedS3()

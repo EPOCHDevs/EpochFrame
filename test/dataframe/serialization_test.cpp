@@ -4,18 +4,20 @@
 #include <random>
 
 #include "epoch_frame/dataframe.h"
-#include "epoch_frame/serialization.h"
 #include "epoch_frame/factory/dataframe_factory.h"
-#include "epoch_frame/factory/series_factory.h"
 #include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/series_factory.h"
+#include "epoch_frame/serialization.h"
 
-namespace {
+namespace
+{
     using namespace epoch_frame;
     // Helper to create a temporary file path
-    std::string get_temp_file_path(const std::string& prefix, const std::string& extension) {
-        auto temp_dir = std::filesystem::temp_directory_path();
-        std::random_device rd;
-        std::mt19937 gen(rd());
+    std::string get_temp_file_path(const std::string& prefix, const std::string& extension)
+    {
+        auto                            temp_dir = std::filesystem::temp_directory_path();
+        std::random_device              rd;
+        std::mt19937                    gen(rd());
         std::uniform_int_distribution<> distrib(1, 100000);
         auto temp_file = temp_dir / (prefix + "_" + std::to_string(distrib(gen)) + extension);
         return temp_file.string();
@@ -29,10 +31,8 @@ namespace {
 
         // Define column names
         arrow::FieldVector col_names = {
-            arrow::field("Name", arrow::utf8()),
-            arrow::field("Age", arrow::int64()),
-            arrow::field("City", arrow::utf8()),
-            arrow::field("Salary", arrow::int64())};
+            arrow::field("Name", arrow::utf8()), arrow::field("Age", arrow::int64()),
+            arrow::field("City", arrow::utf8()), arrow::field("Salary", arrow::int64())};
 
         // Define data using vector<vector<Scalar>>
         std::vector<std::vector<Scalar>> data = {
@@ -46,64 +46,66 @@ namespace {
     }
 
     // Helper to create a sample Series for testing
-    Series create_test_series() {
-        auto index = factory::index::from_range(0, 5);
-        std::vector<double> data = {1.1, 2.2, 3.3, 4.4, 5.5};
+    Series create_test_series()
+    {
+        auto                index = factory::index::from_range(0, 5);
+        std::vector<double> data  = {1.1, 2.2, 3.3, 4.4, 5.5};
         return make_series(index, data, "test_series");
     }
 
     // Check if S3 testing is available
-    constexpr bool s3_testing_available() {
-        #ifdef EPOCH_FRAME_S3_TEST_BUCKET
-            return true;
-        #else
-            return false;
-        #endif
+    constexpr bool s3_testing_available()
+    {
+#ifdef EPOCH_FRAME_S3_TEST_BUCKET
+        return true;
+#else
+        return false;
+#endif
     }
 
     // Get S3 path for testing
-    constexpr auto get_s3_test_path(const char* path) {
-        #ifdef EPOCH_FRAME_S3_TEST_BUCKET
-            return std::format("s3://{}/{}", EPOCH_FRAME_S3_TEST_BUCKET, path);
-        #else
-            return "";
-        #endif
+    constexpr auto get_s3_test_path(const char* path)
+    {
+#ifdef EPOCH_FRAME_S3_TEST_BUCKET
+        return std::format("s3://{}/{}", EPOCH_FRAME_S3_TEST_BUCKET, path);
+#else
+        return "";
+#endif
     }
-}
+} // namespace
 
-TEST_CASE("CSV Serialization", "[serialization][csv]") {
+TEST_CASE("CSV Serialization", "[serialization][csv]")
+{
 
-    struct CSVTestParams {
+    struct CSVTestParams
+    {
         CSVWriteOptions write_options;
-        CSVReadOptions read_options;
-        DataFrame expected_df;
+        CSVReadOptions  read_options;
+        DataFrame       expected_df;
     };
     INFO("Testing CSV serialization with various options");
 
     auto df = create_test_dataframe();
 
     std::vector<CSVTestParams> test_cases = {
-        {
-            // Default options
-            CSVWriteOptions{.index_label = "index"},
-            CSVReadOptions{.index_column = "index"},
-            df
-        }
-    };
+        {// Default options
+         CSVWriteOptions{.index_label = "index"}, CSVReadOptions{.index_column = "index"}, df}};
 
-    for (const auto& params : test_cases) {
+    for (const auto& params : test_cases)
+    {
         std::string csv_output;
-        write_csv(df, csv_output, params.write_options);
+        REQUIRE(write_csv(df, csv_output, params.write_options).ok());
         REQUIRE(!csv_output.empty());
 
-        auto read_df = read_csv(csv_output, params.read_options);
+        auto read_df = read_csv(csv_output, params.read_options).ValueOrDie();
         INFO("read_df: " << read_df);
         INFO("expected df: " << params.expected_df);
         REQUIRE(read_df.equals(params.expected_df));
     }
 }
 
-TEST_CASE("CSV Serialization - File") {
+TEST_CASE("CSV Serialization - File")
+{
     INFO("Testing CSV file serialization");
 
     auto df = create_test_dataframe();
@@ -114,9 +116,9 @@ TEST_CASE("CSV Serialization - File") {
     // Write to file
     CSVWriteOptions write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
+    write_options.index_label   = "idx";
 
-    write_csv_file(df, temp_file, write_options);
+    REQUIRE(write_csv_file(df, temp_file, write_options).ok());
 
     // Verify file exists
     REQUIRE(std::filesystem::exists(temp_file));
@@ -125,7 +127,7 @@ TEST_CASE("CSV Serialization - File") {
     CSVReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_csv_file(temp_file, read_options);
+    auto read_df = read_csv_file(temp_file, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
@@ -135,17 +137,18 @@ TEST_CASE("CSV Serialization - File") {
     std::filesystem::remove(temp_file);
 }
 
-TEST_CASE("CSV Serialization - Series") {
+TEST_CASE("CSV Serialization - Series")
+{
     INFO("Testing CSV serialization with Series");
 
     auto series = create_test_series();
 
     // Write to string
-    std::string csv_output;
+    std::string     csv_output;
     CSVWriteOptions write_options;
     write_options.include_index = true;
 
-    write_csv(series, csv_output, write_options);
+    REQUIRE(write_csv(series, csv_output, write_options).ok());
 
     REQUIRE(!csv_output.empty());
 
@@ -153,7 +156,7 @@ TEST_CASE("CSV Serialization - Series") {
     CSVReadOptions read_options;
     read_options.index_column = "index";
 
-    auto read_df = read_csv(csv_output, read_options);
+    auto read_df = read_csv(csv_output, read_options).ValueOrDie();
 
     // Series should be converted to DataFrame for comparison
     REQUIRE(read_df.num_rows() == series.size());
@@ -161,8 +164,10 @@ TEST_CASE("CSV Serialization - Series") {
     REQUIRE(read_df.equals(series.to_frame()));
 }
 
-TEST_CASE("CSV Serialization - S3", "[s3]") {
-    if constexpr (!s3_testing_available()) {
+TEST_CASE("CSV Serialization - S3", "[s3]")
+{
+    if constexpr (!s3_testing_available())
+    {
         SKIP("S3 test bucket not configured");
     }
 
@@ -176,15 +181,15 @@ TEST_CASE("CSV Serialization - S3", "[s3]") {
     // Write to S3
     CSVWriteOptions write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
+    write_options.index_label   = "idx";
 
-    write_csv_file(df, s3_path, write_options);
+    REQUIRE(write_csv_file(df, s3_path, write_options).ok());
 
     // Read from S3
     CSVReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_csv_file(s3_path, read_options);
+    auto read_df = read_csv_file(s3_path, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
@@ -192,10 +197,12 @@ TEST_CASE("CSV Serialization - S3", "[s3]") {
 }
 
 // Test Arrow JSON Serialization
-TEST_CASE("Arrow JSON Serialization", "[dataframe][serialization][json][arrow]") {
+TEST_CASE("Arrow JSON Serialization", "[dataframe][serialization][json][arrow]")
+{
     auto expected = create_test_dataframe();
 
-    SECTION("Basic") {
+    SECTION("Basic")
+    {
         // Create a simple JSON string in records format that Arrow can parse
         std::string arrow_json = R"(
             {"Name": "John", "Age": 28, "City": "New York", "Salary": 75000}
@@ -206,14 +213,15 @@ TEST_CASE("Arrow JSON Serialization", "[dataframe][serialization][json][arrow]")
 
         // Read the JSON back into a new DataFrame using Arrow
         DataFrame read_df;
-        REQUIRE_NOTHROW(read_df = read_json(arrow_json, {}));
+        REQUIRE_NOTHROW(read_df = read_json(arrow_json, {}).ValueOrDie());
 
         // Check basic DataFrame properties
         INFO(read_df);
         REQUIRE(read_df.equals(expected));
     }
 
-    SECTION("Include Index") {
+    SECTION("Include Index")
+    {
         // Create a JSON string with an index column in records format
         std::string arrow_json = R"(
             {"idx": 0, "Name": "John", "Age": 28, "City": "New York", "Salary": 75000}
@@ -226,7 +234,7 @@ TEST_CASE("Arrow JSON Serialization", "[dataframe][serialization][json][arrow]")
         JSONReadOptions read_options;
         read_options.index_column = "idx";
         DataFrame read_df;
-        REQUIRE_NOTHROW(read_df = read_json(arrow_json, read_options));
+        REQUIRE_NOTHROW(read_df = read_json(arrow_json, read_options).ValueOrDie());
 
         // Check basic DataFrame properties
         INFO(read_df);
@@ -235,7 +243,8 @@ TEST_CASE("Arrow JSON Serialization", "[dataframe][serialization][json][arrow]")
 }
 
 // Test JSON File I/O
-TEST_CASE("JSON File I/O", "[dataframe][serialization][json]") {
+TEST_CASE("JSON File I/O", "[dataframe][serialization][json]")
+{
     auto df = create_test_dataframe();
 
     // Define temporary file paths
@@ -243,14 +252,17 @@ TEST_CASE("JSON File I/O", "[dataframe][serialization][json]") {
     std::string arrow_file_path = get_temp_file_path("test_arrow", ".json");
 
     // Clean up any existing test files
-    if (std::filesystem::exists(glaze_file_path)) {
+    if (std::filesystem::exists(glaze_file_path))
+    {
         std::filesystem::remove(glaze_file_path);
     }
-    if (std::filesystem::exists(arrow_file_path)) {
+    if (std::filesystem::exists(arrow_file_path))
+    {
         std::filesystem::remove(arrow_file_path);
     }
 
-    SECTION("Arrow File I/O") {
+    SECTION("Arrow File I/O")
+    {
         // Create a JSON string in Arrow-compatible format
         std::string arrow_json = R"(
             {"Name": "John", "Age": 28, "City": "New York", "Salary": 75000}
@@ -271,7 +283,7 @@ TEST_CASE("JSON File I/O", "[dataframe][serialization][json]") {
         JSONReadOptions read_options;
         read_options.index_column = "idx";
         DataFrame read_df;
-        REQUIRE_NOTHROW(read_df = read_json_file(arrow_file_path, read_options));
+        REQUIRE_NOTHROW(read_df = read_json_file(arrow_file_path, read_options).ValueOrDie());
 
         // Check basic DataFrame properties
         REQUIRE(read_df.num_rows() == 4);
@@ -279,17 +291,21 @@ TEST_CASE("JSON File I/O", "[dataframe][serialization][json]") {
     }
 
     // Clean up
-    if (std::filesystem::exists(glaze_file_path)) {
+    if (std::filesystem::exists(glaze_file_path))
+    {
         std::filesystem::remove(glaze_file_path);
     }
-    if (std::filesystem::exists(arrow_file_path)) {
+    if (std::filesystem::exists(arrow_file_path))
+    {
         std::filesystem::remove(arrow_file_path);
     }
 }
 
 // Test S3 operations separately if S3 is available
-TEST_CASE("JSON Serialization - S3", "[s3]") {
-    if constexpr (!s3_testing_available()) {
+TEST_CASE("JSON Serialization - S3", "[s3]")
+{
+    if constexpr (!s3_testing_available())
+    {
         SKIP("S3 test bucket not configured");
     }
 
@@ -301,7 +317,8 @@ TEST_CASE("JSON Serialization - S3", "[s3]") {
     auto s3_glaze_path = get_s3_test_path("test_glaze.json");
     auto s3_arrow_path = get_s3_test_path("test_arrow.json");
 
-    SECTION("Arrow S3") {
+    SECTION("Arrow S3")
+    {
         // Create Arrow-compatible JSON string
         std::string arrow_json = R"(
             {"Name": "John", "Age": 28, "City": "New York", "Salary": 75000}
@@ -328,7 +345,7 @@ TEST_CASE("JSON Serialization - S3", "[s3]") {
         read_options.index_column = "idx";
 
         DataFrame read_df;
-        REQUIRE_NOTHROW(read_df = read_json_file(s3_arrow_path, read_options));
+        REQUIRE_NOTHROW(read_df = read_json_file(s3_arrow_path, read_options).ValueOrDie());
 
         // Check basic properties
         REQUIRE(read_df.equals(df));
@@ -336,8 +353,10 @@ TEST_CASE("JSON Serialization - S3", "[s3]") {
 }
 
 // Test edge cases with separate Glaze and Arrow implementations
-TEST_CASE("JSON Serialization - Edge Cases", "[dataframe][serialization][json]") {
-    SECTION("Null DataFrame - Arrow") {
+TEST_CASE("JSON Serialization - Edge Cases", "[dataframe][serialization][json]")
+{
+    SECTION("Null DataFrame - Arrow")
+    {
         // Create an empty JSON in Arrow format
         std::string arrow_json = R"(
         {
@@ -346,28 +365,28 @@ TEST_CASE("JSON Serialization - Edge Cases", "[dataframe][serialization][json]")
         }
         )";
 
-        auto arrow_df = read_json(arrow_json, {});
-        auto expected = make_dataframe(factory::index::from_range(1),
-            {
-                {Scalar{}},
-                {Scalar{}}
-            }, {arrow::field("col1", arrow::null()), arrow::field("col2", arrow::null())});
+        auto arrow_df = read_json(arrow_json, {}).ValueOrDie();
+        auto expected = make_dataframe(
+            factory::index::from_range(1), {{Scalar{}}, {Scalar{}}},
+            {arrow::field("col1", arrow::null()), arrow::field("col2", arrow::null())});
         INFO(arrow_df);
         REQUIRE(arrow_df.equals(expected));
     }
 
-    SECTION("Empty DataFrame - Arrow") {
+    SECTION("Empty DataFrame - Arrow")
+    {
         // Create an empty JSON in Arrow format
         std::string arrow_json = "";
 
-        auto arrow_df = read_json(arrow_json, {});
+        auto arrow_df = read_json(arrow_json, {}).ValueOrDie();
         REQUIRE(arrow_df.num_rows() == 0);
         REQUIRE(arrow_df.num_cols() == 0);
     }
 }
 
 // Test Parquet Serialization
-TEST_CASE("Parquet Serialization - File") {
+TEST_CASE("Parquet Serialization - File")
+{
     INFO("Testing Parquet file serialization");
 
     auto df = create_test_dataframe();
@@ -378,9 +397,9 @@ TEST_CASE("Parquet Serialization - File") {
     // Write to file
     ParquetWriteOptions write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
+    write_options.index_label   = "idx";
 
-    write_parquet(df, temp_file, write_options);
+    REQUIRE(write_parquet(df, temp_file, write_options).ok());
 
     // Verify file exists
     REQUIRE(std::filesystem::exists(temp_file));
@@ -389,7 +408,7 @@ TEST_CASE("Parquet Serialization - File") {
     ParquetReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_parquet(temp_file, read_options);
+    auto read_df = read_parquet(temp_file, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
@@ -399,7 +418,8 @@ TEST_CASE("Parquet Serialization - File") {
     std::filesystem::remove(temp_file);
 }
 
-TEST_CASE("Parquet Serialization - Series") {
+TEST_CASE("Parquet Serialization - Series")
+{
     INFO("Testing Parquet serialization with Series");
 
     auto series = create_test_series();
@@ -411,7 +431,7 @@ TEST_CASE("Parquet Serialization - Series") {
     ParquetWriteOptions write_options;
     write_options.include_index = true;
 
-    write_parquet(series, temp_file, write_options);
+    REQUIRE(write_parquet(series, temp_file, write_options).ok());
 
     // Verify file exists
     REQUIRE(std::filesystem::exists(temp_file));
@@ -420,7 +440,7 @@ TEST_CASE("Parquet Serialization - Series") {
     ParquetReadOptions read_options;
     read_options.index_column = "index";
 
-    auto read_df = read_parquet(temp_file, read_options);
+    auto read_df = read_parquet(temp_file, read_options).ValueOrDie();
 
     // Series should be converted to DataFrame for comparison
     REQUIRE(read_df.num_rows() == series.size());
@@ -431,8 +451,10 @@ TEST_CASE("Parquet Serialization - Series") {
     std::filesystem::remove(temp_file);
 }
 
-TEST_CASE("Parquet Serialization - S3", "[s3]") {
-    if constexpr (!s3_testing_available()) {
+TEST_CASE("Parquet Serialization - S3", "[s3]")
+{
+    if constexpr (!s3_testing_available())
+    {
         SKIP("S3 test bucket not configured");
     }
 
@@ -446,15 +468,15 @@ TEST_CASE("Parquet Serialization - S3", "[s3]") {
     // Write to S3
     ParquetWriteOptions write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
+    write_options.index_label   = "idx";
 
-    write_parquet(df, s3_path, write_options);
+    REQUIRE(write_parquet(df, s3_path, write_options).ok());
 
     // Read from S3
     ParquetReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_parquet(s3_path, read_options);
+    auto read_df = read_parquet(s3_path, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
@@ -462,18 +484,19 @@ TEST_CASE("Parquet Serialization - S3", "[s3]") {
 }
 
 // Binary Tests
-TEST_CASE("Binary Serialization - Vector") {
+TEST_CASE("Binary Serialization - Vector")
+{
     INFO("Testing binary serialization to vector");
 
     auto df = create_test_dataframe();
 
     // Write to vector
     std::vector<uint8_t> binary_output;
-    BinaryWriteOptions write_options;
+    BinaryWriteOptions   write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
+    write_options.index_label   = "idx";
 
-    write_binary(df, binary_output, write_options);
+    REQUIRE(write_binary(df, binary_output, write_options).ok());
 
     REQUIRE(!binary_output.empty());
 
@@ -481,14 +504,15 @@ TEST_CASE("Binary Serialization - Vector") {
     BinaryReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_binary(binary_output, read_options);
+    auto read_df = read_binary(binary_output, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
     REQUIRE(read_df.equals(df));
 }
 
-TEST_CASE("Binary Serialization - Buffer") {
+TEST_CASE("Binary Serialization - Buffer")
+{
     INFO("Testing binary serialization to buffer");
 
     auto df = create_test_dataframe();
@@ -500,10 +524,11 @@ TEST_CASE("Binary Serialization - Buffer") {
 
     BinaryWriteOptions write_options;
     write_options.include_index = true;
-    write_options.index_label = "idx";
-    write_options.metadata = std::unordered_map<std::string, std::string>{{"key1", "value1"}, {"key2", "value2"}};
+    write_options.index_label   = "idx";
+    write_options.metadata =
+        std::unordered_map<std::string, std::string>{{"key1", "value1"}, {"key2", "value2"}};
 
-    write_buffer(df, buffer, write_options);
+    REQUIRE(write_buffer(df, buffer, write_options).ok());
 
     REQUIRE(buffer->size() > 0);
 
@@ -511,24 +536,25 @@ TEST_CASE("Binary Serialization - Buffer") {
     BinaryReadOptions read_options;
     read_options.index_column = "idx";
 
-    auto read_df = read_buffer(buffer, read_options);
+    auto read_df = read_buffer(buffer, read_options).ValueOrDie();
 
     REQUIRE(read_df.num_rows() == df.num_rows());
     REQUIRE(read_df.num_cols() == df.num_cols());
     REQUIRE(read_df.equals(df));
 }
 
-TEST_CASE("Binary Serialization - Series") {
+TEST_CASE("Binary Serialization - Series")
+{
     INFO("Testing binary serialization with Series");
 
     auto series = create_test_series();
 
     // Write to vector
     std::vector<uint8_t> binary_output;
-    BinaryWriteOptions write_options;
+    BinaryWriteOptions   write_options;
     write_options.include_index = true;
 
-    write_binary(series, binary_output, write_options);
+    REQUIRE(write_binary(series, binary_output, write_options).ok());
 
     REQUIRE(!binary_output.empty());
 
@@ -536,7 +562,7 @@ TEST_CASE("Binary Serialization - Series") {
     BinaryReadOptions read_options;
     read_options.index_column = "index";
 
-    auto read_df = read_binary(binary_output, read_options);
+    auto read_df = read_binary(binary_output, read_options).ValueOrDie();
 
     // Series should be converted to DataFrame for comparison
     REQUIRE(read_df.num_rows() == series.size());
