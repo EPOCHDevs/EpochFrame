@@ -813,23 +813,7 @@ namespace epoch_frame
         }
 
         ARROW_ASSIGN_OR_RAISE(auto writer, arrow::ipc::MakeStreamWriter(output_stream, schema));
-
-        // Convert table to record batches for writing
-        arrow::TableBatchReader reader(table_to_write);
-
-        std::shared_ptr<arrow::RecordBatch> batch;
-        while (true)
-        {
-            ARROW_ASSIGN_OR_RAISE(batch, reader.Next());
-            if (batch == nullptr)
-            {
-                break; // No more batches
-            }
-
-            ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*batch));
-        }
-
-        // Close the writer
+        ARROW_RETURN_NOT_OK(writer->WriteTable(*table_to_write));
         ARROW_RETURN_NOT_OK(writer->Close());
 
         // Close the output stream
