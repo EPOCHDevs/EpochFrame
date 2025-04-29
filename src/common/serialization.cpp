@@ -234,7 +234,22 @@ namespace epoch_frame
             {
                 // Extract the index column
                 auto chunked_index = table->column(index_pos);
-                if (chunked_index->num_chunks() == 1)
+
+                // Check if chunked_index is empty
+                if (chunked_index->length() == 0 || chunked_index->num_chunks() == 0)
+                {
+                    // Create empty array of the same type as the column
+                    auto field_type         = table->schema()->field(index_pos)->type();
+                    auto empty_array_result = arrow::MakeEmptyArray(field_type);
+                    if (!empty_array_result.ok())
+                    {
+                        throw std::runtime_error(
+                            std::format("Failed to create empty array: {}",
+                                        empty_array_result.status().ToString()));
+                    }
+                    index_array = empty_array_result.ValueOrDie();
+                }
+                else if (chunked_index->num_chunks() == 1)
                 {
                     index_array = chunked_index->chunk(0);
                 }
