@@ -7,7 +7,6 @@
 #include "epoch_frame/day_of_week.h"
 #include <arrow/scalar.h>
 #include <epoch_frame/datetime.h>
-#include <flatbuffers/array.h>
 #include <numeric>
 #include <optional>
 #include <string>
