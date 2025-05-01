@@ -6,7 +6,7 @@
 #include "ndframe.h"
 #include "common/arrow_compute_utils.h"
 #include "common/asserts.h"
-#include "common/series_or_scalar.h"
+#include "../../include/epoch_frame/series_or_scalar.h"
 #include "common/table_or_array.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "epoch_frame/factory/table_factory.h"

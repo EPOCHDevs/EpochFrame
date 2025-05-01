@@ -6,7 +6,7 @@
 #include <epoch_frame/enums.h>
 #include "method_base.h"
 #include "epoch_frame/aliases.h"
-#include "common/series_or_scalar.h"
+#include "../../include/epoch_frame/series_or_scalar.h"
 #include <string>
 
 
