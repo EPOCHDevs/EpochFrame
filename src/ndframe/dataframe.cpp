@@ -628,13 +628,13 @@ namespace epoch_frame
 
     DataFrame DataFrame::drop(std::vector<std::string> const& columns) const
     {
-        auto table = std::ranges::fold_left(
+        const auto table = std::ranges::fold_left(
             columns, m_table,
-            [&](arrow::TablePtr const& table, std::string const& column)
+            [&](arrow::TablePtr const& _table, std::string const& column)
             {
-                int64_t location = m_table->schema()->GetFieldIndex(column);
+                const int64_t location = _table->schema()->GetFieldIndex(column);
                 AssertFromFormat(location != -1, "Column {} not found", column);
-                return AssertResultIsOk(table->RemoveColumn(location));
+                return AssertResultIsOk(_table->RemoveColumn(location));
             });
         return DataFrame(m_index, table);
     }
