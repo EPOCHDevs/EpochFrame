@@ -231,7 +231,7 @@ namespace epoch_frame
         sort_keys.reserve(by.size());
         for (auto const& key : by)
         {
-            sort_keys.push_back(SortKey(key, order));
+            sort_keys.emplace_back(key, order);
         }
 
         SortOptions options{sort_keys, null_placement};
