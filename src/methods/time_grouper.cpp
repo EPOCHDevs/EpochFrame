@@ -28,6 +28,7 @@ namespace epoch_frame
             for (int64_t i = 0; i < lenbin - 1; ++i)
             {
                 auto r_bin = binner[i + 1];
+                // count values in current bin, advance to next bin
                 while (j < lenidx && values[j] <= r_bin)
                     ++j;
                 bins[bc] = j;
@@ -39,6 +40,7 @@ namespace epoch_frame
             for (int64_t i = 0; i < lenbin - 1; ++i)
             {
                 auto r_bin = binner[i + 1];
+                // count values in current bin, advance to next bin
                 while (j < lenidx && values[j] < r_bin)
                     ++j;
                 bins[bc] = j;
@@ -161,7 +163,7 @@ namespace epoch_frame
             return AssertResultIsOk(arrow::ChunkedArray::Make({}));
         }
 
-        AssertFromStream(index.size() >= bins.size(), "up_sampling is not supported.");
+        // AssertFromStream(index.size() >= bins.size(), "up_sampling is not supported.");
 
         std::vector<int64_t> rep(bins.size());
 
