@@ -698,10 +698,10 @@ namespace epoch_frame
             arrow::compute::IfElse(mask.value(), m_array, replacement.value())));
     }
 
-    Array Array::where(const Array& mask) const
+    Array Array::where() const
     {
         return Array(AssertContiguousArrayResultIsOk(
-            arrow::compute::CallFunction("indices_nonzero", {mask.value()})));
+            arrow::compute::CallFunction("indices_nonzero", {m_array})));
     }
 
     Array Array::append(const Array& other) const

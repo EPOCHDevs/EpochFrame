@@ -626,7 +626,7 @@ namespace epoch_frame
 
         Array where(const Array& mask, const Scalar& replacement) const;
         Array where(const Array& mask, const Array& replacement) const;
-        Array where(const Array& mask) const;
+        Array where() const;
 
         [[nodiscard]] arrow::ChunkedArrayPtr as_chunked_array() const
         {
