@@ -574,6 +574,13 @@ namespace epoch_frame
     {
         if (s.index()->equals(m_index))
         {
+            if (contains(column))
+            {
+                auto location = m_table->schema()->GetFieldIndex(column);
+                AssertFromFormat(location != -1, "Column {} not found", column);
+                auto new_table = AssertResultIsOk(m_table->RemoveColumn(location));
+                return {m_index, add_column(new_table, column, s.array())};
+            }
             return {m_index, add_column(m_table, column, s.array())};
         }
         if (size() == 0)
@@ -598,10 +605,9 @@ namespace epoch_frame
             return DataFrame(indices, arr);
         }
 
-        auto                                  arr_columns = arr->ColumnNames();
-        const std::unordered_set arr_column_set(arr_columns.begin(),
-                                                             arr_columns.end());
-        auto                                  new_table = arrow_utils::apply_function_to_table(
+        auto                     arr_columns = arr->ColumnNames();
+        const std::unordered_set arr_column_set(arr_columns.begin(), arr_columns.end());
+        auto                     new_table = arrow_utils::apply_function_to_table(
             m_table,
             [&](arrow::Datum const& datum, std::string const& name)
             {
@@ -610,8 +616,8 @@ namespace epoch_frame
                     return datum;
                 }
                 return arrow::Datum(Series(m_index, datum.chunked_array(), name)
-                                                                         .assign(indices, arr->GetColumnByName(name))
-                                                                         .array());
+                                                            .assign(indices, arr->GetColumnByName(name))
+                                                            .array());
             },
             false);
 
