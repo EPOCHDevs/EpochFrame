@@ -276,6 +276,7 @@ namespace epoch_frame
     // Explicitly instantiate to_view for common types
     template std::shared_ptr<arrow::Int32Array>   Array::to_view<int32_t>() const;
     template std::shared_ptr<arrow::Int64Array>   Array::to_view<int64_t>() const;
+    template std::shared_ptr<arrow::UInt64Array>  Array::to_view<uint64_t>() const;
     template std::shared_ptr<arrow::FloatArray>   Array::to_view<float>() const;
     template std::shared_ptr<arrow::DoubleArray>  Array::to_view<double>() const;
     template std::shared_ptr<arrow::BooleanArray> Array::to_view<bool>() const;
@@ -285,6 +286,7 @@ namespace epoch_frame
     template std::vector<DateTime>    Array::to_vector<DateTime>() const;
     template std::vector<int32_t>     Array::to_vector<int32_t>() const;
     template std::vector<int64_t>     Array::to_vector<int64_t>() const;
+    template std::vector<uint64_t>    Array::to_vector<uint64_t>() const;
     template std::vector<float>       Array::to_vector<float>() const;
     template std::vector<double>      Array::to_vector<double>() const;
     template std::vector<bool>        Array::to_vector<bool>() const;
