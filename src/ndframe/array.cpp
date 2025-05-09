@@ -456,6 +456,11 @@ namespace epoch_frame
         {
             return -1;
         }
+        if (m_array->type()->id() == arrow::Type::BOOL)
+        {
+            auto arg_min = (!*this).where();
+            return arg_min.length() == 0 ? 0 : arg_min[0].value<IndexType>().value_or(0);
+        }
         return AssertCastScalarResultIsOk<arrow::Int64Scalar>(
                    arrow::compute::Index(
                        m_array, arrow::compute::IndexOptions{min(skip_nulls, min_count).value()}))
@@ -467,6 +472,11 @@ namespace epoch_frame
         if (length() == 0)
         {
             return -1;
+        }
+        if (m_array->type()->id() == arrow::Type::BOOL)
+        {
+            auto arg_max = where();
+            return arg_max.length() == 0 ? 0 : arg_max[0].value<IndexType>().value_or(0);
         }
         return AssertCastScalarResultIsOk<arrow::Int64Scalar>(
                    arrow::compute::Index(
