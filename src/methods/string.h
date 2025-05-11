@@ -115,7 +115,7 @@ namespace epoch_frame {
         }
         Type strptime(arrow::compute::StrptimeOptions const& options) const
         {
-            return call_function("strptime", options);
+            return call_function("strptime", &options);
         }
         // String containment
         Type count_substring(arrow::compute::MatchSubstringOptions const& options) const {
