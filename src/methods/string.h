@@ -113,7 +113,10 @@ namespace epoch_frame {
         Type utf8_slice_codeunits(const arrow::compute::SliceOptions& options) const {
             return call_function("utf8_slice_codeunits", &options);
         }
-
+        Type strptime(arrow::compute::StrptimeOptions const& options) const
+        {
+            return call_function("strptime", options);
+        }
         // String containment
         Type count_substring(arrow::compute::MatchSubstringOptions const& options) const {
             return call_function("count_substring", &options);

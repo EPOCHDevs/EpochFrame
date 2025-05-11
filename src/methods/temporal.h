@@ -90,11 +90,6 @@ namespace epoch_frame
             return to_type(arrow::compute::Strftime(m_data.value(), options));
         }
 
-        Type strptime(arrow::compute::StrptimeOptions const& options) const
-        {
-            return to_type(arrow::compute::Strptime(m_data.value(), options));
-        }
-
         // component
 
         Type day() const
