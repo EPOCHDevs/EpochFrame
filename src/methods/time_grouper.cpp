@@ -416,7 +416,7 @@ namespace epoch_frame
         {
             if (m_options.closed == epoch_core::GrouperClosedType::Right) {
                 bin_edges = bin_edges.dt().tz_localize("") + Scalar{TimeDelta{chrono_days{1}}} - Scalar{TimeDelta{chrono_microseconds{1}}};
-                bin_edges = bin_edges.dt().tz_convert(arrow_utils::get_tz(binner->dtype()));
+                bin_edges = bin_edges.dt().tz_localize(arrow_utils::get_tz(binner->dtype()));
             }
 
             if (bin_edges[-2] > ax_values.max())
