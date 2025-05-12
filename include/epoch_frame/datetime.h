@@ -137,7 +137,7 @@ namespace epoch_frame
 
         DateTime replace_tz(std::string const& _tz) const
         {
-            auto dt = *this;
+            auto dt      = *this;
             dt.m_time.tz = _tz;
             return dt;
         }
@@ -319,8 +319,10 @@ namespace epoch_frame
             return m_date.weekday();
         }
 
-        static DateTime from_str(const std::string& str, const std::string& tz = "");
-        static DateTime from_date_str(const std::string& str, const std::string& tz = "");
+        static DateTime from_str(const std::string& str, const std::string& tz = "",
+                                 const std::optional<std::string>& format = std::nullopt);
+        static DateTime from_date_str(const std::string& str, const std::string& tz = "",
+                                      const std::optional<std::string>& format = std::nullopt);
 
         Date        m_date;
         Time        m_time;

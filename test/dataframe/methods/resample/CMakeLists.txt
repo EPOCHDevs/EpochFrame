@@ -1,1 +1,1 @@
-target_sources(epoch_frame_test PRIVATE datetime_index_test.cpp resample_test.cpp)
+target_sources(epoch_frame_test PRIVATE datetime_index_test.cpp resample_test.cpp resample_file_test.cpp)

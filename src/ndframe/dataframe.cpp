@@ -5,7 +5,11 @@
 
 #include "epoch_frame/dataframe.h"
 
+#include <arrow/array/array_base.h>
 #include <arrow/array/concatenate.h>
+#include <arrow/array/util.h>
+#include <arrow/table.h>
+#include <arrow/type_fwd.h>
 #include <unordered_set>
 
 #include "common/methods_helper.h"
@@ -14,6 +18,7 @@
 #include "epoch_frame/common.h"
 #include "epoch_frame/factory/array_factory.h"
 #include "epoch_frame/factory/index_factory.h"
+#include "epoch_frame/factory/table_factory.h"
 #include "epoch_frame/index.h"
 #include "epoch_frame/series.h"
 #include "methods/arith.h"
@@ -544,6 +549,40 @@ namespace epoch_frame
                                               bool                      groupKeys) const
     {
         return factory::group_by::make_apply_by_index(*this, groupKeys, options);
+    }
+
+    DataFrame
+    DataFrame::resample_by_ohlcv(const TimeGrouperOptions&                           options,
+                                 std::unordered_map<std::string, std::string> const& columns) const
+    {
+        const std::string open_   = columns.contains("open") ? columns.at("open") : "o";
+        const std::string high_   = columns.contains("high") ? columns.at("high") : "h";
+        const std::string low_    = columns.contains("low") ? columns.at("low") : "l";
+        const std::string close_  = columns.contains("close") ? columns.at("close") : "c";
+        const std::string volume_ = columns.contains("volume") ? columns.at("volume") : "v";
+        auto              ohlcv   = [&](epoch_frame::DataFrame const& df)
+        {
+            auto open   = df[open_].iloc(0);
+            auto high   = df[high_].max();
+            auto low    = df[low_].min();
+            auto close  = df[close_].iloc(-1);
+            auto volume = df[volume_].sum();
+
+            return arrow::Table::Make(
+                arrow::schema(
+                    {arrow::field(open_, arrow::float64()), arrow::field(high_, arrow::float64()),
+                     arrow::field(low_, arrow::float64()), arrow::field(close_, arrow::float64()),
+                     arrow::field(volume_, arrow::float64())}),
+                arrow::ArrayVector{
+                    arrow::MakeArrayFromScalar(*open.value(), 1).MoveValueUnsafe(),
+                    arrow::MakeArrayFromScalar(*high.value(), 1).MoveValueUnsafe(),
+                    arrow::MakeArrayFromScalar(*low.value(), 1).MoveValueUnsafe(),
+                    arrow::MakeArrayFromScalar(*close.value(), 1).MoveValueUnsafe(),
+                    arrow::MakeArrayFromScalar(*volume.value(), 1).MoveValueUnsafe()},
+                1);
+        };
+
+        return resample_by_apply(options).apply(ohlcv);
     }
 
     AggRollingWindowOperations<true>

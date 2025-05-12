@@ -163,7 +163,9 @@ namespace epoch_frame
         GroupByAgg<DataFrame> resample_by_agg(const TimeGrouperOptions& options) const;
         GroupByApply          resample_by_apply(const TimeGrouperOptions& options,
                                                 bool                      groupKeys = true) const;
-
+        DataFrame
+                              resample_by_ohlcv(const TimeGrouperOptions&                           options,
+                                                std::unordered_map<std::string, std::string> const& columns) const;
         GroupByAgg<DataFrame> group_by_agg(std::string const& by) const
         {
             return group_by_agg(std::vector<std::string>{by});

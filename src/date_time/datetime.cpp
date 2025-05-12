@@ -120,8 +120,10 @@ namespace epoch_frame
 
     std::string Time::repr() const
     {
-        auto str = std::format("{:0>2}:{:0>2}:{:0>2}", hour.count(), minute.count(), second.count());
-        if (tz.empty()) {
+        auto str =
+            std::format("{:0>2}:{:0>2}:{:0>2}", hour.count(), minute.count(), second.count());
+        if (tz.empty())
+        {
             return str;
         }
         return std::format("{}{}", str, tz == "UTC" ? "Z" : tz);
@@ -636,15 +638,17 @@ namespace epoch_frame
         return DateTime{chrono_time_point(m_nanoseconds), tz_};
     }
 
-    DateTime DateTime::from_str(const std::string& str, const std::string& tz)
+    DateTime DateTime::from_str(const std::string& str, const std::string& tz,
+                                const std::optional<std::string>& format)
     {
         Scalar scalar{str};
-        return scalar.to_datetime("%Y-%m-%d %H:%M:%S", tz);
+        return scalar.to_datetime(format.value_or("%Y-%m-%d %H:%M:%S"), tz);
     }
 
-    DateTime DateTime::from_date_str(const std::string& str, const std::string& tz)
+    DateTime DateTime::from_date_str(const std::string& str, const std::string& tz,
+                                     const std::optional<std::string>& format)
     {
         Scalar scalar{str};
-        return scalar.to_date("%Y-%m-%d", tz);
+        return scalar.to_date(format.value_or("%Y-%m-%d"), tz);
     }
 } // namespace epoch_frame
