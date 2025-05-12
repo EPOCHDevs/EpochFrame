@@ -551,6 +551,43 @@ namespace epoch_frame
         return factory::group_by::make_apply_by_index(*this, groupKeys, options);
     }
 
+    std::string DataFrame::diff(DataFrame const& other) const {
+        std::stringstream ss;
+        std::vector<std::string> added;
+
+        auto log_if_diff = [&](std::string const& column, std::string const& diff) {
+            if (diff.empty()) {
+                return;
+            }
+            ss << column << ":\n" << diff << "\n";
+        };
+
+        log_if_diff("Index", m_index->array()->Diff(*other.m_index->array()));
+
+        for (auto const& column: column_names()) {
+            if (other.contains(column)) {
+                added.push_back(column);
+                log_if_diff(column, operator[](column).contiguous_array()->Diff(*other[column].contiguous_array()));
+            }
+            else {
+                log_if_diff(column, "MISSING");
+            }
+            ss << "\n";
+        }
+
+        if (added.size() != num_cols()) {
+            std::vector<std::string> diff_columns;
+            std::ranges::set_difference(other.column_names(), added, std::back_inserter(diff_columns));
+            ss << "Missing Columns: [";
+            for (auto const& column: diff_columns) {
+                ss << column << ", ";
+            }
+            ss << "]";
+        }
+
+        return ss.str();
+    }
+
     DataFrame
     DataFrame::resample_by_ohlcv(const TimeGrouperOptions&                           options,
                                  std::unordered_map<std::string, std::string> const& columns) const

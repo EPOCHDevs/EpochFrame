@@ -35,7 +35,7 @@ namespace epoch_frame::factory::offset {
         return std::make_shared<DayHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> weeks(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = {}) {
+    inline std::shared_ptr<FixedOffsetHandler> weeks(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = epoch_core::EpochDayOfWeek::Sunday) {
         return std::make_shared<WeekHandler>(n, weekday);
     }
 

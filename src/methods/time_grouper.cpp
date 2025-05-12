@@ -5,19 +5,19 @@
 #include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
 #include <execution>
+#include <catch2/generators/catch_generators.hpp>
 
 namespace epoch_frame
 {
-    std::vector<int64_t> generate_bins(Array const& values, Array const& binner,
-                                       epoch_core::GrouperClosedType closed)
-    {
-        auto lenidx = values.length();
-        auto lenbin = binner.length();
+    std::vector<int64_t> generate_bins(std::shared_ptr<arrow::TimestampArray> const& values, std::shared_ptr<arrow::TimestampArray> const& binner,
+                                       epoch_core::GrouperClosedType closed) {
+        const auto lenidx = values->length();
+        const auto lenbin = binner->length();
 
         AssertFalseFromFormat(lenidx <= 0 || lenbin <= 0,
                               "Invalid length for values or for binner");
-        AssertFalseFromFormat(values[0] < binner[0], "Values falls before first bin");
-        AssertFalseFromFormat(values[-1] > binner[-1], "Values falls after last bin");
+        AssertFalseFromFormat(values->Value(0) < binner->Value(0), "Values falls before first bin. {} < {}.", values->Value(0), binner->Value(0));
+        AssertFalseFromFormat(values->Value(lenidx-1) > binner->Value(lenbin-1), "Values falls after last bin. {} > {}.", values->Value(lenidx-1), binner->Value(lenbin-1));
 
         std::vector<int64_t> bins(lenbin - 1);
         int64_t              j  = 0;
@@ -27,9 +27,9 @@ namespace epoch_frame
         {
             for (int64_t i = 0; i < lenbin - 1; ++i)
             {
-                auto r_bin = binner[i + 1];
+                auto r_bin = binner->Value(i + 1);
                 // count values in current bin, advance to next bin
-                while (j < lenidx && values[j] <= r_bin)
+                while (j < lenidx && values->Value(j) <= r_bin)
                     ++j;
                 bins[bc] = j;
                 ++bc;
@@ -39,15 +39,22 @@ namespace epoch_frame
         {
             for (int64_t i = 0; i < lenbin - 1; ++i)
             {
-                auto r_bin = binner[i + 1];
+                auto r_bin = binner->Value(i + 1);
                 // count values in current bin, advance to next bin
-                while (j < lenidx && values[j] < r_bin)
+                while (j < lenidx && values->Value(j) < r_bin)
                     ++j;
                 bins[bc] = j;
                 ++bc;
             }
         }
         return bins;
+    }
+
+    std::vector<int64_t> generate_bins(Array const& values, Array const& binner,
+                                   epoch_core::GrouperClosedType closed) {
+        AssertFromFormat(values.null_count() == 0, "Values cannot contain null values");
+        AssertFromFormat(binner.null_count() == 0, "Bin edges cannot contain null values");
+        return generate_bins(values.to_timestamp_view(), binner.to_timestamp_view(), closed);
     }
 
     TimeGrouper::TimeGrouper(const TimeGrouperOptions& options) : m_options(options)
@@ -389,7 +396,7 @@ namespace epoch_frame
 
             if (m_options.closed == epoch_core::GrouperClosedType::Left)
             {
-                _first = m_options.freq->rollforward(_first);
+                _first = m_options.freq->rollback(_first);
             }
             else
             {
@@ -404,16 +411,11 @@ namespace epoch_frame
     std::pair<IndexPtr, Array> TimeGrouper::adjust_bin_edges(IndexPtr     binner,
                                                              Array const& ax_values) const
     {
-        Array bin_edges;
+        Array bin_edges = binner->array();
         if (m_options.freq->is_end() || m_options.freq->type() == epoch_core::EpochOffsetType::Week)
         {
-            if (m_options.closed == epoch_core::GrouperClosedType::Right)
-            {
-                bin_edges = binner->tz_localize("")->tz_localize(ax_values.dt().tz())->array();
-            }
-            else
-            {
-                bin_edges = binner->array();
+            if (m_options.closed == epoch_core::GrouperClosedType::Right) {
+                bin_edges = bin_edges.dt().tz_localize("") + Scalar{TimeDelta{chrono_days{1}}} - Scalar{TimeDelta{chrono_microseconds{1}}};
             }
 
             if (bin_edges[-2] > ax_values.max())

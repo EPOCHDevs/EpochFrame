@@ -91,38 +91,35 @@ get_origin_value(const std::string& origin)
     {
         return epoch_core::GrouperOrigin::StartDay;
     }
-    else if (origin == "epoch")
+    if (origin == "epoch")
     {
         return epoch_core::GrouperOrigin::Epoch;
     }
-    else if (origin == "start")
+    if (origin == "start")
     {
         return epoch_core::GrouperOrigin::Start;
     }
-    else if (origin == "start_day")
+    if (origin == "start_day")
     {
         return epoch_core::GrouperOrigin::StartDay;
     }
-    else if (origin == "end")
+    if (origin == "end")
     {
         return epoch_core::GrouperOrigin::End;
     }
-    else if (origin == "end_day")
+    if (origin == "end_day")
     {
         return epoch_core::GrouperOrigin::EndDay;
     }
-    else
+    // Try to parse as timestamp
+    try
     {
-        // Try to parse as timestamp
-        try
-        {
-            return efo::DateTime::from_str(origin);
-        }
-        catch (...)
-        {
-            // Fall back to default
-            return epoch_core::GrouperOrigin::StartDay;
-        }
+        return efo::DateTime::from_str(origin);
+    }
+    catch (...)
+    {
+        // Fall back to default
+        return epoch_core::GrouperOrigin::StartDay;
     }
 }
 
@@ -336,7 +333,7 @@ TEST_CASE("Test resampled files", "[resample_file_test]")
                     }
                     catch (const std::exception& e)
                     {
-                        SPDLOG_ERROR("Manual resample failed: {}", e.what());
+                        FAIL("Manual resample failed: " << e.what());
                         // Skip comparison for unsupported combinations
                         continue;
                     }
@@ -344,6 +341,7 @@ TEST_CASE("Test resampled files", "[resample_file_test]")
                     std::vector<std::string> columns = {"Open", "High", "Low", "Close", "Volume"};
 
                     // Compare results (shape, first few values)
+                    INFO(resampled_df[columns].diff(manually_resampled[columns]));
                     REQUIRE(resampled_df[columns].equals(manually_resampled[columns]));
                 }
             }

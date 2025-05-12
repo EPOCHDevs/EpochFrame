@@ -977,7 +977,7 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]")
         auto week_handler = efo::weeks(1);
 
         // Just make sure it doesn't crash
-        REQUIRE(week_handler->is_on_offset(monday));
+        REQUIRE(week_handler->is_on_offset(sunday));
 
         // Test with day anchoring as well
         auto monday_handler = efo::weeks(1, epoch_core::EpochDayOfWeek::Monday);

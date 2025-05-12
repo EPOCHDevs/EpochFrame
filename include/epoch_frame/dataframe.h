@@ -166,6 +166,9 @@ namespace epoch_frame
         DataFrame
                               resample_by_ohlcv(const TimeGrouperOptions&                           options,
                                                 std::unordered_map<std::string, std::string> const& columns) const;
+
+        std::string diff(DataFrame const& other) const;
+
         GroupByAgg<DataFrame> group_by_agg(std::string const& by) const
         {
             return group_by_agg(std::vector<std::string>{by});
