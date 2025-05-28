@@ -4,20 +4,26 @@
 #include "epoch_core/macros.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
-#include <execution>
 #include <catch2/generators/catch_generators.hpp>
+#include <execution>
 
 namespace epoch_frame
 {
-    std::vector<int64_t> generate_bins(std::shared_ptr<arrow::TimestampArray> const& values, std::shared_ptr<arrow::TimestampArray> const& binner,
-                                       epoch_core::GrouperClosedType closed) {
+    std::vector<int64_t> generate_bins(std::shared_ptr<arrow::TimestampArray> const& values,
+                                       std::shared_ptr<arrow::TimestampArray> const& binner,
+                                       epoch_core::GrouperClosedType                 closed)
+    {
         const auto lenidx = values->length();
         const auto lenbin = binner->length();
 
         AssertFalseFromFormat(lenidx <= 0 || lenbin <= 0,
                               "Invalid length for values or for binner");
-        AssertFalseFromFormat(values->Value(0) < binner->Value(0), "Values falls before first bin. {} < {}.", values->Value(0), binner->Value(0));
-        AssertFalseFromFormat(values->Value(lenidx-1) > binner->Value(lenbin-1), "Values falls after last bin. {} > {}.", values->Value(lenidx-1), binner->Value(lenbin-1));
+        AssertFalseFromFormat(values->Value(0) < binner->Value(0),
+                              "Values falls before first bin. {} < {}.", values->Value(0),
+                              binner->Value(0));
+        AssertFalseFromFormat(values->Value(lenidx - 1) > binner->Value(lenbin - 1),
+                              "Values falls after last bin. {} > {}.", values->Value(lenidx - 1),
+                              binner->Value(lenbin - 1));
 
         std::vector<int64_t> bins(lenbin - 1);
         int64_t              j  = 0;
@@ -51,7 +57,8 @@ namespace epoch_frame
     }
 
     std::vector<int64_t> generate_bins(Array const& values, Array const& binner,
-                                   epoch_core::GrouperClosedType closed) {
+                                       epoch_core::GrouperClosedType closed)
+    {
         AssertFromFormat(values.null_count() == 0, "Values cannot contain null values");
         AssertFromFormat(binner.null_count() == 0, "Bin edges cannot contain null values");
         return generate_bins(values.to_timestamp_view(), binner.to_timestamp_view(), closed);
@@ -280,7 +287,7 @@ namespace epoch_frame
         int64_t lresult_int = 0;
         if (m_options.closed == epoch_core::GrouperClosedType::Right)
         {
-            if (foffset > loffset)
+            if (foffset > 0)
             {
                 fresult_int = first.value - foffset;
             }
@@ -414,8 +421,10 @@ namespace epoch_frame
         Array bin_edges = binner->array();
         if (m_options.freq->is_end() || m_options.freq->type() == epoch_core::EpochOffsetType::Week)
         {
-            if (m_options.closed == epoch_core::GrouperClosedType::Right) {
-                bin_edges = bin_edges.dt().tz_localize("") + Scalar{TimeDelta{chrono_days{1}}} - Scalar{TimeDelta{chrono_microseconds{1}}};
+            if (m_options.closed == epoch_core::GrouperClosedType::Right)
+            {
+                bin_edges = bin_edges.dt().tz_localize("") + Scalar{TimeDelta{chrono_days{1}}} -
+                            Scalar{TimeDelta{chrono_microseconds{1}}};
                 bin_edges = bin_edges.dt().tz_localize(arrow_utils::get_tz(binner->dtype()));
             }
 
