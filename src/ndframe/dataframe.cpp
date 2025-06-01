@@ -73,7 +73,7 @@ namespace epoch_frame
         return DataFrame{m_index, arrow::Table::Make(new_schema, m_table->columns())};
     }
 
-    DataFrame DataFrame::rename(std::unordered_map<std::string, std::string> const& by)
+    DataFrame DataFrame::rename(std::unordered_map<std::string, std::string> const& by) const
     {
         std::vector<std::string> new_fields;
         for (auto const& field : m_table->schema()->fields())

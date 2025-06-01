@@ -34,7 +34,7 @@ namespace epoch_frame
             return add_prefix_or_suffix(suffix, false);
         }
 
-        DataFrame rename(std::unordered_map<std::string, std::string> const& by);
+        DataFrame rename(std::unordered_map<std::string, std::string> const& by) const;
 
         using NDFrame<DataFrame, arrow::Table>::set_index;
         DataFrame set_index(std::string const&) const;
