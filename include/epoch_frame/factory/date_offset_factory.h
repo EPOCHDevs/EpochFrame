@@ -7,62 +7,62 @@
 
 
 namespace epoch_frame::factory::offset {
-    inline std::shared_ptr<FixedOffsetHandler> nanos(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> nanos(int64_t n) {
         return std::make_shared<NanoHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> micro(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> micro(int64_t n) {
         return std::make_shared<MicroHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> millis(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> millis(int64_t n) {
         return std::make_shared<MilliHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> seconds(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> seconds(int64_t n) {
         return std::make_shared<SecondHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> minutes(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> minutes(int64_t n) {
         return std::make_shared<MinuteHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> hours(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> hours(int64_t n) {
         return std::make_shared<HourHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> days(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> days(int64_t n) {
         return std::make_shared<DayHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> weeks(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = epoch_core::EpochDayOfWeek::Sunday) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> weeks(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = epoch_core::EpochDayOfWeek::Sunday) {
         return std::make_shared<WeekHandler>(n, weekday);
     }
 
     // Month offset factory functions
-    inline std::shared_ptr<FixedOffsetHandler> month_start(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> month_start(int64_t n) {
         return std::make_shared<MonthStartHandler>(n);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> month_end(int64_t n) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> month_end(int64_t n) {
         return std::make_shared<MonthEndHandler>(n);
     }
 
     // Quarter offset factory functions
-    inline std::shared_ptr<FixedOffsetHandler> quarter_start(int64_t n, std::optional<std::chrono::month> starting_month = std::chrono::January) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> quarter_start(int64_t n, std::optional<std::chrono::month> starting_month = std::chrono::January) {
         return std::make_shared<QuarterStartHandler>(n, starting_month);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> quarter_end(int64_t n, std::optional<std::chrono::month> starting_month = std::chrono::December) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> quarter_end(int64_t n, std::optional<std::chrono::month> starting_month = std::chrono::December) {
         return std::make_shared<QuarterEndHandler>(n, starting_month);
     }
 
     // Year offset factory functions
-    inline std::shared_ptr<FixedOffsetHandler> year_start(int64_t n, std::optional<std::chrono::month> month = std::chrono::January) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> year_start(int64_t n, std::optional<std::chrono::month> month = std::chrono::January) {
         return std::make_shared<YearStartHandler>(n, month);
     }
 
-    inline std::shared_ptr<FixedOffsetHandler> year_end(int64_t n, std::optional<std::chrono::month> month = std::chrono::December) {
+    inline std::shared_ptr<BaseCalendarOffsetHandler> year_end(int64_t n, std::optional<std::chrono::month> month = std::chrono::December) {
         return std::make_shared<YearEndHandler>(n, month);
     }
 

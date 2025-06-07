@@ -99,9 +99,9 @@ namespace epoch_frame
         int64_t n_;
     };
 
-    struct FixedOffsetHandler : OffsetHandler
+    struct BaseCalendarOffsetHandler : OffsetHandler
     {
-        FixedOffsetHandler(int64_t n) : OffsetHandler(n) {}
+        BaseCalendarOffsetHandler(int64_t n) : OffsetHandler(n) {}
 
         bool is_fixed() const override
         {
@@ -162,9 +162,9 @@ namespace epoch_frame
         TimeDelta pd_timedelta() const;
     };
 
-    struct TickHandler : FixedOffsetHandler
+    struct TickHandler : BaseCalendarOffsetHandler
     {
-        explicit TickHandler(int64_t n) : FixedOffsetHandler(n) {}
+        explicit TickHandler(int64_t n) : BaseCalendarOffsetHandler(n) {}
 
         virtual int64_t nano_increments() const = 0;
 
@@ -429,7 +429,7 @@ namespace epoch_frame
 
     // ---------------------------------------------------------------------
     // Week-Based Offset Classes
-    class WeekHandler : public FixedOffsetHandler
+    class WeekHandler : public BaseCalendarOffsetHandler
     {
       public:
         WeekHandler(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday = {});
@@ -438,6 +438,10 @@ namespace epoch_frame
                      const arrow::TimestampScalar& end) const override;
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
+
+        bool is_fixed() const override {
+            return false;
+        }
 
         arrow::compute::CalendarUnit calendar_unit() const override
         {
@@ -475,12 +479,16 @@ namespace epoch_frame
     // TODO: WeekOfMonthOffsetHandler
     // TODO: LastWeekOfMonthOffsetHandler
     // -------------------------------------------------------------------------------
-    class MonthOffsetHandler : public FixedOffsetHandler
+    class MonthOffsetHandler : public BaseCalendarOffsetHandler
     {
       public:
         MonthOffsetHandler(int64_t n, DayOption day_opt = DayOption::END)
-            : FixedOffsetHandler(n), m_day_opt(day_opt)
+            : BaseCalendarOffsetHandler(n), m_day_opt(day_opt)
         {
+        }
+
+        bool is_fixed() const override {
+            return false;
         }
 
         int64_t diff(const arrow::TimestampScalar& start,
@@ -566,7 +574,7 @@ namespace epoch_frame
         }
     };
 
-    class QuarterOffsetHandler : public FixedOffsetHandler
+    class QuarterOffsetHandler : public BaseCalendarOffsetHandler
     {
       public:
         QuarterOffsetHandler(int64_t n, std::optional<std::chrono::month> starting_month = {},
@@ -574,6 +582,10 @@ namespace epoch_frame
 
         int64_t diff(const arrow::TimestampScalar& start,
                      const arrow::TimestampScalar& end) const override;
+
+        bool is_fixed() const override {
+            return false;
+        }
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
@@ -664,14 +676,18 @@ namespace epoch_frame
         }
     };
 
-    class YearOffsetHandler : public FixedOffsetHandler
+    class YearOffsetHandler : public BaseCalendarOffsetHandler
     {
       public:
         YearOffsetHandler(int64_t n, std::optional<std::chrono::month> month = {},
                           DayOption day_opt = DayOption::END)
-            : FixedOffsetHandler(n), m_month(month.value_or(std::chrono::December)),
+            : BaseCalendarOffsetHandler(n), m_month(month.value_or(std::chrono::December)),
               m_day_opt(day_opt)
         {
+        }
+
+        bool is_fixed() const override {
+            return false;
         }
 
         int64_t diff(const arrow::TimestampScalar& start,

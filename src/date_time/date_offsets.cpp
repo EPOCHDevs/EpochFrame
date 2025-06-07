@@ -211,7 +211,7 @@ namespace epoch_frame
     }
 
     WeekHandler::WeekHandler(int64_t n, std::optional<epoch_core::EpochDayOfWeek> weekday)
-        : FixedOffsetHandler(n), m_weekday(weekday)
+        : BaseCalendarOffsetHandler(n), m_weekday(weekday)
     {
     }
 
@@ -280,7 +280,7 @@ namespace epoch_frame
     QuarterOffsetHandler::QuarterOffsetHandler(int64_t                           n,
                                                std::optional<std::chrono::month> starting_month,
                                                DayOption                         day_opt)
-        : FixedOffsetHandler(n), m_starting_month(starting_month.value_or(std::chrono::March)),
+        : BaseCalendarOffsetHandler(n), m_starting_month(starting_month.value_or(March)),
           m_day_opt(day_opt)
     {
     }
