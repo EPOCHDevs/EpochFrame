@@ -46,9 +46,9 @@ namespace epoch_frame::calendar
             std::ranges::transform(rules, pre_holidays.begin(),
                                    [&](const HolidayData& rule)
                                    {
-                                       return Holiday{rule}.dates_with_name(
+                                       return FrameOrSeries{Holiday{rule}.dates_with_name(
                                            start_date_to_use.timestamp(),
-                                           end_date_to_use.timestamp());
+                                           end_date_to_use.timestamp())};
                                    });
 
             // Update cache

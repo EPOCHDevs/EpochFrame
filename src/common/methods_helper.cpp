@@ -416,10 +416,15 @@ namespace epoch_frame
                         for (size_t i = r.begin(); i != r.end(); ++i)
                         {
                             auto obj          = objs[i];
-                            aligned_frames[i] = FrameOrSeries(
-                                newIndex,
-                                align_by_index(TableComponent{obj.index(), obj.table_or_array()},
-                                               newIndex));
+                            auto table_array = align_by_index(TableComponent{obj.index(), obj.table_or_array()},
+                                               newIndex);
+                            if (table_array.is_table()) {
+                                aligned_frames[i] = FrameOrSeries(newIndex, table_array.table());
+                            }
+                            else {
+                                auto name = obj.series().name();
+                                aligned_frames[i] = FrameOrSeries(newIndex, table_array.chunked_array(), name);
+                            }
                         }
                     },
                     tbb::simple_partitioner());

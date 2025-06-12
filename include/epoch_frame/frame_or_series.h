@@ -14,13 +14,10 @@ namespace epoch_frame {
     class FrameOrSeries {
     public:
         FrameOrSeries() = default;
-        FrameOrSeries(IndexPtr const& index, TableOrArray const& tableOrArray) {
-            if (tableOrArray.is_table()) {
-                m_impl = DataFrame(index, tableOrArray.table());
-            } else {
-                m_impl = Series(index, tableOrArray.chunked_array());
-            }
-        }
+        FrameOrSeries(IndexPtr const& index, arrow::TablePtr const& table):m_impl(DataFrame{index, table}) {}
+
+        FrameOrSeries(IndexPtr const& index, arrow::ChunkedArrayPtr const& arr,
+            std::optional<std::string> const& name = std::nullopt):m_impl(Series{index, arr, name}) {}
 
         FrameOrSeries(DataFrame frame) : m_impl(std::move(frame)) {}
 
