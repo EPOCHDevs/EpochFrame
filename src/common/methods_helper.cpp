@@ -397,6 +397,38 @@ namespace epoch_frame
             arrays.insert(arrays.end(), columns_.begin(), columns_.end());
             fields.insert(fields.end(), fields_.begin(), fields_.end());
         }
+
+        // Check for duplicate column names before creating DataFrame
+        std::unordered_set<std::string> unique_names;
+        std::vector<std::string>        duplicates;
+        for (const auto& field : fields)
+        {
+            const auto& name = field->name();
+            if (unique_names.contains(name))
+            {
+                duplicates.push_back(name);
+            }
+            else
+            {
+                unique_names.insert(name);
+            }
+        }
+
+        if (!duplicates.empty())
+        {
+            std::string duplicate_list;
+            for (size_t i = 0; i < duplicates.size(); ++i)
+            {
+                if (i > 0)
+                    duplicate_list += ", ";
+                duplicate_list += "'" + duplicates[i] + "'";
+            }
+            throw std::runtime_error(fmt::format(
+                "concat: Duplicate column names detected: {}. "
+                "Use different column names or consider using suffixes to avoid conflicts.",
+                duplicate_list));
+        }
+
         auto new_table = arrow::Table::Make(arrow::schema(fields), arrays);
         return ignore_index ? DataFrame(new_table) : DataFrame(newIndex, new_table);
     }
@@ -415,15 +447,18 @@ namespace epoch_frame
                     {
                         for (size_t i = r.begin(); i != r.end(); ++i)
                         {
-                            auto obj          = objs[i];
-                            auto table_array = align_by_index(TableComponent{obj.index(), obj.table_or_array()},
-                                               newIndex);
-                            if (table_array.is_table()) {
+                            auto obj         = objs[i];
+                            auto table_array = align_by_index(
+                                TableComponent{obj.index(), obj.table_or_array()}, newIndex);
+                            if (table_array.is_table())
+                            {
                                 aligned_frames[i] = FrameOrSeries(newIndex, table_array.table());
                             }
-                            else {
+                            else
+                            {
                                 auto name = obj.series().name();
-                                aligned_frames[i] = FrameOrSeries(newIndex, table_array.chunked_array(), name);
+                                aligned_frames[i] =
+                                    FrameOrSeries(newIndex, table_array.chunked_array(), name);
                             }
                         }
                     },
