@@ -428,7 +428,6 @@ namespace epoch_frame
                 "Use different column names or consider using suffixes to avoid conflicts.",
                 duplicate_list));
         }
-
         auto new_table = arrow::Table::Make(arrow::schema(fields), arrays);
         return ignore_index ? DataFrame(new_table) : DataFrame(newIndex, new_table);
     }

@@ -551,12 +551,15 @@ namespace epoch_frame
         return factory::group_by::make_apply_by_index(*this, groupKeys, options);
     }
 
-    std::string DataFrame::diff(DataFrame const& other) const {
-        std::stringstream ss;
+    std::string DataFrame::diff(DataFrame const& other) const
+    {
+        std::stringstream        ss;
         std::vector<std::string> added;
 
-        auto log_if_diff = [&](std::string const& column, std::string const& diff) {
-            if (diff.empty()) {
+        auto log_if_diff = [&](std::string const& column, std::string const& diff)
+        {
+            if (diff.empty())
+            {
                 return;
             }
             ss << column << ":\n" << diff << "\n";
@@ -564,22 +567,29 @@ namespace epoch_frame
 
         log_if_diff("Index", m_index->array()->Diff(*other.m_index->array()));
 
-        for (auto const& column: column_names()) {
-            if (other.contains(column)) {
+        for (auto const& column : column_names())
+        {
+            if (other.contains(column))
+            {
                 added.push_back(column);
-                log_if_diff(column, operator[](column).contiguous_array()->Diff(*other[column].contiguous_array()));
+                log_if_diff(column, operator[](column).contiguous_array()->Diff(
+                                        *other[column].contiguous_array()));
             }
-            else {
+            else
+            {
                 log_if_diff(column, "MISSING");
             }
             ss << "\n";
         }
 
-        if (added.size() != num_cols()) {
+        if (added.size() != num_cols())
+        {
             std::vector<std::string> diff_columns;
-            std::ranges::set_difference(other.column_names(), added, std::back_inserter(diff_columns));
+            std::ranges::set_difference(other.column_names(), added,
+                                        std::back_inserter(diff_columns));
             ss << "Missing Columns: [";
-            for (auto const& column: diff_columns) {
+            for (auto const& column : diff_columns)
+            {
                 ss << column << ", ";
             }
             ss << "]";
@@ -592,31 +602,41 @@ namespace epoch_frame
     DataFrame::resample_by_ohlcv(const TimeGrouperOptions&                           options,
                                  std::unordered_map<std::string, std::string> const& columns) const
     {
-        const std::string open_   = columns.contains("open") ? columns.at("open") : "o";
-        const std::string high_   = columns.contains("high") ? columns.at("high") : "h";
-        const std::string low_    = columns.contains("low") ? columns.at("low") : "l";
-        const std::string close_  = columns.contains("close") ? columns.at("close") : "c";
-        const std::string volume_ = columns.contains("volume") ? columns.at("volume") : "v";
-        auto              ohlcv   = [&](epoch_frame::DataFrame const& df)
-        {
-            auto open   = df[open_].iloc(0);
-            auto high   = df[high_].max();
-            auto low    = df[low_].min();
-            auto close  = df[close_].iloc(-1);
-            auto volume = df[volume_].sum();
+        const std::string open_     = columns.contains("open") ? columns.at("open") : "o";
+        const std::string high_     = columns.contains("high") ? columns.at("high") : "h";
+        const std::string low_      = columns.contains("low") ? columns.at("low") : "l";
+        const std::string close_    = columns.contains("close") ? columns.at("close") : "c";
+        const std::string volume_   = columns.contains("volume") ? columns.at("volume") : "v";
+        const std::string contract_ = columns.contains("contract") ? columns.at("contract") : "s";
 
-            return arrow::Table::Make(
-                arrow::schema(
-                    {arrow::field(open_, arrow::float64()), arrow::field(high_, arrow::float64()),
-                     arrow::field(low_, arrow::float64()), arrow::field(close_, arrow::float64()),
-                     arrow::field(volume_, arrow::float64())}),
-                arrow::ArrayVector{
-                    arrow::MakeArrayFromScalar(*open.value(), 1).MoveValueUnsafe(),
-                    arrow::MakeArrayFromScalar(*high.value(), 1).MoveValueUnsafe(),
-                    arrow::MakeArrayFromScalar(*low.value(), 1).MoveValueUnsafe(),
-                    arrow::MakeArrayFromScalar(*close.value(), 1).MoveValueUnsafe(),
-                    arrow::MakeArrayFromScalar(*volume.value(), 1).MoveValueUnsafe()},
-                1);
+        auto ohlcv = [&](epoch_frame::DataFrame const& df)
+        {
+            auto               open   = df[open_].iloc(0);
+            auto               high   = df[high_].max();
+            auto               low    = df[low_].min();
+            auto               close  = df[close_].iloc(-1);
+            auto               volume = df[volume_].sum();
+            arrow::ArrayVector array_list{
+                arrow::MakeArrayFromScalar(*open.value(), 1).MoveValueUnsafe(),
+                arrow::MakeArrayFromScalar(*high.value(), 1).MoveValueUnsafe(),
+                arrow::MakeArrayFromScalar(*low.value(), 1).MoveValueUnsafe(),
+                arrow::MakeArrayFromScalar(*close.value(), 1).MoveValueUnsafe(),
+                arrow::MakeArrayFromScalar(*volume.value(), 1).MoveValueUnsafe()};
+
+            std::vector<arrow::FieldPtr> fields{
+                arrow::field(open_, arrow::float64()), arrow::field(high_, arrow::float64()),
+                arrow::field(low_, arrow::float64()), arrow::field(close_, arrow::float64()),
+                arrow::field(volume_, arrow::float64())};
+
+            if (df.contains(contract_))
+            {
+                auto contract = df[contract_].iloc(-1);
+                array_list.emplace_back(
+                    arrow::MakeArrayFromScalar(*contract.value(), 1).MoveValueUnsafe());
+                fields.emplace_back(arrow::field(contract_, arrow::utf8()));
+            }
+
+            return arrow::Table::Make(arrow::schema(fields), array_list, 1);
         };
 
         return resample_by_apply(options).apply(ohlcv);
