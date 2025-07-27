@@ -267,21 +267,21 @@ namespace epoch_frame
     Series DataFrame::loc(const Scalar& index_label) const
     {
         auto integer_index = m_index->get_loc(index_label);
-        AssertFalseFromStream(integer_index.empty(), "loc: index not found");
+        AssertFalseFromStream(integer_index.empty(), "loc: index not found: " << index_label << "\n" << head());
         return iloc(integer_index.back());
     }
 
     DataFrame DataFrame::safe_loc(const Scalar& index_label) const
     {
         auto integer_index = m_index->get_loc(index_label);
-        AssertFalseFromStream(integer_index.empty(), "loc: index not found");
+        AssertFalseFromStream(integer_index.empty(), "loc: index not found: " << index_label << "\n" << head());
         return iloc(Array(factory::array::make_contiguous_array(integer_index)));
     }
 
     Scalar DataFrame::loc(const Scalar& index_label, const std::string& column) const
     {
         auto integer_index = m_index->get_loc(index_label);
-        AssertFalseFromStream(integer_index.empty(), "loc: index not found");
+        AssertFalseFromStream(integer_index.empty(), "loc: index not found: " << index_label << "\n" << head());
         return Scalar(AssertResultIsOk(
             get_column_by_name(*m_table, column)->GetScalar(integer_index.back())));
     }
