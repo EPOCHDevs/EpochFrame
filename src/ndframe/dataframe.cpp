@@ -268,6 +268,10 @@ namespace epoch_frame
     {
         auto integer_index = m_index->get_loc(index_label);
         AssertFalseFromStream(integer_index.empty(), "loc: index not found: " << index_label << "\n" << head());
+        if (index.size() > 1) {
+            SPDLOG_WARN("Found Duplicate Index: {}, Using last value.\nDetail:\n{}",
+                index_label.repr(), iloc(Array(factory::array::make_contiguous_array(integer_index))).repr());
+        }
         return iloc(integer_index.back());
     }
 

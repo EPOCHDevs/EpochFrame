@@ -183,9 +183,11 @@ namespace epoch_frame
     {
         auto index = m_index->get_loc(index_label);
         AssertFalseFromStream(index.empty(), "loc: index not found");
-        AssertFalseFromStream(index.size() > 1, "loc: duplicate index for scalar: " << index_label <<
-            "\n" << head().repr() << "\nindex_size" << index.size());
-        return iloc(index.front());
+        if (index.size() > 1) {
+            SPDLOG_WARN("Found Duplicate Index: {}, Using last value.\nDetail:\n{}",
+                index_label.repr(), iloc(Array(factory::array::make_contiguous_array(index))).repr());
+        }
+        return iloc(index.back());
     }
 
     Series Series::safe_loc(const Scalar& index_label) const
