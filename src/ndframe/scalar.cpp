@@ -359,7 +359,8 @@ namespace epoch_frame {
     }
 
     DateTime Scalar::to_date(std::string const &format, const std::string& tz) const {
-        return factory::scalar::to_datetime(timestamp(format, tz));
+        auto dt = factory::scalar::to_datetime(timestamp(format, tz));
+        return dt.replace_tz("");
     }
 
     epoch_core::EpochDayOfWeek Scalar::weekday() const {
