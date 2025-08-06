@@ -183,9 +183,11 @@ namespace epoch_frame
     {
         auto index = m_index->get_loc(index_label);
         AssertFalseFromStream(index.empty(), "loc: index not found");
-        if (index.size() > 1) {
+        if (index.size() > 1)
+        {
             SPDLOG_WARN("Found Duplicate Index: {}, Using last value.\nDetail:\n{}",
-                index_label.repr(), iloc(Array(factory::array::make_contiguous_array(index))).repr());
+                        index_label.repr(),
+                        iloc(Array(factory::array::make_contiguous_array(index))).repr());
         }
         return iloc(index.back());
     }
@@ -193,7 +195,8 @@ namespace epoch_frame
     Series Series::safe_loc(const Scalar& index_label) const
     {
         auto index = m_index->get_loc(index_label);
-        AssertFalseFromStream(index.empty(), "loc: index not found: " << index_label  << "\n" << head().repr() );
+        AssertFalseFromStream(index.empty(), "loc: index not found: " << index_label << "\n"
+                                                                      << head().repr());
         return iloc(Array(factory::array::make_contiguous_array(index)));
     }
 

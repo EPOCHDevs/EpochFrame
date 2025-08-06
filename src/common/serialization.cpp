@@ -6,9 +6,12 @@
 #include <arrow/result.h>
 #include <arrow/status.h>
 #include <atomic>
+#include <chrono>
+#include <cmath>
 #include <fmt/format.h>
 #include <mutex>
 #include <spdlog/spdlog.h>
+#include <thread>
 
 #include "s3_manager.h"
 #include <arrow/compute/api.h>
@@ -92,6 +95,15 @@ namespace epoch_frame
         // Create S3 filesystem
         arrow::fs::S3Options options = arrow::fs::S3Options::Defaults();
 
+        // Configure timeouts (with environment variable override)
+        auto request_timeout_str = getenv("ARROW_S3_REQUEST_TIMEOUT");
+        auto connect_timeout_str = getenv("ARROW_S3_CONNECT_TIMEOUT");
+
+        options.request_timeout =
+            request_timeout_str ? std::stod(request_timeout_str) : 30.0; // Default 30 seconds
+        options.connect_timeout =
+            connect_timeout_str ? std::stod(connect_timeout_str) : 10.0; // Default 10 seconds
+
         // Configure credentials
         const auto aws_access_key = getenv("AWS_ACCESS_KEY_ID");
         const auto aws_secret_key = getenv("AWS_SECRET_ACCESS_KEY");
@@ -174,7 +186,6 @@ namespace epoch_frame
         if (is_s3_path(path))
         {
             // Get S3 filesystem using the S3Manager
-
             ARROW_ASSIGN_OR_RAISE(auto s3fs, get_s3_filesystem());
 
             // Parse the S3 URI to get bucket and key

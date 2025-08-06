@@ -18,15 +18,13 @@ add_subdirectory(series)
 target_compile_definitions(epoch_frame_test PRIVATE -DEPOCH_FRAME_S3_TEST_BUCKET="epoch-test-files/epoch_frame")
 
 # Copy CSV test files to the runtime directory
-if(NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files")
-    # Create directory if it doesn't exist    
-    file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files")
-    # Copy test data directory to runtime bin
-    file(COPY "${CMAKE_CURRENT_LIST_DIR}/test_files" 
-         DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-         PATTERN "*")
-         
-    message(STATUS "Copied test data to: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files")
-endif()
+# Always copy test files to ensure they're available
+file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files")
+# Copy test data directory to runtime bin
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/test_files/" 
+     DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files"
+     PATTERN "*")
+     
+message(STATUS "Copied test data to: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_files")
 
 
