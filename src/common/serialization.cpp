@@ -839,6 +839,110 @@ namespace epoch_frame
         return arrow::Status::OK();
     }
 
+    // Arrow format operations
+    arrow::Result<DataFrame> read_arrow(const std::string&      file_path,
+                                        const ArrowReadOptions& options)
+    {
+        ARROW_ASSIGN_OR_RAISE(auto input, get_input_stream(file_path));
+
+        // Open the Arrow file reader
+        ARROW_ASSIGN_OR_RAISE(auto reader, arrow::ipc::RecordBatchFileReader::Open(input));
+
+        // Read all record batches
+        std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+        for (int i = 0; i < reader->num_record_batches(); ++i)
+        {
+            ARROW_ASSIGN_OR_RAISE(auto batch, reader->ReadRecordBatch(i));
+            batches.push_back(batch);
+        }
+
+        // Convert batches to table
+        ARROW_ASSIGN_OR_RAISE(auto table, arrow::Table::FromRecordBatches(batches));
+
+        // Select columns if specified
+        if (options.columns)
+        {
+            ARROW_ASSIGN_OR_RAISE(table, table->SelectColumns(*options.columns));
+        }
+
+        // Extract index column if specified
+        arrow::ArrayPtr index_array = nullptr;
+        if (options.index_column)
+        {
+            auto [new_table, extracted_index] = extract_index_column(table, options.index_column);
+            table                             = new_table;
+            index_array                       = extracted_index;
+        }
+
+        // Create and return the DataFrame
+        if (index_array)
+        {
+            auto index = factory::index::make_index(index_array, std::nullopt, "");
+            return DataFrame(index, table);
+        }
+        else
+        {
+            return DataFrame(table);
+        }
+    }
+
+    arrow::Status write_arrow(const FrameOrSeries& data, const std::string& file_path,
+                              const ArrowWriteOptions& options)
+    {
+        // Convert to DataFrame if Series
+        auto df = data.is_frame() ? data.frame() : data.series().to_frame();
+
+        // Add index as a column if requested
+        std::shared_ptr<arrow::Table> table_to_write;
+        if (options.include_index)
+        {
+            auto        index_array = df.index()->array().value();
+            std::string index_name  = options.index_label.value_or("index");
+
+            arrow::FieldVector fields = df.table()->schema()->fields();
+            fields.insert(fields.begin(), arrow::field(index_name, index_array->type()));
+
+            arrow::ChunkedArrayVector columns = df.table()->columns();
+            columns.insert(columns.begin(), arrow::ChunkedArray::Make({index_array}).ValueOrDie());
+
+            table_to_write = arrow::Table::Make(arrow::schema(fields), columns);
+        }
+        else
+        {
+            table_to_write = df.table();
+        }
+
+        // Get output stream for the file
+        ARROW_ASSIGN_OR_RAISE(auto output_stream, get_output_stream(file_path));
+
+        // Create metadata if needed
+        std::shared_ptr<arrow::KeyValueMetadata> kv_metadata;
+        if (options.metadata)
+        {
+            std::vector<std::string> keys, values;
+            for (const auto& [key, value] : *options.metadata)
+            {
+                keys.push_back(key);
+                values.push_back(value);
+            }
+            kv_metadata = arrow::KeyValueMetadata::Make(keys, values);
+        }
+
+        // Create record batch file writer
+        auto schema = table_to_write->schema();
+        if (kv_metadata)
+        {
+            schema = schema->WithMetadata(kv_metadata);
+        }
+
+        ARROW_ASSIGN_OR_RAISE(auto writer, arrow::ipc::MakeFileWriter(output_stream, schema));
+        ARROW_RETURN_NOT_OK(writer->WriteTable(*table_to_write));
+        ARROW_RETURN_NOT_OK(writer->Close());
+
+        // Close the output stream
+        return output_stream->Close();
+    }
+
     ScopedS3::ScopedS3()
     {
         S3Manager::Instance().initialize();

@@ -569,3 +569,137 @@ TEST_CASE("Binary Serialization - Series")
     REQUIRE(read_df.num_cols() == 1);
     REQUIRE(read_df.equals(series.to_frame()));
 }
+
+// Arrow Format Tests
+TEST_CASE("Arrow Format Serialization - File")
+{
+    INFO("Testing Arrow format file serialization");
+
+    auto df = create_test_dataframe();
+
+    // Get temp file path
+    auto temp_file = get_temp_file_path("arrow_test", ".arrow");
+
+    // Write to file
+    ArrowWriteOptions write_options;
+    write_options.include_index = true;
+    write_options.index_label   = "idx";
+
+    REQUIRE(write_arrow(df, temp_file, write_options).ok());
+
+    // Verify file exists
+    REQUIRE(std::filesystem::exists(temp_file));
+
+    // Read from file
+    ArrowReadOptions read_options;
+    read_options.index_column = "idx";
+
+    auto read_df = read_arrow(temp_file, read_options).ValueOrDie();
+
+    REQUIRE(read_df.num_rows() == df.num_rows());
+    REQUIRE(read_df.num_cols() == df.num_cols());
+    REQUIRE(read_df.equals(df));
+
+    // Clean up
+    std::filesystem::remove(temp_file);
+}
+
+TEST_CASE("Arrow Format Serialization - Series")
+{
+    INFO("Testing Arrow format serialization with Series");
+
+    auto series = create_test_series();
+
+    // Get temp file path
+    auto temp_file = get_temp_file_path("arrow_series_test", ".arrow");
+
+    // Write to file
+    ArrowWriteOptions write_options;
+    write_options.include_index = true;
+
+    REQUIRE(write_arrow(series, temp_file, write_options).ok());
+
+    // Verify file exists
+    REQUIRE(std::filesystem::exists(temp_file));
+
+    // Read from file
+    ArrowReadOptions read_options;
+    read_options.index_column = "index";
+
+    auto read_df = read_arrow(temp_file, read_options).ValueOrDie();
+
+    // Series should be converted to DataFrame for comparison
+    REQUIRE(read_df.num_rows() == series.size());
+    REQUIRE(read_df.num_cols() == 1);
+    REQUIRE(read_df.equals(series.to_frame()));
+
+    // Clean up
+    std::filesystem::remove(temp_file);
+}
+
+TEST_CASE("Arrow Format Serialization - S3", "[s3]")
+{
+    if constexpr (!s3_testing_available())
+    {
+        SKIP("S3 test bucket not configured");
+    }
+
+    INFO("Testing Arrow format S3 serialization");
+
+    auto df = create_test_dataframe();
+
+    // Get S3 path
+    auto s3_path = get_s3_test_path("test_arrow.arrow");
+
+    // Write to S3
+    ArrowWriteOptions write_options;
+    write_options.include_index = true;
+    write_options.index_label   = "idx";
+
+    REQUIRE(write_arrow(df, s3_path, write_options).ok());
+
+    // Read from S3
+    ArrowReadOptions read_options;
+    read_options.index_column = "idx";
+
+    auto read_df = read_arrow(s3_path, read_options).ValueOrDie();
+
+    REQUIRE(read_df.num_rows() == df.num_rows());
+    REQUIRE(read_df.num_cols() == df.num_cols());
+    REQUIRE(read_df.equals(df));
+}
+
+TEST_CASE("Arrow Format Serialization - Metadata")
+{
+    INFO("Testing Arrow format serialization with metadata");
+
+    auto df = create_test_dataframe();
+
+    // Get temp file path
+    auto temp_file = get_temp_file_path("arrow_metadata_test", ".arrow");
+
+    // Write to file with metadata
+    ArrowWriteOptions write_options;
+    write_options.include_index = true;
+    write_options.index_label   = "idx";
+    write_options.metadata =
+        std::unordered_map<std::string, std::string>{{"author", "EpochFrame"}, {"version", "1.0"}};
+
+    REQUIRE(write_arrow(df, temp_file, write_options).ok());
+
+    // Verify file exists
+    REQUIRE(std::filesystem::exists(temp_file));
+
+    // Read from file
+    ArrowReadOptions read_options;
+    read_options.index_column = "idx";
+
+    auto read_df = read_arrow(temp_file, read_options).ValueOrDie();
+
+    REQUIRE(read_df.num_rows() == df.num_rows());
+    REQUIRE(read_df.num_cols() == df.num_cols());
+    REQUIRE(read_df.equals(df));
+
+    // Clean up
+    std::filesystem::remove(temp_file);
+}

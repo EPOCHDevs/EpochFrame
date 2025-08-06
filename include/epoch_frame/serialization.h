@@ -73,6 +73,19 @@ namespace epoch_frame
         std::optional<std::unordered_map<std::string, std::string>> metadata      = std::nullopt;
     };
 
+    struct ArrowReadOptions
+    {
+        std::optional<std::vector<int>> columns      = std::nullopt;
+        std::optional<std::string>      index_column = std::nullopt;
+    };
+
+    struct ArrowWriteOptions
+    {
+        bool                                                        include_index = true;
+        std::optional<std::string>                                  index_label   = std::nullopt;
+        std::optional<std::unordered_map<std::string, std::string>> metadata      = std::nullopt;
+    };
+
     // Function declarations for different I/O operations
 
     // CSV operations
@@ -110,6 +123,12 @@ namespace epoch_frame
     arrow::Status write_buffer(const FrameOrSeries&                     data,
                                std::shared_ptr<arrow::ResizableBuffer>& buffer,
                                const BinaryWriteOptions&                options = {});
+
+    // Arrow format operations
+    arrow::Result<DataFrame> read_arrow(const std::string&      file_path,
+                                        const ArrowReadOptions& options = {});
+    arrow::Status            write_arrow(const FrameOrSeries& data, const std::string& file_path,
+                                         const ArrowWriteOptions& options = {});
 
     // Utility functions
     bool                                                  is_s3_path(const std::string& path);
