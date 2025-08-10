@@ -14,7 +14,8 @@
 
 CREATE_ENUM(EpochOffsetType, RelativeDelta, Day, Hour, Minute, Second, Milli, Micro, Nano, Week,
             Month, MonthStart, MonthEnd, Quarter, QuarterStart, QuarterEnd, Year, YearStart,
-            YearEnd, BusinessDay, CustomBusinessDay);
+            YearEnd, BusinessDay, CustomBusinessDay, BusinessMonth, BusinessMonthStart,
+            BusinessMonthEnd, SessionAnchor, LastWeekOfMonth, WeekOfMonth);
 namespace epoch_frame
 {
     struct IDateOffsetHandler
@@ -1037,7 +1038,7 @@ namespace epoch_frame
         epoch_core::EpochOffsetType type() const override
         {
             // Not a fixed-width calendar unit; reuse RelativeDelta classification
-            return epoch_core::EpochOffsetType::RelativeDelta;
+            return epoch_core::EpochOffsetType::SessionAnchor;
         }
 
         std::string code() const override
@@ -1097,7 +1098,7 @@ namespace epoch_frame
 
         epoch_core::EpochOffsetType type() const override
         {
-            return epoch_core::EpochOffsetType::RelativeDelta;
+            return epoch_core::EpochOffsetType::WeekOfMonth;
         }
 
         std::string code() const override
@@ -1189,7 +1190,7 @@ namespace epoch_frame
 
         epoch_core::EpochOffsetType type() const override
         {
-            return epoch_core::EpochOffsetType::Month; // month-based progression
+            return epoch_core::EpochOffsetType::BusinessMonth; // month-based progression
         }
 
         std::string code() const override
