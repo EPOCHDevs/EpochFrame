@@ -3,16 +3,15 @@
 //
 
 #pragma once
-#include "epoch_frame/day_of_week.h"
+#include "business/np_busdaycal.h"
 #include "epoch_frame/aliases.h"
+#include "epoch_frame/day_of_week.h"
 #include "epoch_frame/enums.h"
 #include "epoch_frame/relative_delta.h"
 #include <arrow/compute/api.h>
 #include <arrow/scalar.h>
 #include <fmt/format.h>
 #include <memory>
-#include "business/np_busdaycal.h"
-
 
 CREATE_ENUM(EpochOffsetType, RelativeDelta, Day, Hour, Minute, Second, Milli, Micro, Nano, Week,
             Month, MonthStart, MonthEnd, Quarter, QuarterStart, QuarterEnd, Year, YearStart,
@@ -28,10 +27,9 @@ namespace epoch_frame
         virtual int64_t diff(arrow::TimestampScalar const&,
                              arrow::TimestampScalar const&) const = 0;
 
-        virtual bool is_fixed() const = 0;
-        virtual bool is_end() const   = 0;
-        virtual epoch_core::EpochOffsetType type() const = 0;
-
+        virtual bool                        is_fixed() const = 0;
+        virtual bool                        is_end() const   = 0;
+        virtual epoch_core::EpochOffsetType type() const     = 0;
 
         virtual arrow::TimestampScalar              add(arrow::TimestampScalar const&) const  = 0;
         virtual std::shared_ptr<IDateOffsetHandler> mul(int64_t const&) const                 = 0;
@@ -121,6 +119,11 @@ namespace epoch_frame
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
+        RelativeDelta get_relative_delta() const
+        {
+            return m_offset;
+        }
+
         bool is_on_offset(const arrow::TimestampScalar&) const override
         {
             return true;
@@ -168,7 +171,8 @@ namespace epoch_frame
 
         virtual int64_t nano_increments() const = 0;
 
-        int64_t nanos() const {
+        int64_t nanos() const
+        {
             return nano_increments() * n();
         }
 
@@ -439,7 +443,8 @@ namespace epoch_frame
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
-        bool is_fixed() const override {
+        bool is_fixed() const override
+        {
             return false;
         }
 
@@ -454,7 +459,9 @@ namespace epoch_frame
         {
             return std::format(
                 "W{}",
-                m_weekday ? std::format("-{}", epoch_core::EpochDayOfWeekWrapper::ToString(*m_weekday)) : "");
+                m_weekday
+                    ? std::format("-{}", epoch_core::EpochDayOfWeekWrapper::ToString(*m_weekday))
+                    : "");
         }
 
         std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
@@ -487,7 +494,13 @@ namespace epoch_frame
         {
         }
 
-        bool is_fixed() const override {
+        DayOption get_day_option() const
+        {
+            return m_day_opt;
+        }
+
+        bool is_fixed() const override
+        {
             return false;
         }
 
@@ -583,8 +596,14 @@ namespace epoch_frame
         int64_t diff(const arrow::TimestampScalar& start,
                      const arrow::TimestampScalar& end) const override;
 
-        bool is_fixed() const override {
+        bool is_fixed() const override
+        {
             return false;
+        }
+
+        DayOption get_day_option() const
+        {
+            return m_day_opt;
         }
 
         arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
@@ -686,7 +705,13 @@ namespace epoch_frame
         {
         }
 
-        bool is_fixed() const override {
+        DayOption get_day_option() const
+        {
+            return m_day_opt;
+        }
+
+        bool is_fixed() const override
+        {
             return false;
         }
 
@@ -825,91 +850,135 @@ namespace epoch_frame
         }
     };
 
-    struct BusinessMixinParams {
-        np::WeekMask weekmask{true, true, true, true, true, false, false};
+    struct BusinessMixinParams
+    {
+        np::WeekMask          weekmask{true, true, true, true, true, false, false};
         std::vector<DateTime> holidays{};
-        std::optional<std::variant<np::BusinessDayCalendarPtr, calendar::AbstractHolidayCalendarPtr>> calendar{std::nullopt};
+        std::optional<
+            std::variant<np::BusinessDayCalendarPtr, calendar::AbstractHolidayCalendarPtr>>
+            calendar{std::nullopt};
     };
 
-    class BusinessMixin : public OffsetHandler {
-        public:
-            BusinessMixin(np::BusinessDayCalendarPtr  calendar, int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
-            BusinessMixin(BusinessMixinParams , int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
-        protected:
-            np::BusinessDayCalendarPtr m_calendar{nullptr};
-            std::optional<TimeDelta> m_offset;
+    class BusinessMixin : public OffsetHandler
+    {
+      public:
+        BusinessMixin(np::BusinessDayCalendarPtr calendar, int64_t n,
+                      std::optional<TimeDelta> timedelta = std::nullopt);
+        BusinessMixin(BusinessMixinParams, int64_t n,
+                      std::optional<TimeDelta> timedelta = std::nullopt);
+
+        np::BusinessDayCalendarPtr get_calendar() const
+        {
+            return m_calendar;
+        }
+
+        std::optional<TimeDelta> get_timedelta() const
+        {
+            return m_offset;
+        }
+
+      protected:
+        np::BusinessDayCalendarPtr m_calendar{nullptr};
+        std::optional<TimeDelta>   m_offset;
     };
 
-    class BusinessDay : public OffsetHandler {
-        public:
-            BusinessDay(int64_t n, std::optional<TimeDelta> timedelta=std::nullopt);
+    class BusinessDay : public OffsetHandler
+    {
+      public:
+        BusinessDay(int64_t n, std::optional<TimeDelta> timedelta = std::nullopt);
 
-            int64_t diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const override;
+        int64_t diff(const arrow::TimestampScalar& start,
+                     const arrow::TimestampScalar& end) const override;
 
-            arrow::TimestampScalar add(const arrow::TimestampScalar &other) const override;
+        arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
-            bool is_on_offset(const arrow::TimestampScalar &other) const override;
+        bool is_on_offset(const arrow::TimestampScalar& other) const override;
 
-            bool is_fixed() const override {
-                return false;
-            }
+        bool is_fixed() const override
+        {
+            return false;
+        }
 
-            std::string code() const override { return "B"; }
+        std::string code() const override
+        {
+            return "B";
+        }
 
-            std::string name() const override { return "BusinessDay"; }
+        std::string name() const override
+        {
+            return "BusinessDay";
+        }
 
-            std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override {
-                return std::make_shared<BusinessDay>(n, m_offset);
-            }
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<BusinessDay>(n, m_offset);
+        }
 
-            epoch_core::EpochOffsetType type() const override {
-                return epoch_core::EpochOffsetType::BusinessDay;
-            }
+        epoch_core::EpochOffsetType type() const override
+        {
+            return epoch_core::EpochOffsetType::BusinessDay;
+        }
 
-            bool is_end() const override {
-                return false;
-            }
+        bool is_end() const override
+        {
+            return false;
+        }
 
-            private:
-                std::optional<TimeDelta> m_offset;
+      private:
+        std::optional<TimeDelta> m_offset;
 
-                int64_t adjust_ndays(int8_t wday, int64_t weeks) const;
+        int64_t adjust_ndays(int8_t wday, int64_t weeks) const;
     };
 
-    class CustomBusinessDay : public BusinessMixin {
-        public:
-            CustomBusinessDay(BusinessMixinParams, int64_t n=1, std::optional<TimeDelta> timedelta=std::nullopt);
-            CustomBusinessDay(np::BusinessDayCalendarPtr  calendar, int64_t n,  std::optional<TimeDelta> timedelta=std::nullopt);
+    class CustomBusinessDay : public BusinessMixin
+    {
+      public:
+        CustomBusinessDay(BusinessMixinParams, int64_t n = 1,
+                          std::optional<TimeDelta> timedelta = std::nullopt);
+        CustomBusinessDay(np::BusinessDayCalendarPtr calendar, int64_t n,
+                          std::optional<TimeDelta> timedelta = std::nullopt);
 
-            int64_t diff(const arrow::TimestampScalar &start, const arrow::TimestampScalar &end) const override;
+        int64_t diff(const arrow::TimestampScalar& start,
+                     const arrow::TimestampScalar& end) const override;
 
-            arrow::TimestampScalar add(const arrow::TimestampScalar &other) const override;
+        arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
 
-            bool is_on_offset(const arrow::TimestampScalar &other) const override;
+        bool is_on_offset(const arrow::TimestampScalar& other) const override;
 
-            bool is_fixed() const override {
-                return false;
-            }
+        bool is_fixed() const override
+        {
+            return false;
+        }
 
-            std::string code() const override { return "C"; }
+        std::string code() const override
+        {
+            return "C";
+        }
 
-            std::string name() const override { return "CustomBusinessDay"; }
+        std::string name() const override
+        {
+            return "CustomBusinessDay";
+        }
 
-            std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override {
-                return std::make_shared<CustomBusinessDay>(m_calendar, n, m_offset);
-            }
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<CustomBusinessDay>(m_calendar, n, m_offset);
+        }
 
-            epoch_core::EpochOffsetType type() const override {
-                return epoch_core::EpochOffsetType::CustomBusinessDay;
-            }
+        epoch_core::EpochOffsetType type() const override
+        {
+            return epoch_core::EpochOffsetType::CustomBusinessDay;
+        }
 
-            bool is_end() const override {
-                return false;
-            }
+        bool is_end() const override
+        {
+            return false;
+        }
 
-            auto holidays() const {
-                return m_calendar->holidays();
-            }
+        auto holidays() const
+        {
+            return m_calendar->holidays();
+        }
     };
 
     using DateOffsetHandlerPtr  = std::shared_ptr<IDateOffsetHandler>;
