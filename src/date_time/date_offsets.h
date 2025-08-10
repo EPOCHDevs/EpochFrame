@@ -601,6 +601,11 @@ namespace epoch_frame
             return false;
         }
 
+        std::chrono::month get_starting_month() const
+        {
+            return m_starting_month;
+        }
+
         DayOption get_day_option() const
         {
             return m_day_opt;
@@ -708,6 +713,11 @@ namespace epoch_frame
         DayOption get_day_option() const
         {
             return m_day_opt;
+        }
+
+        std::chrono::month get_month() const
+        {
+            return m_month;
         }
 
         bool is_fixed() const override
