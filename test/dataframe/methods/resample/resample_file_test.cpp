@@ -57,7 +57,7 @@ epoch_frame::DateOffsetHandlerPtr get_offset_from_timeframe(const std::string& t
     if (tf == "1D")
         return days(1);
     if (tf == "1W")
-        return weeks(1);
+        return weeks(1, epoch_core::EpochDayOfWeek::Sunday);
     if (tf == "1ME")
         return month_end(1);
     if (tf == "1Quarter")

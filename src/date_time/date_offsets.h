@@ -6,7 +6,6 @@
 #include "business/np_busdaycal.h"
 #include "epoch_frame/aliases.h"
 #include "epoch_frame/day_of_week.h"
-#include "epoch_frame/enums.h"
 #include "epoch_frame/relative_delta.h"
 #include <arrow/compute/api.h>
 #include <arrow/scalar.h>
@@ -64,9 +63,9 @@ namespace epoch_frame
             return std::format("{}{}", this->n(), this->code());
         }
 
-        arrow::TimestampScalar rollforward(arrow::TimestampScalar const&) const;
+        arrow::TimestampScalar rollforward(arrow::TimestampScalar const&) const override;
 
-        arrow::TimestampScalar rollback(arrow::TimestampScalar const&) const;
+        arrow::TimestampScalar rollback(arrow::TimestampScalar const&) const override;
 
         // TODO: Allow subclasses to override this for faster vectorized operations
         Array add_array(Array const&) const final;
@@ -995,6 +994,225 @@ namespace epoch_frame
             return m_calendar->holidays();
         }
     };
+
+    // ---------------------------------------------------------------------
+    // SessionAnchorOffsetHandler: Move by N session anchors from a calendar
+    //  - which = AfterOpen  => market_open + delta
+    //  - which = BeforeClose => market_close - delta
+    // Works across holidays/early closes using the calendar's schedule.
+    namespace calendar
+    {
+        class MarketCalendar;
+        using MarketCalendarPtr = std::shared_ptr<MarketCalendar>;
+    } // namespace calendar
+
+    enum class SessionAnchorWhich
+    {
+        AfterOpen,
+        BeforeClose
+    };
+
+    class SessionAnchorOffsetHandler : public OffsetHandler
+    {
+      public:
+        SessionAnchorOffsetHandler(calendar::MarketCalendarPtr calendar, SessionAnchorWhich which,
+                                   TimeDelta delta, int64_t n = 1);
+
+        int64_t diff(const arrow::TimestampScalar& start,
+                     const arrow::TimestampScalar& end) const override;
+
+        arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
+
+        bool is_on_offset(const arrow::TimestampScalar& other) const override;
+
+        bool is_fixed() const override
+        {
+            return false;
+        }
+        bool is_end() const override
+        {
+            return false;
+        }
+
+        epoch_core::EpochOffsetType type() const override
+        {
+            // Not a fixed-width calendar unit; reuse RelativeDelta classification
+            return epoch_core::EpochOffsetType::RelativeDelta;
+        }
+
+        std::string code() const override
+        {
+            return "SessionAnchor";
+        }
+
+        std::string name() const override
+        {
+            auto minutes = m_delta.to_microseconds() / 60'000'000; // integer minutes
+            return fmt::format(
+                "SessionAnchor(which={}, delta={}m)",
+                m_which == SessionAnchorWhich::AfterOpen ? "after_open" : "before_close", minutes);
+        }
+
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<SessionAnchorOffsetHandler>(m_calendar, m_which, m_delta, n);
+        }
+
+      private:
+        calendar::MarketCalendarPtr m_calendar;
+        SessionAnchorWhich          m_which{SessionAnchorWhich::BeforeClose};
+        TimeDelta                   m_delta; // positive duration
+
+        // Helper to normalize to UTC
+        static arrow::TimestampScalar to_utc(arrow::TimestampScalar const& ts);
+
+        // Build anchor timestamps within [ts - back_days, ts + fwd_days]
+        std::shared_ptr<arrow::TimestampArray> build_anchors(const arrow::TimestampScalar& ts_utc,
+                                                             int64_t back_days,
+                                                             int64_t fwd_days) const;
+    };
+
+    // ---------------------------------------------------------------------
+    // WeekOfMonth / LastWeekOfMonth Offsets (modeled after pandas WeekOfMonthMixin)
+    class WeekOfMonthOffsetHandler : public BaseCalendarOffsetHandler
+    {
+      public:
+        WeekOfMonthOffsetHandler(int64_t n, int week, epoch_core::EpochDayOfWeek weekday);
+
+        int64_t diff(const arrow::TimestampScalar& start,
+                     const arrow::TimestampScalar& end) const override;
+
+        arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
+
+        bool is_on_offset(const arrow::TimestampScalar& other) const override;
+
+        bool is_fixed() const override
+        {
+            return false;
+        }
+        bool is_end() const override
+        {
+            return false;
+        }
+
+        epoch_core::EpochOffsetType type() const override
+        {
+            return epoch_core::EpochOffsetType::RelativeDelta;
+        }
+
+        std::string code() const override
+        {
+            return "WOM";
+        }
+
+        std::string name() const override
+        {
+            return std::format("WeekOfMonth(week={}, weekday={})", m_week,
+                               epoch_core::EpochDayOfWeekWrapper::ToString(m_weekday));
+        }
+
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<WeekOfMonthOffsetHandler>(n, m_week, m_weekday);
+        }
+
+        arrow::compute::CalendarUnit calendar_unit() const override
+        {
+            return arrow::compute::CalendarUnit::MONTH;
+        }
+
+      protected:
+        int                        m_week;    // 0..3 (first..fourth), -1 for last (used by LWOM)
+        epoch_core::EpochDayOfWeek m_weekday; // Monday=0 ... Sunday=6
+
+        int get_offset_day_from_ymd(chrono_year_month_day const& ymd) const;
+        int get_offset_day(const arrow::TimestampScalar& other) const;
+    };
+
+    class LastWeekOfMonthOffsetHandler : public WeekOfMonthOffsetHandler
+    {
+      public:
+        LastWeekOfMonthOffsetHandler(int64_t n, epoch_core::EpochDayOfWeek weekday)
+            : WeekOfMonthOffsetHandler(n, -1, weekday)
+        {
+            AssertFromFormat(n != 0, "LastWeekOfMonth n cannot be 0");
+        }
+
+        std::string code() const override
+        {
+            return "LWOM";
+        }
+
+        std::string name() const override
+        {
+            return std::format("LastWeekOfMonth(weekday={})",
+                               epoch_core::EpochDayOfWeekWrapper::ToString(m_weekday));
+        }
+
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<LastWeekOfMonthOffsetHandler>(n, m_weekday);
+        }
+    };
+
+    // ---------------------------------------------------------------------
+    // Business Month Begin/End (Mon-Fri only)
+    class BusinessMonthOffsetHandler : public BaseCalendarOffsetHandler
+    {
+      public:
+        enum class BusinessEdge
+        {
+            Begin,
+            End
+        };
+
+        BusinessMonthOffsetHandler(int64_t n, BusinessEdge edge)
+            : BaseCalendarOffsetHandler(n), m_edge(edge)
+        {
+        }
+
+        int64_t diff(const arrow::TimestampScalar& start,
+                     const arrow::TimestampScalar& end) const override;
+
+        arrow::TimestampScalar add(const arrow::TimestampScalar& other) const override;
+
+        bool is_on_offset(const arrow::TimestampScalar& other) const override;
+
+        bool is_fixed() const override
+        {
+            return false;
+        }
+        bool is_end() const override
+        {
+            return m_edge == BusinessEdge::End;
+        }
+
+        epoch_core::EpochOffsetType type() const override
+        {
+            return epoch_core::EpochOffsetType::Month; // month-based progression
+        }
+
+        std::string code() const override
+        {
+            return m_edge == BusinessEdge::Begin ? "BMS" : "BME";
+        }
+
+        std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
+        {
+            return std::make_shared<BusinessMonthOffsetHandler>(n, m_edge);
+        }
+
+        arrow::compute::CalendarUnit calendar_unit() const override
+        {
+            return arrow::compute::CalendarUnit::MONTH;
+        }
+
+      protected:
+        BusinessEdge m_edge;
+    };
+
+    using BusinessMonthBeginHandler = BusinessMonthOffsetHandler; // with Begin
+    using BusinessMonthEndHandler   = BusinessMonthOffsetHandler; // with End
 
     using DateOffsetHandlerPtr  = std::shared_ptr<IDateOffsetHandler>;
     using DateOffsetHandlerPtrs = std::vector<DateOffsetHandlerPtr>;

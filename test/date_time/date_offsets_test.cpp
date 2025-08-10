@@ -1059,6 +1059,30 @@ TEST_CASE("DateOffsets - Week Handlers", "[date_offsets]")
         REQUIRE(range[2].to_datetime() == DateTime{Date{2023y, January, 18d}});
         REQUIRE(range[3].to_datetime() == DateTime{Date{2023y, January, 25d}});
     }
+
+    SECTION("Week Handlers - n > 1")
+    {
+        // Unanchored: two-week increments
+        auto two_week_handler = efo::weeks(2);
+        auto ts_start         = "2023-01-01"_date; // Sunday
+        auto ts_plus_2w       = two_week_handler->add(ts_start);
+        REQUIRE(to_datetime(ts_plus_2w) == DateTime{Date{2023y, January, 15d}});
+
+        // Anchored to Monday: from a Wednesday, 2 future occurrences → Monday Jan 16
+        auto two_week_monday = efo::weeks(2, epoch_core::EpochDayOfWeek::Monday);
+        auto wed_start       = "2023-01-04"_date; // Wednesday
+        auto res             = two_week_monday->add(wed_start);
+        REQUIRE(to_datetime(res) == DateTime{Date{2023y, January, 16d}});
+
+        // Date range every 2 weeks
+        auto rng =
+            date_range({.start = "2023-01-01"_date, .periods = 3, .offset = two_week_handler})
+                ->array();
+        REQUIRE(rng.length() == 3);
+        REQUIRE(rng[0].to_datetime() == DateTime{Date{2023y, January, 1d}});
+        REQUIRE(rng[1].to_datetime() == DateTime{Date{2023y, January, 15d}});
+        REQUIRE(rng[2].to_datetime() == DateTime{Date{2023y, January, 29d}});
+    }
 }
 
 TEST_CASE("DateOffsets - Easter Handlers", "[date_offsets]")

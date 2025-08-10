@@ -6,12 +6,15 @@
 #include "common/arrow_compute_utils.h"
 #include "common/asserts.h"
 #include "common/python_utils.h"
+#include "epoch_frame/aliases.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "epoch_frame/index.h"
+#include "epoch_frame/index.h" // Intentional include for dependent utilities
+#include "epoch_frame/market_calendar.h"
 #include "epoch_frame/scalar.h"
+#include "epoch_frame/series.h"
 #include "holiday/holiday_calendar.h"
 #include "methods/temporal.h"
-#include <iostream>
+#include "visitors/search_sorted.h"
 
 using namespace std::literals::chrono_literals;
 namespace epoch_frame
@@ -96,18 +99,19 @@ namespace epoch_frame
                                       std::chrono::months const&      months,
                                       std::optional<DayOption> const& day_opt)
     {
-        auto               num  = static_cast<uint32_t>(ymd.month()) + months.count();
-        auto               divy = std::div(static_cast<uint32_t>(num), 12);
-        std::chrono::years dy(divy.quot);
-
-        auto        month = divy.rem;
-        chrono_year year  = ymd.year() + dy;
-
-        if (month == 0)
+        // Match pandas: dy = (m0 + months)//12; month = (m0 + months)%12; if month==0: month=12;
+        // dy-=1
+        int base_month         = static_cast<int>(static_cast<unsigned>(ymd.month())); // 1..12
+        int total              = base_month + months.count();
+        auto [dy_int, rem_int] = floor_div_rem<int>(total, 12);
+        if (rem_int == 0)
         {
-            month = 12;
-            year -= std::chrono::years(1);
+            rem_int = 12;
+            dy_int -= 1;
         }
+
+        chrono_year  year  = ymd.year() + std::chrono::years(dy_int);
+        chrono_month month = chrono_month(static_cast<unsigned>(rem_int));
 
         chrono_day day;
         if (!day_opt)
@@ -225,6 +229,7 @@ namespace epoch_frame
     {
         if (!m_weekday)
         {
+            // Unanchored: follow pandas Week._apply => other + n * timedelta(weeks=1)
             return other + (n() * TimeDelta{{.weeks = 1}});
         }
 
@@ -520,6 +525,299 @@ namespace epoch_frame
             return m_calendar->is_busday(factory::scalar::to_datetime(other));
         }
         return true;
+    }
+
+    // -------------------- WeekOfMonth / LastWeekOfMonth --------------------
+    int WeekOfMonthOffsetHandler::get_offset_day_from_ymd(chrono_year_month_day const& ymd) const
+    {
+        // Compute day of the month for m_week-th weekday
+        auto mstart   = chrono_year_month_day{ymd.year(), ymd.month(), 1d};
+        auto weekday0 = Scalar{factory::scalar::from_ymd(mstart, "")}.weekday();
+        int  shift    = (static_cast<int>(m_weekday) - static_cast<int>(weekday0) + 7) % 7;
+        if (m_week == -1)
+        {
+            // Last week of month: find month end and go backwards to weekday
+            auto dim         = get_days_in_month(ymd.year(), ymd.month());
+            auto mend        = chrono_year_month_day{ymd.year(), ymd.month(), dim};
+            auto end_weekday = Scalar{factory::scalar::from_ymd(mend, "")}.weekday();
+            int  back = (static_cast<int>(end_weekday) - static_cast<int>(m_weekday) + 7) % 7;
+            return static_cast<int>(static_cast<unsigned>(dim)) - back;
+        }
+        return 1 + shift + m_week * 7;
+    }
+
+    int WeekOfMonthOffsetHandler::get_offset_day(const arrow::TimestampScalar& other) const
+    {
+        auto ymd = arrow_utils::get_year_month_day(other);
+        return get_offset_day_from_ymd(ymd);
+    }
+
+    WeekOfMonthOffsetHandler::WeekOfMonthOffsetHandler(int64_t n, int week,
+                                                       epoch_core::EpochDayOfWeek weekday)
+        : BaseCalendarOffsetHandler(n), m_week(week), m_weekday(weekday)
+    {
+        AssertFromFormat(week == -1 || (week >= 0 && week <= 3), "Week must be -1 or 0..3");
+    }
+
+    int64_t WeekOfMonthOffsetHandler::diff(const arrow::TimestampScalar& start,
+                                           const arrow::TimestampScalar& end) const
+    {
+        return relative_diff(start, end, *this);
+    }
+
+    arrow::TimestampScalar WeekOfMonthOffsetHandler::add(const arrow::TimestampScalar& other) const
+    {
+        // Following pandas WeekOfMonthMixin behavior
+        auto ymd         = arrow_utils::get_year_month_day(other);
+        int  compare_day = get_offset_day_from_ymd(ymd);
+
+        auto months = n();
+        months      = roll_convention(static_cast<uint32_t>(ymd.day()), months, compare_day);
+
+        auto shifted = shift_month(ymd, chrono_months(months), DayOption::START);
+        int  to_day  = get_offset_day_from_ymd(shifted);
+        auto target  = chrono_year_month_day{shifted.year(), shifted.month(),
+                                            chrono_day{static_cast<unsigned>(to_day)}};
+        return factory::scalar::from_ymd(target, arrow_utils::get_tz(other));
+    }
+
+    bool WeekOfMonthOffsetHandler::is_on_offset(const arrow::TimestampScalar& other) const
+    {
+        auto ymd = arrow_utils::get_year_month_day(other);
+        return static_cast<uint32_t>(ymd.day()) ==
+               static_cast<uint32_t>(get_offset_day_from_ymd(ymd));
+    }
+
+    // -------------------- BusinessMonthOffsetHandler --------------------
+    static bool is_business_day(DateTime const& dt)
+    {
+        auto wd = static_cast<epoch_core::EpochDayOfWeek>(dt.weekday());
+        return wd >= epoch_core::EpochDayOfWeek::Monday && wd <= epoch_core::EpochDayOfWeek::Friday;
+    }
+
+    static DateTime month_business_edge(DateTime const& dt, bool begin)
+    {
+        if (begin)
+        {
+            auto first = DateTime{Date{dt.date().year, dt.date().month, 1d}};
+            auto cur   = first;
+            while (!is_business_day(cur))
+            {
+                cur = cur + TimeDelta{{.days = 1}};
+            }
+            return cur;
+        }
+        else
+        {
+            auto dim  = get_days_in_month(dt.date().year, dt.date().month);
+            auto last = DateTime{Date{dt.date().year, dt.date().month, dim}};
+            auto cur  = last;
+            while (!is_business_day(cur))
+            {
+                cur = cur - TimeDelta{{.days = 1}};
+            }
+            return cur;
+        }
+    }
+
+    int64_t BusinessMonthOffsetHandler::diff(const arrow::TimestampScalar& start,
+                                             const arrow::TimestampScalar& end) const
+    {
+        return relative_diff(start, end, *this);
+    }
+
+    arrow::TimestampScalar
+    BusinessMonthOffsetHandler::add(const arrow::TimestampScalar& other) const
+    {
+        auto dt       = factory::scalar::to_datetime(other);
+        bool is_begin = (m_edge == BusinessEdge::Begin);
+        auto current  = month_business_edge(dt, is_begin);
+
+        // n == 0 → rollforward to edge on or after dt
+        if (n() == 0)
+        {
+            if (dt.date() <= current.date())
+            {
+                return current.timestamp();
+            }
+            auto ymd_next  = shift_month(arrow_utils::get_year_month_day(other), chrono_months(1),
+                                         DayOption::START);
+            auto next_base = DateTime{Date{ymd_next.year(), ymd_next.month(), 1d}};
+            auto next_edge = month_business_edge(next_base, is_begin);
+            return next_edge.timestamp();
+        }
+
+        // General case: strictly next/previous edges
+        auto months = n();
+        if (is_begin)
+        {
+            // Begin: positive steps always move by n months; negative steps include current-month
+            // edge when dt is after it
+            if (months < 0 && dt.date() > current.date())
+            {
+                months += 1;
+            }
+        }
+        else
+        {
+            // End: positive steps include current-month edge when dt is before it;
+            // negative steps include current-month edge when dt is after it
+            if (months > 0 && dt.date() < current.date())
+            {
+                months -= 1;
+            }
+            else if (months < 0 && dt.date() > current.date())
+            {
+                months += 1;
+            }
+        }
+
+        auto dest_ymd = shift_month(arrow_utils::get_year_month_day(other), chrono_months(months),
+                                    DayOption::START);
+        auto dest_dt  = DateTime{Date{dest_ymd.year(), dest_ymd.month(), 1d}};
+        auto edge_dt  = month_business_edge(dest_dt, is_begin);
+        return edge_dt.timestamp();
+    }
+
+    bool BusinessMonthOffsetHandler::is_on_offset(const arrow::TimestampScalar& other) const
+    {
+        auto dt   = factory::scalar::to_datetime(other);
+        auto edge = month_business_edge(dt, m_edge == BusinessEdge::Begin);
+        return dt.date() == edge.date();
+    }
+
+    // -------------------- SessionAnchorOffsetHandler --------------------
+    arrow::TimestampScalar SessionAnchorOffsetHandler::to_utc(const arrow::TimestampScalar& ts)
+    {
+        auto s  = Scalar{ts};
+        auto tz = s.dt().tz();
+        if (tz.empty())
+        {
+            return s.dt().tz_localize("UTC").timestamp();
+        }
+        return s.dt().tz_convert("UTC").timestamp();
+    }
+
+    SessionAnchorOffsetHandler::SessionAnchorOffsetHandler(calendar::MarketCalendarPtr calendar,
+                                                           SessionAnchorWhich          which,
+                                                           TimeDelta delta, int64_t n)
+        : OffsetHandler(n), m_calendar(std::move(calendar)), m_which(which),
+          m_delta(std::move(delta))
+    {
+        AssertFromFormat(m_calendar, "SessionAnchorOffsetHandler requires a valid calendar");
+    }
+
+    std::shared_ptr<arrow::TimestampArray>
+    SessionAnchorOffsetHandler::build_anchors(const arrow::TimestampScalar& ts_utc,
+                                              int64_t back_days, int64_t fwd_days) const
+    {
+        auto ts_dt = factory::scalar::to_datetime(ts_utc);
+        auto start = Date{(ts_dt - TimeDelta{{.days = static_cast<double>(back_days)}}).date()};
+        auto end   = Date{(ts_dt + TimeDelta{{.days = static_cast<double>(fwd_days)}}).date()};
+
+        // Choose base time and apply delta
+        epoch_core::MarketTimeType base = (m_which == SessionAnchorWhich::AfterOpen)
+                                              ? epoch_core::MarketTimeType::MarketOpen
+                                              : epoch_core::MarketTimeType::MarketClose;
+
+        // Start from all valid days, then compute anchor series
+        auto days = m_calendar->valid_days(start, end, "");
+        if (!days || days->empty())
+        {
+            auto empty = AssertResultIsOk(
+                arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::NANO, "UTC")));
+            return std::static_pointer_cast<arrow::TimestampArray>(empty);
+        }
+        // Build schedule times for base and adjust by delta
+        auto  base_series = m_calendar->days_at_time(days, base);
+        Array base_arr    = base_series.contiguous_array();
+        Array adjusted = (m_which == SessionAnchorWhich::AfterOpen) ? (base_arr + Scalar{m_delta})
+                                                                    : (base_arr - Scalar{m_delta});
+        // Normalize to UTC; schedule returns UTC already. Ensure timezone is UTC type.
+        auto array = adjusted.value();
+        if (array->type()->id() != arrow::Type::TIMESTAMP ||
+            std::static_pointer_cast<arrow::TimestampType>(array->type())->timezone() != "UTC")
+        {
+            array = Array{array}.cast(arrow::timestamp(arrow::TimeUnit::NANO, "UTC")).value();
+        }
+        return std::static_pointer_cast<arrow::TimestampArray>(array);
+    }
+
+    int64_t SessionAnchorOffsetHandler::diff(const arrow::TimestampScalar& start,
+                                             const arrow::TimestampScalar& end) const
+    {
+        // Conservative: iterate add() to count steps, similar to relative_diff
+        return relative_diff(start, end, *this);
+    }
+
+    bool SessionAnchorOffsetHandler::is_on_offset(const arrow::TimestampScalar& other) const
+    {
+        auto ts = to_utc(other);
+        // Small window around the day
+        auto anchors = build_anchors(ts, 7, 30);
+        if (anchors->length() == 0)
+        {
+            return false;
+        }
+        // Search exact match using a boolean equality check
+        auto anchor_arr = Array{anchors};
+        auto eq         = anchor_arr == Scalar{ts};
+        return eq.any();
+    }
+
+    arrow::TimestampScalar
+    SessionAnchorOffsetHandler::add(const arrow::TimestampScalar& other) const
+    {
+        // Work in UTC
+        auto ts = to_utc(other);
+
+        // Heuristic windows scale with |n|
+        int64_t back_days = 14 + 7 * std::llabs(n());
+        int64_t fwd_days  = 400 + 30 * std::llabs(n());
+
+        while (true)
+        {
+            auto anchors = build_anchors(ts, back_days, fwd_days);
+            if (anchors->length() == 0)
+            {
+                back_days *= 2;
+                fwd_days *= 2;
+                continue;
+            }
+
+            // searchsorted
+            Scalar              needle{ts};
+            SearchSortedVisitor right_vis{needle.value(), SearchSortedSide::Right};
+            SearchSortedVisitor left_vis{needle.value(), SearchSortedSide::Left};
+            AssertStatusIsOk(anchors->Accept(&right_vis));
+            AssertStatusIsOk(anchors->Accept(&left_vis));
+
+            int64_t pos;
+            if (n() > 0)
+            {
+                // strictly after ts for n>0; (n-1) additional steps ahead
+                pos = static_cast<int64_t>(right_vis.result()) + (n() - 1);
+            }
+            else if (n() < 0)
+            {
+                // strictly before ts for n<0; |n| steps back
+                auto k = -n();
+                pos    = static_cast<int64_t>(left_vis.result()) - static_cast<int64_t>(k);
+            }
+            else
+            {
+                // n == 0 → anchor at or before ts
+                pos = static_cast<int64_t>(right_vis.result()) - 1;
+            }
+
+            if (0 <= pos && pos < anchors->length())
+            {
+                return arrow::TimestampScalar{anchors->Value(pos), anchors->type()};
+            }
+
+            back_days *= 2;
+            fwd_days *= 2;
+        }
     }
 
 } // namespace epoch_frame
