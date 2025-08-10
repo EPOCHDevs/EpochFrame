@@ -479,6 +479,11 @@ namespace epoch_frame
             return epoch_core::EpochOffsetType::Week;
         }
 
+        std::optional<epoch_core::EpochDayOfWeek> get_weekday() const
+        {
+            return m_weekday;
+        }
+
       private:
         std::optional<epoch_core::EpochDayOfWeek> m_weekday;
     };
