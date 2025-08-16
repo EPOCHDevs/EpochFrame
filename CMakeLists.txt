@@ -10,6 +10,9 @@ else()
   message(STATUS "Building STATIC libraries")
 endif()
 
+add_compile_options(-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -D_GLIBCXX_ASSERTIONS)
+add_link_options(-fsanitize=address,undefined)
+
 # Set binary and library output directories to keep build files separate from source
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

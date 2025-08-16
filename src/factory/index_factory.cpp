@@ -25,26 +25,43 @@ namespace epoch_frame::factory::index
             throw std::invalid_argument("RangeIndex step cannot be zero");
         }
 
+        const bool forward = step > 0;
+        if ((forward && start >= stop) || (!forward && start <= stop))
+        {
+            // Empty range
+            arrow::UInt64Builder builder;
+            AssertStatusIsOk(builder.Reserve(0));
+            return std::static_pointer_cast<arrow::UInt64Array>(
+                AssertContiguousArrayResultIsOk(builder.Finish()));
+        }
+
+        const __int128 diff     = static_cast<__int128>(stop) - static_cast<__int128>(start);
+        const __int128 step_abs = static_cast<__int128>(step > 0 ? step : -step);
+
+        // Number of terms for exclusive stop: ceil(|diff|/|step|) but without overflow
+        __int128 len128 = (((diff > 0 ? diff : -diff) - 1) / step_abs) + 1;
+        if (len128 < 0)
+            len128 = 0;
+        const int64_t length = static_cast<int64_t>(
+            std::min<__int128>(len128, static_cast<__int128>(std::numeric_limits<int64_t>::max())));
+
         arrow::UInt64Builder builder;
-        auto                 length = static_cast<int64_t>(std::abs((stop - start) / step)) + 1;
         AssertStatusIsOk(builder.Reserve(length));
 
-        if (step > 0)
+        if (forward)
         {
-            for (int64_t val = start; val < stop; val += step)
+            for (int64_t v = start; v < stop; v += step)
             {
-                builder.UnsafeAppend(static_cast<uint64_t>(val));
+                builder.UnsafeAppend(static_cast<uint64_t>(v));
             }
         }
         else
         {
-            // step < 0
-            for (int64_t val = start; val > stop; val += step)
+            for (int64_t v = start; v > stop; v += step)
             {
-                builder.UnsafeAppend(static_cast<uint64_t>(val));
+                builder.UnsafeAppend(static_cast<uint64_t>(v));
             }
         }
-
         auto resultArr = AssertResultIsOk(builder.Finish());
         return std::static_pointer_cast<arrow::UInt64Array>(resultArr);
     }
@@ -211,11 +228,21 @@ namespace epoch_frame::factory::index
                                                        DateOffsetHandlerPtr const&   offset)
     {
         std::vector<int64_t> result;
-        const auto           days = std::chrono::floor<std::chrono::days>(
-                              system_clock::time_point(nanoseconds(end.value - start.value)))
-                              .time_since_epoch()
-                              .count();
-        result.reserve(std::max<int64_t>(0, days) + 1);
+
+        // Safe, saturating estimate for reserve (optional but helpful)
+        const __int128 ns_per_day = static_cast<__int128>(86'400'000'000'000LL);
+        __int128       diff = static_cast<__int128>(end.value) - static_cast<__int128>(start.value);
+        int64_t        days = 0;
+        if (diff > 0)
+        {
+            days = static_cast<int64_t>(std::min<__int128>(
+                diff / ns_per_day, static_cast<__int128>(std::numeric_limits<int64_t>::max())));
+        }
+        constexpr int64_t kCap = 50'000'000; // hard cap to avoid absurd reserves
+        if (days > 0)
+        {
+            result.reserve(static_cast<size_t>(std::min<int64_t>(days + 1, kCap)));
+        }
 
         while (start.value <= end.value)
         {
