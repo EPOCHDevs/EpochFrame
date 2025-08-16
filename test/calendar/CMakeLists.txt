@@ -13,11 +13,12 @@ cme_globex_crypto_calendar_test.cpp cme_globex_energy_and_metals_calendar_test.c
 cme_globex_grains_calendar_test.cpp
 fx_calendar_test.cpp
 crypto_calendar_test.cpp utils_test.cpp
+        catch_main.cpp
 )
 
 target_link_libraries(epoch_frame_cal_test
         PRIVATE
-        Catch2::Catch2 Catch2::Catch2WithMain trompeloeil::trompeloeil
+        Catch2::Catch2 trompeloeil::trompeloeil
         PUBLIC epoch_frame)
 
 target_include_directories(epoch_frame_cal_test

@@ -6,7 +6,7 @@
 
 namespace epoch_frame::calendar
 {
-    CalendarFactory::CalendarFactory() {
+    void CalendarFactory::Init() {
         REGISTER_CALENDAR(NYSEExchangeCalendar);
         REGISTER_CALENDAR(CMEEquityExchangeCalendar);
         REGISTER_CALENDAR(CMEAgricultureExchangeCalendar);

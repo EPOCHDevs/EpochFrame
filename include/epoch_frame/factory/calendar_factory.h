@@ -10,6 +10,8 @@ namespace epoch_frame::calendar
     class CalendarFactory
     {
       public:
+        void Init();
+
         static CalendarFactory& instance()
         {
             static CalendarFactory factory;
@@ -25,7 +27,6 @@ namespace epoch_frame::calendar
         void add_calendar(FactoryFunction factory);
 
       private:
-        CalendarFactory();
 
         std::unordered_map<std::string, FactoryFunction>   m_calendars_functions{};
         std::unordered_map<std::string, MarketCalendarPtr> m_default_calendars{};
