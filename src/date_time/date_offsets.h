@@ -457,11 +457,15 @@ namespace epoch_frame
 
         std::string code() const override
         {
-            return std::format(
-                "W{}",
-                m_weekday
-                    ? std::format("-{}", epoch_core::EpochDayOfWeekWrapper::ToString(*m_weekday))
-                    : "");
+            if (!m_weekday)
+            {
+                return "W";
+            }
+            // Pandas-style 3-letter weekday abbreviations
+            constexpr const char* WEEKDAY_ABBR[7] = {"MON", "TUE", "WED", "THU",
+                                                     "FRI", "SAT", "SUN"};
+            auto                  idx             = static_cast<int>(*m_weekday);
+            return std::format("W-{}", WEEKDAY_ABBR[idx]);
         }
 
         std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
