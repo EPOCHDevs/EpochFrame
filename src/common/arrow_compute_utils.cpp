@@ -388,28 +388,43 @@ namespace epoch_frame::arrow_utils
 
     arrow::ChunkedArrayPtr _shift(const arrow::ChunkedArrayPtr& array, int64_t periods)
     {
+        // Null-safe: return null if input is null
+        if (!array)
+        {
+            return nullptr;
+        }
+
+        // Fast path: zero shift returns the input as-is
         if (periods == 0)
         {
             return array;
         }
 
-        auto abs_periods = std::abs(periods);
-        auto nans        = factory::array::make_null_array(abs_periods, array->type());
-        if (abs_periods == array->length())
+        const int64_t length      = array->length();
+        const int64_t abs_periods = std::abs(periods);
+
+        // Clamp overshifts to array length to avoid negative slice sizes
+        const int64_t clamped = std::min<int64_t>(abs_periods, length);
+
+        // Build the null pad of clamped length
+        auto nans = factory::array::make_null_array(clamped, array->type());
+
+        // If fully shifted out, return only nulls of the original length
+        if (clamped == length)
         {
             return std::make_shared<arrow::ChunkedArray>(nans);
         }
 
-        if (periods == abs_periods)
+        // Positive periods -> pad on left (join_right = true) and slice head
+        if (periods > 0)
         {
-            return factory::array::join_chunked_arrays(
-                nans, array->Slice(0, array->length() - abs_periods), true);
+            return factory::array::join_chunked_arrays(nans, array->Slice(0, length - clamped),
+                                                       true);
         }
-        else
-        {
-            return factory::array::join_chunked_arrays(
-                nans, array->Slice(abs_periods, array->length() - abs_periods), false);
-        }
+
+        // Negative periods -> pad on right (join_right = false) and slice tail
+        return factory::array::join_chunked_arrays(nans, array->Slice(clamped, length - clamped),
+                                                   false);
     }
 
     TableOrArray shift(const TableOrArray& table, int64_t periods)
