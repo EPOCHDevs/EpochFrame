@@ -12,12 +12,12 @@
       "name": "arrow",
       "features": [
         "acero",
-        "dataset",
         "csv",
         "json",
         "parquet",
         "s3",
-        "filesystem"
+        "filesystem",
+        "compute"
       ]
     }
   ]
