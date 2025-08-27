@@ -55,10 +55,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/EpochCore.cmake)
 # Arrow already includes AWS SDK internally when built with S3 support
 find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
-find_package(Arrow 20.0.0 CONFIG REQUIRED)
-find_package(ArrowDataset 20.0.0 CONFIG REQUIRED)
-find_package(ArrowAcero 20.0.0 CONFIG REQUIRED)
-find_package(Parquet 20.0.0 CONFIG REQUIRED)
+find_package(Arrow 21.0.0 CONFIG REQUIRED)
+find_package(ArrowDataset 21.0.0 CONFIG REQUIRED)
+find_package(ArrowAcero 21.0.0 CONFIG REQUIRED)
+find_package(Parquet 21.0.0 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 # Create the library - type determined by BUILD_SHARED_LIBS
