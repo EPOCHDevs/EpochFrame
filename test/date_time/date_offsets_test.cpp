@@ -102,7 +102,7 @@ TEST_CASE("DateOffsets - Core Handler Functionality", "[date_offsets]")
     SECTION("Minute Handler")
     {
         auto minute_handler = efo::minutes(5);
-        REQUIRE(minute_handler->code() == "T");
+        REQUIRE(minute_handler->code() == "Min");
         REQUIRE(minute_handler->calendar_unit() == arrow::compute::CalendarUnit::MINUTE);
 
         auto ts1 = "2023-01-01"_date;
@@ -243,11 +243,11 @@ TEST_CASE("DateOffsets - Factory Methods", "[date_offsets]")
 
         REQUIRE(day->code() == "D");
         REQUIRE(hour->code() == "H");
-        REQUIRE(minute->code() == "T");
+        REQUIRE(minute->code() == "Min");
         REQUIRE(second->code() == "S");
-        REQUIRE(milli->code() == "L");
-        REQUIRE(micro->code() == "U");
-        REQUIRE(nano->code() == "N");
+        REQUIRE(milli->code() == "ms");
+        REQUIRE(micro->code() == "us");
+        REQUIRE(nano->code() == "ns");
     }
 }
 
@@ -397,7 +397,7 @@ TEST_CASE("DateOffsets - Month Handlers", "[date_offsets]")
     SECTION("Month End - Basic Functionality")
     {
         auto month_end = efo::month_end(1);
-        REQUIRE(month_end->code() == "M");
+        REQUIRE(month_end->code() == "ME");
         REQUIRE(month_end->calendar_unit() == arrow::compute::CalendarUnit::MONTH);
 
         // Test adding one month to Jan 15, 2023 -> Jan 31, 2023
@@ -481,7 +481,7 @@ TEST_CASE("DateOffsets - Quarter Handlers", "[date_offsets]")
     SECTION("Quarter End - Basic Functionality")
     {
         auto quarter_end = efo::quarter_end(1);
-        REQUIRE(quarter_end->code() == "Q");
+        REQUIRE(quarter_end->code() == "QE");
         REQUIRE(quarter_end->calendar_unit() == arrow::compute::CalendarUnit::QUARTER);
 
         // Test adding one quarter to Feb 15, 2023 -> Mar 28, 2023 (based on actual implementation)
@@ -537,7 +537,7 @@ TEST_CASE("DateOffsets - Year Handlers", "[date_offsets]")
     SECTION("Year Start - Basic Functionality")
     {
         auto year_start = efo::year_start(1);
-        REQUIRE(year_start->code() == "AS");
+        REQUIRE(year_start->code() == "YS");
         REQUIRE(year_start->calendar_unit() == arrow::compute::CalendarUnit::YEAR);
 
         // Test adding one year to Jun 15, 2023 -> Dec 1, 2023 (based on actual implementation)
@@ -551,7 +551,7 @@ TEST_CASE("DateOffsets - Year Handlers", "[date_offsets]")
     SECTION("Year End - Basic Functionality")
     {
         auto year_end = efo::year_end(1);
-        REQUIRE(year_end->code() == "A");
+        REQUIRE(year_end->code() == "YE");
         REQUIRE(year_end->calendar_unit() == arrow::compute::CalendarUnit::YEAR);
 
         // Test adding one year to Jun 15, 2023 -> Dec 30, 2023 (based on actual implementation)
