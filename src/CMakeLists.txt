@@ -13,9 +13,9 @@ target_link_libraries(epoch_frame
         PUBLIC TBB::tbb
         "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Parquet::parquet_static,Parquet::parquet_shared>"
         spdlog::spdlog_header_only
-        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,$<LINK_LIBRARY:WHOLE_ARCHIVE,ArrowCompute::arrow_compute_static>,ArrowCompute::arrow_compute_shared>"
-        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,$<LINK_LIBRARY:WHOLE_ARCHIVE,Arrow::arrow_static>,Arrow::arrow_shared>"
-        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,$<LINK_LIBRARY:WHOLE_ARCHIVE,ArrowAcero::arrow_acero_static>,ArrowAcero::arrow_acero_shared>"
+        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,ArrowCompute::arrow_compute_static,ArrowCompute::arrow_compute_shared>"
+        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"
+        "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,ArrowAcero::arrow_acero_static,ArrowAcero::arrow_acero_shared>"
         epoch::core)
 
 #target_compile_options(epoch_frame PRIVATE -Wall -Wextra -Werror)
