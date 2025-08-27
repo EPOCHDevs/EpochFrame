@@ -132,7 +132,7 @@ TEST_CASE("DateOffsets - Core Handler Functionality", "[date_offsets]")
     SECTION("Millisecond Handler")
     {
         auto milli_handler = efo::millis(100);
-        REQUIRE(milli_handler->code() == "L");
+        REQUIRE(milli_handler->code() == "ms");
         REQUIRE(milli_handler->calendar_unit() == arrow::compute::CalendarUnit::MILLISECOND);
 
         auto ts1 = create_timestamp(TS_2023_01_01);
@@ -145,7 +145,7 @@ TEST_CASE("DateOffsets - Core Handler Functionality", "[date_offsets]")
     SECTION("Microsecond Handler")
     {
         auto micro_handler = efo::micro(500);
-        REQUIRE(micro_handler->code() == "U");
+        REQUIRE(micro_handler->code() == "us");
         REQUIRE(micro_handler->calendar_unit() == arrow::compute::CalendarUnit::MICROSECOND);
 
         auto ts1 = create_timestamp(TS_2023_01_01);
@@ -160,7 +160,7 @@ TEST_CASE("DateOffsets - Core Handler Functionality", "[date_offsets]")
     SECTION("Nanosecond Handler")
     {
         auto nano_handler = efo::nanos(750);
-        REQUIRE(nano_handler->code() == "N");
+        REQUIRE(nano_handler->code() == "ns");
         REQUIRE(nano_handler->calendar_unit() == arrow::compute::CalendarUnit::NANOSECOND);
 
         auto ts1 = create_timestamp(TS_2023_01_01);
