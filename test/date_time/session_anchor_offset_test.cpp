@@ -123,7 +123,7 @@ TEST_CASE("SessionAnchorOffsetHandler navigation on NYSE with n variants")
             date_range({.start = d0_close.timestamp(), .periods = 2, .offset = before_close_n2})
                 ->array());
         REQUIRE(rng2.length() == 2);
-        auto bc0        = before_close_n2->add(d0_close.timestamp());
+        auto bc0        = before_close_n2->base()->add(d0_close.timestamp());
         auto exp_rng2_0 = bc0.value;
         auto bc1        = before_close_n2->add(bc0);
         auto exp_rng2_1 = bc1.value;
