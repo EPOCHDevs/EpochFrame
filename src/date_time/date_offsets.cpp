@@ -8,13 +8,10 @@
 #include "common/python_utils.h"
 #include "epoch_frame/aliases.h"
 #include "epoch_frame/factory/scalar_factory.h"
-#include "epoch_frame/index.h" // Intentional include for dependent utilities
-#include "epoch_frame/market_calendar.h"
+#include "epoch_frame/index.h"
 #include "epoch_frame/scalar.h"
-#include "epoch_frame/series.h"
 #include "holiday/holiday_calendar.h"
 #include "methods/temporal.h"
-#include "visitors/search_sorted.h"
 
 using namespace std::literals::chrono_literals;
 namespace epoch_frame
@@ -687,60 +684,39 @@ namespace epoch_frame
     }
 
     // -------------------- SessionAnchorOffsetHandler --------------------
-    arrow::TimestampScalar SessionAnchorOffsetHandler::to_utc(const arrow::TimestampScalar& ts)
-    {
-        auto s  = Scalar{ts};
-        auto tz = s.dt().tz();
-        if (tz.empty())
-        {
-            return s.dt().tz_localize("UTC").timestamp();
-        }
-        return s.dt().tz_convert("UTC").timestamp();
-    }
-
-    SessionAnchorOffsetHandler::SessionAnchorOffsetHandler(calendar::MarketCalendarPtr calendar,
-                                                           SessionAnchorWhich          which,
+    SessionAnchorOffsetHandler::SessionAnchorOffsetHandler(SessionRange       session,
+                                                           SessionAnchorWhich which,
                                                            TimeDelta delta, int64_t n)
-        : OffsetHandler(n), m_calendar(std::move(calendar)), m_which(which),
-          m_delta(std::move(delta))
+        : OffsetHandler(n), m_session(std::move(session)), m_which(which), m_delta(std::move(delta))
     {
-        AssertFromFormat(m_calendar, "SessionAnchorOffsetHandler requires a valid calendar");
+        AssertFromFormat(m_session.start.tz == m_session.end.tz,
+                         "SessionRange.start.tz must equal SessionRange.end.tz");
     }
 
-    std::shared_ptr<arrow::TimestampArray>
-    SessionAnchorOffsetHandler::build_anchors(const arrow::TimestampScalar& ts_utc,
-                                              int64_t back_days, int64_t fwd_days) const
+    void SessionAnchorOffsetHandler::assert_tz_match(const DateTime& dt) const
     {
-        auto ts_dt = factory::scalar::to_datetime(ts_utc);
-        auto start = Date{(ts_dt - TimeDelta{{.days = static_cast<double>(back_days)}}).date()};
-        auto end   = Date{(ts_dt + TimeDelta{{.days = static_cast<double>(fwd_days)}}).date()};
+        AssertFromStream(dt.tz() == m_session.start.tz,
+                         "Timestamp tz (" << dt.tz() << ") must equal SessionRange tz ("
+                                          << m_session.start.tz << ")");
+    }
 
-        // Choose base time and apply delta
-        epoch_core::MarketTimeType base = (m_which == SessionAnchorWhich::AfterOpen)
-                                              ? epoch_core::MarketTimeType::MarketOpen
-                                              : epoch_core::MarketTimeType::MarketClose;
-
-        // Start from all valid days, then compute anchor series
-        auto days = m_calendar->valid_days(start, end, "");
-        if (!days || days->empty())
+    arrow::TimestampScalar SessionAnchorOffsetHandler::anchor_for_date(const Date&        date,
+                                                                       const std::string& tz) const
+    {
+        auto base_time =
+            (m_which == SessionAnchorWhich::AfterOpen) ? m_session.start : m_session.end;
+        // ensure we use provided tz (must match session tz by contract)
+        auto time_in_tz = base_time.replace_tz(tz);
+        auto dt         = DateTime{date, time_in_tz};
+        if (m_which == SessionAnchorWhich::AfterOpen)
         {
-            auto empty = AssertResultIsOk(
-                arrow::MakeEmptyArray(arrow::timestamp(arrow::TimeUnit::NANO, "UTC")));
-            return std::static_pointer_cast<arrow::TimestampArray>(empty);
+            dt = dt + m_delta;
         }
-        // Build schedule times for base and adjust by delta
-        auto  base_series = m_calendar->days_at_time(days, base);
-        Array base_arr    = base_series.contiguous_array();
-        Array adjusted = (m_which == SessionAnchorWhich::AfterOpen) ? (base_arr + Scalar{m_delta})
-                                                                    : (base_arr - Scalar{m_delta});
-        // Normalize to UTC; schedule returns UTC already. Ensure timezone is UTC type.
-        auto array = adjusted.value();
-        if (array->type()->id() != arrow::Type::TIMESTAMP ||
-            std::static_pointer_cast<arrow::TimestampType>(array->type())->timezone() != "UTC")
+        else
         {
-            array = Array{array}.cast(arrow::timestamp(arrow::TimeUnit::NANO, "UTC")).value();
+            dt = dt - m_delta;
         }
-        return std::static_pointer_cast<arrow::TimestampArray>(array);
+        return dt.timestamp();
     }
 
     int64_t SessionAnchorOffsetHandler::diff(const arrow::TimestampScalar& start,
@@ -752,72 +728,50 @@ namespace epoch_frame
 
     bool SessionAnchorOffsetHandler::is_on_offset(const arrow::TimestampScalar& other) const
     {
-        auto ts = to_utc(other);
-        // Small window around the day
-        auto anchors = build_anchors(ts, 7, 30);
-        if (anchors->length() == 0)
-        {
-            return false;
-        }
-        // Search exact match using a boolean equality check
-        auto anchor_arr = Array{anchors};
-        auto eq         = anchor_arr == Scalar{ts};
-        return eq.any();
+        auto s  = Scalar{other};
+        auto dt = s.to_datetime();
+        assert_tz_match(dt);
+        auto anchor = anchor_for_date(dt.date(), dt.tz());
+        return Scalar{anchor} == s;
     }
 
     arrow::TimestampScalar
     SessionAnchorOffsetHandler::add(const arrow::TimestampScalar& other) const
     {
-        // Work in UTC
-        auto ts = to_utc(other);
+        auto s  = Scalar{other};
+        auto dt = s.to_datetime();
+        assert_tz_match(dt);
 
-        // Heuristic windows scale with |n|
-        int64_t back_days = 14 + 7 * std::llabs(n());
-        int64_t fwd_days  = 400 + 30 * std::llabs(n());
+        auto base_date   = dt.date();
+        auto base_anchor = anchor_for_date(base_date, dt.tz());
+        auto ba          = Scalar{base_anchor};
+        bool ba_gt_s     = ba > s;
+        bool ba_lt_s     = ba < s;
 
-        while (true)
+        if (n() == 0)
         {
-            auto anchors = build_anchors(ts, back_days, fwd_days);
-            if (anchors->length() == 0)
+            if (!ba_gt_s)
             {
-                back_days *= 2;
-                fwd_days *= 2;
-                continue;
+                return base_anchor;
             }
-
-            // searchsorted
-            Scalar              needle{ts};
-            SearchSortedVisitor right_vis{needle.value(), SearchSortedSide::Right};
-            SearchSortedVisitor left_vis{needle.value(), SearchSortedSide::Left};
-            AssertStatusIsOk(anchors->Accept(&right_vis));
-            AssertStatusIsOk(anchors->Accept(&left_vis));
-
-            int64_t pos;
-            if (n() > 0)
-            {
-                // strictly after ts for n>0; (n-1) additional steps ahead
-                pos = static_cast<int64_t>(right_vis.result()) + (n() - 1);
-            }
-            else if (n() < 0)
-            {
-                // strictly before ts for n<0; |n| steps back
-                auto k = -n();
-                pos    = static_cast<int64_t>(left_vis.result()) - static_cast<int64_t>(k);
-            }
-            else
-            {
-                // n == 0 → anchor at or before ts
-                pos = static_cast<int64_t>(right_vis.result()) - 1;
-            }
-
-            if (0 <= pos && pos < anchors->length())
-            {
-                return arrow::TimestampScalar{anchors->Value(pos), anchors->type()};
-            }
-
-            back_days *= 2;
-            fwd_days *= 2;
+            auto prev_dt = DateTime{base_date} - TimeDelta{{.days = 1.0}};
+            return anchor_for_date(prev_dt.date(), dt.tz());
         }
+
+        if (n() > 0)
+        {
+            int64_t offset = ba_gt_s ? 0 : 1; // if base_anchor > dt, include today
+            auto    target =
+                DateTime{base_date} + TimeDelta{{.days = static_cast<double>(offset + (n() - 1))}};
+            return anchor_for_date(target.date(), dt.tz());
+        }
+
+        // n() < 0
+        int64_t k      = -n();
+        int64_t offset = ba_lt_s ? 0 : 1; // if base_anchor < dt, include today
+        auto    target =
+            DateTime{base_date} - TimeDelta{{.days = static_cast<double>(offset + (k - 1))}};
+        return anchor_for_date(target.date(), dt.tz());
     }
 
 } // namespace epoch_frame

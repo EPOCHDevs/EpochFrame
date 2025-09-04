@@ -5,6 +5,7 @@
 #pragma once
 #include "business/np_busdaycal.h"
 #include "epoch_frame/aliases.h"
+#include "epoch_frame/datetime.h"
 #include "epoch_frame/day_of_week.h"
 #include "epoch_frame/relative_delta.h"
 #include <arrow/compute/api.h>
@@ -1001,15 +1002,15 @@ namespace epoch_frame
     };
 
     // ---------------------------------------------------------------------
-    // SessionAnchorOffsetHandler: Move by N session anchors from a calendar
-    //  - which = AfterOpen  => market_open + delta
-    //  - which = BeforeClose => market_close - delta
-    // Works across holidays/early closes using the calendar's schedule.
-    namespace calendar
+    // SessionAnchorOffsetHandler: Move by N session anchors defined by a SessionRange
+    //  - which = AfterOpen  => session.start + delta
+    //  - which = BeforeClose => session.end - delta
+    // Requires timezone of input timestamps to match SessionRange times.
+    struct SessionRange
     {
-        class MarketCalendar;
-        using MarketCalendarPtr = std::shared_ptr<MarketCalendar>;
-    } // namespace calendar
+        Time start; // must have tz set
+        Time end;   // must have same tz as start
+    };
 
     enum class SessionAnchorWhich
     {
@@ -1020,8 +1021,8 @@ namespace epoch_frame
     class SessionAnchorOffsetHandler : public OffsetHandler
     {
       public:
-        SessionAnchorOffsetHandler(calendar::MarketCalendarPtr calendar, SessionAnchorWhich which,
-                                   TimeDelta delta, int64_t n = 1);
+        SessionAnchorOffsetHandler(SessionRange session, SessionAnchorWhich which, TimeDelta delta,
+                                   int64_t n = 1);
 
         int64_t diff(const arrow::TimestampScalar& start,
                      const arrow::TimestampScalar& end) const override;
@@ -1060,21 +1061,19 @@ namespace epoch_frame
 
         std::shared_ptr<IDateOffsetHandler> make(int64_t n) const override
         {
-            return std::make_shared<SessionAnchorOffsetHandler>(m_calendar, m_which, m_delta, n);
+            return std::make_shared<SessionAnchorOffsetHandler>(m_session, m_which, m_delta, n);
         }
 
       private:
-        calendar::MarketCalendarPtr m_calendar;
-        SessionAnchorWhich          m_which{SessionAnchorWhich::BeforeClose};
-        TimeDelta                   m_delta; // positive duration
+        SessionRange       m_session;
+        SessionAnchorWhich m_which{SessionAnchorWhich::BeforeClose};
+        TimeDelta          m_delta; // positive duration
 
-        // Helper to normalize to UTC
-        static arrow::TimestampScalar to_utc(arrow::TimestampScalar const& ts);
+        // Ensure tz consistency between input and session range
+        void assert_tz_match(const DateTime& dt) const;
 
-        // Build anchor timestamps within [ts - back_days, ts + fwd_days]
-        std::shared_ptr<arrow::TimestampArray> build_anchors(const arrow::TimestampScalar& ts_utc,
-                                                             int64_t back_days,
-                                                             int64_t fwd_days) const;
+        // Compute anchor for a given date in dt.tz
+        arrow::TimestampScalar anchor_for_date(const Date& date, const std::string& tz) const;
     };
 
     // ---------------------------------------------------------------------

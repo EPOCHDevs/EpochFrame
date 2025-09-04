@@ -121,11 +121,10 @@ namespace epoch_frame::factory::offset
     }
 
     inline DateOffsetHandlerPtr
-    session_anchor(calendar::MarketCalendarPtr cal,
-                   SessionAnchorWhich          which = SessionAnchorWhich::BeforeClose,
+    session_anchor(SessionRange session, SessionAnchorWhich which = SessionAnchorWhich::BeforeClose,
                    TimeDelta delta = TimeDelta{{.minutes = 0}}, int64_t n = 1)
     {
-        return std::make_shared<SessionAnchorOffsetHandler>(std::move(cal), which, delta, n);
+        return std::make_shared<SessionAnchorOffsetHandler>(std::move(session), which, delta, n);
     }
 
     inline DateOffsetHandlerPtr week_of_month(int64_t n, int week,
