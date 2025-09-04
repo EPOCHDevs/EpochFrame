@@ -145,3 +145,121 @@ TEST_CASE("SessionAnchorOffsetHandler navigation on NYSE with n variants")
                 Scalar{d0_close.timestamp()});
     }
 }
+
+TEST_CASE("SessionAnchorOffsetHandler is_on_offset AfterOpen/BeforeClose with delta > 0")
+{
+    auto cal = CalendarFactory::instance().get_calendar("NYSE");
+    REQUIRE(cal);
+
+    auto schedule = cal->schedule("2025-01-03"__date.date(), "2025-01-10"__date.date(), {});
+    REQUIRE(schedule.shape()[0] >= 2);
+
+    auto d0_open  = schedule["MarketOpen"].iloc(0);
+    auto d0_close = schedule["MarketClose"].iloc(0);
+
+    auto d0_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
+    auto d0_before_cl  = (d0_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
+
+    auto session = SessionRange{d0_open.to_datetime().time(), d0_close.to_datetime().time()};
+
+    auto after_open   = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                       TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
+    auto before_close = session_anchor(session, SessionAnchorWhich::BeforeClose,
+                                       TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
+
+    SECTION("AfterOpen: exact anchor is on, +/- 1 minute is off")
+    {
+        REQUIRE(after_open->is_on_offset(d0_after_open));
+        REQUIRE_FALSE(after_open->is_on_offset((d0_after_open + TimeDelta{chrono_minutes(1)})));
+        REQUIRE_FALSE(after_open->is_on_offset((d0_after_open - TimeDelta{chrono_minutes(1)})));
+    }
+
+    SECTION("BeforeClose: exact anchor is on, +/- 1 minute is off")
+    {
+        REQUIRE(before_close->is_on_offset(d0_before_cl));
+        REQUIRE_FALSE(before_close->is_on_offset((d0_before_cl + TimeDelta{chrono_minutes(1)})));
+        REQUIRE_FALSE(before_close->is_on_offset((d0_before_cl - TimeDelta{chrono_minutes(1)})));
+    }
+
+    SECTION("Not on offset cases on same day")
+    {
+        // Times that should not be on the session anchor offset for the day
+        auto d0_open_ts       = d0_open.timestamp();
+        auto d0_close_ts      = d0_close.timestamp();
+        auto mid_after_open   = (d0_open + Scalar{TimeDelta{chrono_minutes(30)}}).timestamp();
+        auto mid_before_close = (d0_close - Scalar{TimeDelta{chrono_minutes(30)}}).timestamp();
+
+        // AfterOpen(anchor=open+2m) => open itself and other intraday times are not on offset
+        REQUIRE_FALSE(after_open->is_on_offset(d0_open_ts));
+        REQUIRE_FALSE(after_open->is_on_offset(mid_after_open));
+        REQUIRE_FALSE(after_open->is_on_offset(mid_before_close));
+
+        // BeforeClose(anchor=close-2m) => close itself and other intraday times are not on offset
+        REQUIRE_FALSE(before_close->is_on_offset(d0_close_ts));
+        REQUIRE_FALSE(before_close->is_on_offset(mid_after_open));
+        REQUIRE_FALSE(before_close->is_on_offset(mid_before_close));
+    }
+}
+
+TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta == 0 (open/close)")
+{
+    auto cal = CalendarFactory::instance().get_calendar("NYSE");
+    REQUIRE(cal);
+
+    auto schedule = cal->schedule("2025-01-06"__date.date(), "2025-01-10"__date.date(), {});
+    REQUIRE(schedule.shape()[0] >= 1);
+
+    auto d0_open_dt  = schedule["MarketOpen"].iloc(0).to_datetime();
+    auto d0_close_dt = schedule["MarketClose"].iloc(0).to_datetime();
+
+    // Build SessionRange from the first day times
+    auto session = SessionRange{d0_open_dt.time(), d0_close_dt.time()};
+
+    auto ao0 = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                              TimeDelta{TimeDelta::Components{.minutes = 0}}, 0);
+    auto bc0 = session_anchor(session, SessionAnchorWhich::BeforeClose,
+                              TimeDelta{TimeDelta::Components{.minutes = 0}}, 0);
+
+    SECTION("AfterOpen(delta=0): open time is on, +/- is off")
+    {
+        REQUIRE(ao0->is_on_offset(d0_open_dt.timestamp()));
+        REQUIRE_FALSE(ao0->is_on_offset(d0_open_dt.timestamp() + TimeDelta{chrono_minutes(1)}));
+        REQUIRE_FALSE(ao0->is_on_offset(d0_open_dt.timestamp() - TimeDelta{chrono_minutes(1)}));
+    }
+
+    SECTION("BeforeClose(delta=0): close time is on, +/- is off")
+    {
+        REQUIRE(bc0->is_on_offset(d0_close_dt.timestamp()));
+        REQUIRE_FALSE(bc0->is_on_offset(d0_close_dt.timestamp() + TimeDelta{chrono_minutes(1)}));
+        REQUIRE_FALSE(bc0->is_on_offset(d0_close_dt.timestamp() - TimeDelta{chrono_minutes(1)}));
+    }
+}
+
+TEST_CASE("SessionAnchorOffsetHandler is_on_offset asserts on tz mismatch")
+{
+    auto cal = CalendarFactory::instance().get_calendar("NYSE");
+    REQUIRE(cal);
+
+    auto schedule = cal->schedule("2025-01-07"__date.date(), "2025-01-09"__date.date(), {});
+    REQUIRE(schedule.shape()[0] >= 1);
+
+    auto d0_open_dt  = schedule["MarketOpen"].iloc(0).to_datetime();
+    auto d0_close_dt = schedule["MarketClose"].iloc(0).to_datetime();
+
+    auto session    = SessionRange{d0_open_dt.time(), d0_close_dt.time()};
+    auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                     TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
+
+    auto anchor_dt =
+        (DateTime{d0_open_dt.date(), d0_open_dt.time()} + TimeDelta{chrono_minutes(2)});
+    auto anchor_ts = anchor_dt.timestamp();
+
+    // Same instant, different tz label than session tz (should NOT be on offset)
+    auto session_tz = d0_open_dt.tz();
+    auto other_tz =
+        (session_tz == std::string("UTC")) ? std::string("America/New_York") : std::string("UTC");
+    auto mismatched_tz_ts = DateTime{anchor_ts.value, other_tz}.timestamp();
+
+    REQUIRE(after_open->is_on_offset(anchor_ts));
+    REQUIRE_THROWS(after_open->is_on_offset(mismatched_tz_ts));
+}
