@@ -303,6 +303,14 @@ namespace epoch_frame
 
     DateTime DateTime::operator+(const TimeDelta& other) const
     {
+        // For timezone-aware DateTimes, work with UTC timestamps directly
+        if (!m_time.tz.empty())
+        {
+            auto new_ns = m_nanoseconds + chrono_nanoseconds(other.to_nanoseconds());
+            return DateTime{chrono_time_point(new_ns), m_time.tz};
+        }
+
+        // For naive DateTimes, use the original component-based arithmetic
         TimeDelta delta{
             TimeDelta::Components{.days         = static_cast<double>(toordinal()),
                                   .seconds      = static_cast<double>(m_time.second.count()),
@@ -316,7 +324,7 @@ namespace epoch_frame
         {
             return combine(Date::fromordinal(delta.days()),
                            Time{chrono_hour(_hour), chrono_minute(_minute), chrono_second(_second),
-                                chrono_microsecond(delta.microseconds()), m_time.tz});
+                                chrono_microsecond(delta.microseconds()), ""});
         }
         throw std::runtime_error("result out of range");
     }

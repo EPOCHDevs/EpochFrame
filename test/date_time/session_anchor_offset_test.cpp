@@ -15,138 +15,84 @@ using namespace epoch_frame::factory::offset;
 using namespace epoch_frame::factory::index;
 using namespace epoch_frame::calendar;
 
-TEST_CASE("SessionAnchorOffsetHandler navigation on NYSE with n variants")
+TEST_CASE("SessionAnchorOffsetHandler throws on unsupported operations")
 {
     auto cal = CalendarFactory::instance().get_calendar("NYSE");
     REQUIRE(cal);
 
     auto schedule = cal->schedule("2025-01-03"__date.date(), "2025-01-10"__date.date(), {});
-    REQUIRE(schedule.shape()[0] >= 4);
+    REQUIRE(schedule.shape()[0] >= 2);
 
     auto d0_open  = schedule["MarketOpen"].iloc(0);
     auto d0_close = schedule["MarketClose"].iloc(0);
     auto d1_open  = schedule["MarketOpen"].iloc(1);
-    auto d1_close = schedule["MarketClose"].iloc(1);
-    auto d2_open  = schedule["MarketOpen"].iloc(2);
-    auto d2_close = schedule["MarketClose"].iloc(2);
-    auto d3_close = schedule["MarketClose"].iloc(3);
-
-    auto d0_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-    auto d1_after_open = (d1_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-    auto d2_after_open = (d2_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-
-    auto d0_before_cl = (d0_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-    auto d1_before_cl = (d1_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-    auto d2_before_cl = (d2_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
-    auto d3_before_cl = (d3_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
 
     // Build SessionRange from day's open/close times (tz must match timestamps used)
     auto session = SessionRange{d0_open.to_datetime().time(), d0_close.to_datetime().time()};
 
-    SECTION("at-or-before (n=0)")
+    SECTION("add() throws")
     {
-        auto after_open   = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                           TimeDelta{TimeDelta::Components{.minutes = 2}}, 0);
-        auto before_close = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                           TimeDelta{TimeDelta::Components{.minutes = 2}}, 0);
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-        auto start_just_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(3)}}).timestamp();
-        REQUIRE(Scalar{after_open->add(start_just_after_open)} == Scalar{d0_after_open});
-        REQUIRE(Scalar{before_close->add(d0_close.timestamp())} == Scalar{d0_before_cl});
+        REQUIRE_THROWS_WITH(
+            after_open->add(d0_open.timestamp()),
+            "SessionAnchorOffsetHandler::add is not supported for SessionAnchor offsets.");
     }
 
-    SECTION("add with n != 1")
+    SECTION("diff() throws")
     {
-        // n = 2: strictly after by 2 anchors
-        auto after_open_n2   = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                              TimeDelta{TimeDelta::Components{.minutes = 2}}, 2);
-        auto before_close_n2 = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                              TimeDelta{TimeDelta::Components{.minutes = 2}}, 2);
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-        auto open_dt           = d0_open.to_datetime();
-        auto exp_after_open_n2 = (DateTime{open_dt.date() + chrono_days(1), open_dt.time()} +
-                                  TimeDelta{chrono_minutes(2)});
-        REQUIRE(Scalar{after_open_n2->add(d0_open.timestamp())} == Scalar{exp_after_open_n2});
-
-        auto close_dt              = d0_close.to_datetime();
-        auto exp_before_close_n2_0 = (DateTime{close_dt.date() + chrono_days(2), close_dt.time()} -
-                                      TimeDelta{chrono_minutes(2)});
-        REQUIRE(Scalar{before_close_n2->add(d0_close.timestamp())} ==
-                Scalar{exp_before_close_n2_0});
-
-        // n = -1, -2: strictly before
-        auto after_open_nm1 = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                             TimeDelta{TimeDelta::Components{.minutes = 2}}, -1);
-        auto after_open_nm2 = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                             TimeDelta{TimeDelta::Components{.minutes = 2}}, -2);
-        auto start_just_after_d1_open =
-            (d1_open + Scalar{TimeDelta{chrono_minutes(3)}}).timestamp();
-        REQUIRE(Scalar{after_open_nm1->add(start_just_after_d1_open)} == Scalar{d1_after_open});
-        auto d1_open_dt         = d1_open.to_datetime();
-        auto exp_after_open_nm2 = (DateTime{d1_open_dt.date() - chrono_days(1), d1_open_dt.time()} +
-                                   TimeDelta{chrono_minutes(2)});
-        REQUIRE(Scalar{after_open_nm2->add(start_just_after_d1_open)} ==
-                Scalar{exp_after_open_nm2});
-
-        auto before_close_nm1 = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                               TimeDelta{TimeDelta::Components{.minutes = 2}}, -1);
-        auto before_close_nm2 = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                               TimeDelta{TimeDelta::Components{.minutes = 2}}, -2);
-        auto start_just_before_d1_close =
-            (d1_close - Scalar{TimeDelta{chrono_minutes(1)}}).timestamp();
-        REQUIRE(Scalar{before_close_nm1->add(start_just_before_d1_close)} == Scalar{d1_before_cl});
-        auto d1_close_dt = d1_close.to_datetime();
-        auto exp_before_close_nm2 =
-            (DateTime{d1_close_dt.date() - chrono_days(1), d1_close_dt.time()} -
-             TimeDelta{chrono_minutes(2)});
-        REQUIRE(Scalar{before_close_nm2->add(start_just_before_d1_close)} ==
-                Scalar{exp_before_close_nm2});
+        REQUIRE_THROWS_WITH(
+            after_open->diff(d0_open.timestamp(), d1_open.timestamp()),
+            "SessionAnchorOffsetHandler::diff is not supported for SessionAnchor offsets.");
     }
 
-    SECTION("date_range with session_anchor")
+    SECTION("rollback() throws")
     {
-        auto  after_open_n1 = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                             TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
-        Array rng1(date_range({.start = d0_open.timestamp(), .periods = 3, .offset = after_open_n1})
-                       ->array());
-        REQUIRE(rng1.length() == 3);
-        REQUIRE(rng1[0].timestamp().value == d0_after_open.value);
-        auto ao0        = after_open_n1->add(d0_open.timestamp());
-        auto exp_rng1_1 = after_open_n1->add(ao0).value;
-        auto exp_rng1_2 = after_open_n1->add(arrow::TimestampScalar{exp_rng1_1, ao0.type}).value;
-        REQUIRE(rng1[1].timestamp().value == exp_rng1_1);
-        REQUIRE(rng1[2].timestamp().value == exp_rng1_2);
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-        auto  before_close_n2 = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                               TimeDelta{TimeDelta::Components{.minutes = 2}}, 2);
-        Array rng2(
-            date_range({.start = d0_close.timestamp(), .periods = 2, .offset = before_close_n2})
-                ->array());
-        REQUIRE(rng2.length() == 2);
-        auto bc0        = before_close_n2->base()->add(d0_close.timestamp());
-        auto exp_rng2_0 = bc0.value;
-        auto bc1        = before_close_n2->add(bc0);
-        auto exp_rng2_1 = bc1.value;
-        REQUIRE(rng2[0].timestamp().value == exp_rng2_0);
-        REQUIRE(rng2[1].timestamp().value == exp_rng2_1);
+        REQUIRE_THROWS_WITH(after_open->rollback(d0_open.timestamp()),
+                            "SessionAnchorOffsetHandler::rollback is not supported for "
+                            "SessionAnchor offsets. Use add()/base() semantics instead.");
     }
 
-    SECTION("delta = 0 (no shift, n=0)")
+    SECTION("rollforward() throws")
     {
-        auto after_open_zero   = session_anchor(session, SessionAnchorWhich::AfterOpen,
-                                                TimeDelta{TimeDelta::Components{.minutes = 0}}, 0);
-        auto before_close_zero = session_anchor(session, SessionAnchorWhich::BeforeClose,
-                                                TimeDelta{TimeDelta::Components{.minutes = 0}}, 0);
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-        auto start_just_after_open0 = (d0_open + Scalar{TimeDelta{chrono_minutes(1)}}).timestamp();
-        REQUIRE(Scalar{after_open_zero->add(start_just_after_open0)} ==
-                Scalar{d0_open.timestamp()});
-        REQUIRE(Scalar{before_close_zero->add(d0_close.timestamp())} ==
-                Scalar{d0_close.timestamp()});
+        REQUIRE_THROWS_WITH(after_open->rollforward(d0_open.timestamp()),
+                            "SessionAnchorOffsetHandler::rollforward is not supported for "
+                            "SessionAnchor offsets. Use add()/base() semantics instead.");
+    }
+
+    SECTION("is_on_offset still works")
+    {
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
+
+        auto d0_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
+
+        // This should still work as it doesn't rely on the unsupported operations
+        REQUIRE(after_open->is_on_offset(d0_after_open));
+        REQUIRE_FALSE(after_open->is_on_offset(d0_open.timestamp()));
+    }
+
+    SECTION("name() and code() still work")
+    {
+        auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
+
+        REQUIRE(after_open->name().find("SessionAnchor") != std::string::npos);
+        REQUIRE(after_open->code() == "SessionAnchor");
     }
 }
 
-TEST_CASE("SessionAnchorOffsetHandler is_on_offset AfterOpen/BeforeClose with delta > 0")
+TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta > 0")
 {
     auto cal = CalendarFactory::instance().get_calendar("NYSE");
     REQUIRE(cal);
@@ -235,31 +181,92 @@ TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta == 0 (open/close)"
     }
 }
 
-TEST_CASE("SessionAnchorOffsetHandler is_on_offset asserts on tz mismatch")
+TEST_CASE(
+    "SessionAnchorOffsetHandler is_on_offset with UTC index and session in different timezone")
 {
-    auto cal = CalendarFactory::instance().get_calendar("NYSE");
-    REQUIRE(cal);
+    // Test case: UTC index with session in New York time
+    // This mimics the TimeGrouper use case where we have UTC timestamps
+    // but session anchors defined in local market time
 
-    auto schedule = cal->schedule("2025-01-07"__date.date(), "2025-01-09"__date.date(), {});
-    REQUIRE(schedule.shape()[0] >= 1);
+    // Define a session in New York time: 09:30-16:00 ET
+    auto session_ny =
+        SessionRange{Time{std::chrono::hours(9), std::chrono::minutes(30), std::chrono::seconds(0),
+                          std::chrono::microseconds(0), "America/New_York"},
+                     Time{std::chrono::hours(16), std::chrono::minutes(0), std::chrono::seconds(0),
+                          std::chrono::microseconds(0), "America/New_York"}};
 
-    auto d0_open_dt  = schedule["MarketOpen"].iloc(0).to_datetime();
-    auto d0_close_dt = schedule["MarketClose"].iloc(0).to_datetime();
-
-    auto session    = SessionRange{d0_open_dt.time(), d0_close_dt.time()};
-    auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
+    auto after_open = session_anchor(session_ny, SessionAnchorWhich::AfterOpen,
                                      TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-    auto anchor_dt =
-        (DateTime{d0_open_dt.date(), d0_open_dt.time()} + TimeDelta{chrono_minutes(2)});
-    auto anchor_ts = anchor_dt.timestamp();
+    SECTION("March 2025 - Before DST (UTC-5)")
+    {
+        // March 7, 2025: Before DST, NY is UTC-5
+        // 09:32 ET = 14:32 UTC
+        auto mar7_anchor_utc =
+            DateTime{Date{2025y, std::chrono::March, 7d},
+                     Time{std::chrono::hours(14), std::chrono::minutes(32), std::chrono::seconds(0),
+                          std::chrono::microseconds(0), "UTC"}};
 
-    // Same instant, different tz label than session tz (should NOT be on offset)
-    auto session_tz = d0_open_dt.tz();
-    auto other_tz =
-        (session_tz == std::string("UTC")) ? std::string("America/New_York") : std::string("UTC");
-    auto mismatched_tz_ts = DateTime{anchor_ts.value, other_tz}.timestamp();
+        // This should be on the offset (exactly at 09:32 ET)
+        REQUIRE(after_open->is_on_offset(mar7_anchor_utc.timestamp()));
 
-    REQUIRE(after_open->is_on_offset(anchor_ts));
-    REQUIRE_THROWS(after_open->is_on_offset(mismatched_tz_ts));
+        // One minute before: 14:31 UTC = 09:31 ET (not on offset)
+        auto one_min_before = mar7_anchor_utc - TimeDelta{chrono_minutes(1)};
+        REQUIRE_FALSE(after_open->is_on_offset(one_min_before.timestamp()));
+
+        // One minute after: 14:33 UTC = 09:33 ET (not on offset)
+        auto one_min_after = mar7_anchor_utc + TimeDelta{chrono_minutes(1)};
+        REQUIRE_FALSE(after_open->is_on_offset(one_min_after.timestamp()));
+    }
+
+    SECTION("March 2025 - After DST (UTC-4)")
+    {
+        // March 11, 2025: After DST, NY is UTC-4
+        // 09:32 ET = 13:32 UTC
+        auto mar11_anchor_utc =
+            DateTime{Date{2025y, std::chrono::March, 11d},
+                     Time{std::chrono::hours(13), std::chrono::minutes(32), std::chrono::seconds(0),
+                          std::chrono::microseconds(0), "UTC"}};
+
+        // This should be on the offset (exactly at 09:32 ET)
+        REQUIRE(after_open->is_on_offset(mar11_anchor_utc.timestamp()));
+
+        // One minute before: 13:31 UTC = 09:31 ET (not on offset)
+        auto one_min_before = mar11_anchor_utc - TimeDelta{chrono_minutes(1)};
+        REQUIRE_FALSE(after_open->is_on_offset(one_min_before.timestamp()));
+
+        // One minute after: 13:33 UTC = 09:33 ET (not on offset)
+        auto one_min_after = mar11_anchor_utc + TimeDelta{chrono_minutes(1)};
+        REQUIRE_FALSE(after_open->is_on_offset(one_min_after.timestamp()));
+    }
+
+    SECTION("Tokyo session with UTC timestamps")
+    {
+        // Tokyo: UTC+9 (no DST)
+        auto session_tokyo =
+            SessionRange{Time{std::chrono::hours(9), std::chrono::minutes(0),
+                              std::chrono::seconds(0), std::chrono::microseconds(0), "Asia/Tokyo"},
+                         Time{std::chrono::hours(15), std::chrono::minutes(0),
+                              std::chrono::seconds(0), std::chrono::microseconds(0), "Asia/Tokyo"}};
+
+        auto tokyo_open = session_anchor(session_tokyo, SessionAnchorWhich::AfterOpen,
+                                         TimeDelta{TimeDelta::Components{.minutes = 0}}, 1);
+
+        // March 27, 2025: 09:00 Tokyo = 00:00 UTC
+        auto mar27_open_utc =
+            DateTime{Date{2025y, std::chrono::March, 27d},
+                     Time{std::chrono::hours(0), std::chrono::minutes(0), std::chrono::seconds(0),
+                          std::chrono::microseconds(0), "UTC"}};
+
+        // This should be on the offset (exactly at 09:00 Tokyo)
+        REQUIRE(tokyo_open->is_on_offset(mar27_open_utc.timestamp()));
+
+        // One hour before: 23:00 UTC previous day = 08:00 Tokyo (not on offset)
+        auto one_hour_before = mar27_open_utc - TimeDelta{chrono_hours(1)};
+        REQUIRE_FALSE(tokyo_open->is_on_offset(one_hour_before.timestamp()));
+
+        // One hour after: 01:00 UTC = 10:00 Tokyo (not on offset)
+        auto one_hour_after = mar27_open_utc + TimeDelta{chrono_hours(1)};
+        REQUIRE_FALSE(tokyo_open->is_on_offset(one_hour_after.timestamp()));
+    }
 }

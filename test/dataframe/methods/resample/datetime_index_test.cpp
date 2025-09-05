@@ -513,13 +513,13 @@ TEST_CASE("Resample Origin With Timezone", "[.][resample_datetime_index_test]")
 
     SECTION("Invalid timezone combinations")
     {
-        // Test with wrong timezone in origin (should throw an exception)
-        auto wrong_tz_origin = "1999-12-31 23:57:00"__dt;
-        REQUIRE_THROWS_WITH(ts.resample_by_agg(TimeGrouperOptions{.freq   = offset::minutes(5),
-                                                                  .origin = wrong_tz_origin})
-                                .mean(),
-                            Catch::Matchers::ContainsSubstring(
-                                "The origin must have the same timezone as the index."));
+        // Test with origin tz that differs from index tz (allowed when both are tz-aware)
+        auto different_tz_origin = ("1999-12-31 23:57:00"__dt).replace_tz("UTC");
+        auto resampled_diff_tz =
+            ts.resample_by_agg(
+                  TimeGrouperOptions{.freq = offset::minutes(5), .origin = different_tz_origin})
+                .mean();
+        // Should not throw - different tz-aware timezones are allowed
 
         // Test with timezone-aware origin but non-timezone-aware series
         auto regular_rng = date_range({.start  = "2000-01-01 00:00:00"_datetime,
@@ -529,8 +529,8 @@ TEST_CASE("Resample Origin With Timezone", "[.][resample_datetime_index_test]")
             epoch_frame::factory::array::make_random_normal_array_for_index(regular_rng, 2);
         auto regular_ts = make_series(regular_rng, regular_data_array);
 
-        // Origin with timezone for non-timezone series
-        auto tz_origin = "1999-12-31 23:57:00"__dt + chrono_hours(3);
+        // Origin with timezone for non-timezone series (should throw)
+        auto tz_origin = ("1999-12-31 23:57:00"__dt).replace_tz("UTC");
         REQUIRE_THROWS_WITH(regular_ts
                                 .resample_by_agg(TimeGrouperOptions{.freq   = offset::minutes(5),
                                                                     .origin = tz_origin})

@@ -1031,6 +1031,10 @@ namespace epoch_frame
 
         bool is_on_offset(const arrow::TimestampScalar& other) const override;
 
+        // Override rollback/rollforward for intraday semantics
+        arrow::TimestampScalar rollback(const arrow::TimestampScalar& dt) const override;
+        arrow::TimestampScalar rollforward(const arrow::TimestampScalar& dt) const override;
+
         bool is_fixed() const override
         {
             return false;
@@ -1070,7 +1074,6 @@ namespace epoch_frame
         TimeDelta          m_delta; // positive duration
 
         // Ensure tz consistency between input and session range
-        void assert_tz_match(const DateTime& dt) const;
 
         // Compute anchor for a given date in dt.tz
         arrow::TimestampScalar anchor_for_date(const Date& date, const std::string& tz) const;

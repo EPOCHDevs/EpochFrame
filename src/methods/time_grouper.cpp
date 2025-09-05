@@ -356,9 +356,10 @@ namespace epoch_frame
             if (origin_is_value)
             {
                 auto origin_value = std::get<DateTime>(m_options.origin);
-                AssertFalseFromStream((origin_value.tz() == "") != (index_tz == ""),
-                                      "origin must have the same timezone as the index. origin: "
-                                          << origin_value.tz() << "\tindex: " << index_tz);
+                AssertFalseFromStream(
+                    (origin_value.tz() == "") != (index_tz == ""),
+                    "The origin must have the same timezone as the index. origin: "
+                        << origin_value.tz() << "\tindex: " << index_tz);
             }
             else if (std::get<epoch_core::GrouperOrigin>(origin) ==
                      epoch_core::GrouperOrigin::Epoch)

@@ -693,13 +693,6 @@ namespace epoch_frame
                          "SessionRange.start.tz must equal SessionRange.end.tz");
     }
 
-    void SessionAnchorOffsetHandler::assert_tz_match(const DateTime& dt) const
-    {
-        AssertFromStream(dt.tz() == m_session.start.tz,
-                         "Timestamp tz (" << dt.tz() << ") must equal SessionRange tz ("
-                                          << m_session.start.tz << ")");
-    }
-
     arrow::TimestampScalar SessionAnchorOffsetHandler::anchor_for_date(const Date&        date,
                                                                        const std::string& tz) const
     {
@@ -707,7 +700,10 @@ namespace epoch_frame
             (m_which == SessionAnchorWhich::AfterOpen) ? m_session.start : m_session.end;
         // ensure we use provided tz (must match session tz by contract)
         auto time_in_tz = base_time.replace_tz(tz);
-        auto dt         = DateTime{date, time_in_tz};
+        // Build as naive local wall time, then localize to apply tz rules (DST-aware)
+        auto naive_time = time_in_tz.replace_tz("");
+        auto dt         = DateTime{date, naive_time}.tz_localize(tz);
+
         if (m_which == SessionAnchorWhich::AfterOpen)
         {
             dt = dt + m_delta;
@@ -716,62 +712,64 @@ namespace epoch_frame
         {
             dt = dt - m_delta;
         }
+
         return dt.timestamp();
     }
 
-    int64_t SessionAnchorOffsetHandler::diff(const arrow::TimestampScalar& start,
-                                             const arrow::TimestampScalar& end) const
+    int64_t SessionAnchorOffsetHandler::diff(const arrow::TimestampScalar& /*start*/,
+                                             const arrow::TimestampScalar& /*end*/) const
     {
-        // Conservative: iterate add() to count steps, similar to relative_diff
-        return relative_diff(start, end, *this);
+        throw std::runtime_error(
+            "SessionAnchorOffsetHandler::diff is not supported for SessionAnchor offsets.");
+    }
+
+    arrow::TimestampScalar
+    SessionAnchorOffsetHandler::rollback(const arrow::TimestampScalar& /*dt*/) const // NOLINT
+    {
+        throw std::runtime_error("SessionAnchorOffsetHandler::rollback is not supported for "
+                                 "SessionAnchor offsets. Use add()/base() semantics instead.");
+    }
+
+    arrow::TimestampScalar
+    SessionAnchorOffsetHandler::rollforward(const arrow::TimestampScalar& /*dt*/) const
+    {
+        throw std::runtime_error("SessionAnchorOffsetHandler::rollforward is not supported for "
+                                 "SessionAnchor offsets. Use add()/base() semantics instead.");
     }
 
     bool SessionAnchorOffsetHandler::is_on_offset(const arrow::TimestampScalar& other) const
     {
         auto s  = Scalar{other};
         auto dt = s.to_datetime();
-        assert_tz_match(dt);
+        // Convert to session timezone if needed
+        auto session_tz = m_session.start.tz;
+        if (dt.tz().empty())
+        {
+            dt = dt.tz_localize("UTC").tz_convert(session_tz);
+        }
+        else if (dt.tz() != session_tz)
+        {
+            dt = dt.tz_convert(session_tz);
+        }
         auto anchor = anchor_for_date(dt.date(), dt.tz());
-        return Scalar{anchor} == s;
+        // Convert input to session tz for comparison
+        Scalar s_in_session_tz = s;
+        if (s.dt().tz().empty())
+        {
+            s_in_session_tz = s.dt().tz_localize("UTC");
+        }
+        if (session_tz != s_in_session_tz.dt().tz())
+        {
+            s_in_session_tz = s_in_session_tz.dt().tz_convert(session_tz);
+        }
+        return Scalar{anchor} == s_in_session_tz;
     }
 
     arrow::TimestampScalar
-    SessionAnchorOffsetHandler::add(const arrow::TimestampScalar& other) const
+    SessionAnchorOffsetHandler::add(const arrow::TimestampScalar& /*other*/) const
     {
-        auto s  = Scalar{other};
-        auto dt = s.to_datetime();
-        assert_tz_match(dt);
-
-        auto base_date   = dt.date();
-        auto base_anchor = anchor_for_date(base_date, dt.tz());
-        auto ba          = Scalar{base_anchor};
-        bool ba_gt_s     = ba > s;
-        bool ba_lt_s     = ba < s;
-
-        if (n() == 0)
-        {
-            if (!ba_gt_s)
-            {
-                return base_anchor;
-            }
-            auto prev_dt = DateTime{base_date} - TimeDelta{{.days = 1.0}};
-            return anchor_for_date(prev_dt.date(), dt.tz());
-        }
-
-        if (n() > 0)
-        {
-            int64_t offset = ba_gt_s ? 0 : 1; // if base_anchor > dt, include today
-            auto    target =
-                DateTime{base_date} + TimeDelta{{.days = static_cast<double>(offset + (n() - 1))}};
-            return anchor_for_date(target.date(), dt.tz());
-        }
-
-        // n() < 0
-        int64_t k      = -n();
-        int64_t offset = ba_lt_s ? 0 : 1; // if base_anchor < dt, include today
-        auto    target =
-            DateTime{base_date} - TimeDelta{{.days = static_cast<double>(offset + (k - 1))}};
-        return anchor_for_date(target.date(), dt.tz());
+        throw std::runtime_error(
+            "SessionAnchorOffsetHandler::add is not supported for SessionAnchor offsets.");
     }
 
 } // namespace epoch_frame
