@@ -1,0 +1,40 @@
+================================================================================
+EPOCHFRAME BENCHMARK SUMMARY REPORT
+================================================================================
+
+Library: EpochFrame 1.0.0
+Timestamp: 1758493328779945363
+
+Data Sizes Tested: 1000, 10000 rows
+
+------------------------------------------------------------
+TOP 10 FASTEST OPERATIONS (at 1M rows)
+------------------------------------------------------------
+ 1. cumsum                                     0.000 ms
+ 2. cumprod                                    0.000 ms
+ 3. cummax                                     0.000 ms
+ 4. copy_deep                                  0.000 ms
+ 5. column_access                              0.010 ms
+ 6. shift                                      0.015 ms
+ 7. multi_column_access                        0.015 ms
+ 8. add_columns                                0.033 ms
+ 9. multiply_columns                           0.036 ms
+10. diff                                       0.042 ms
+
+------------------------------------------------------------
+TOP 10 SLOWEST OPERATIONS (at 1M rows)
+------------------------------------------------------------
+ 1. dropna                                     0.003 s
+ 2. sort_index                                 0.003 s
+ 3. nsmallest                                  0.004 s
+ 4. nlargest                                   0.004 s
+ 5. reset_index                                0.004 s
+ 6. sort_single_column                         0.004 s
+ 7. create_from_numpy                          0.006 s
+ 8. apply_row                                  0.298 s
+ 9. rolling_mean                               0.760 s
+10. expanding_sum                             32.386 s
+
+------------------------------------------------------------
+OPERATIONS NOT AVAILABLE (N/A): 45
+------------------------------------------------------------

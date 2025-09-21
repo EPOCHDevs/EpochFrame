@@ -1,0 +1,66 @@
+================================================================================
+PANDAS BENCHMARK SUMMARY REPORT
+================================================================================
+
+Library: pandas 2.3.2
+NumPy: 2.3.3
+Timestamp: 2025-09-21T15:23:12.868517
+System: 32 CPUs, 125.7 GB RAM
+
+Data Sizes Tested: 1,000, 10,000, 100,000, 1,000,000 rows
+
+------------------------------------------------------------
+TOP 10 FASTEST OPERATIONS (at 1M rows)
+------------------------------------------------------------
+ 1. iloc_range                                  0.097 ms
+ 2. column_access                               0.123 ms
+ 3. iloc_row                                    0.188 ms
+ 4. shift                                       1.188 ms
+ 5. diff                                        1.250 ms
+ 6. add_columns                                 1.541 ms
+ 7. melt                                        1.844 ms
+ 8. multiply_columns                            2.087 ms
+ 9. stack                                       2.313 ms
+10. pivot_table                                 2.811 ms
+
+------------------------------------------------------------
+TOP 10 SLOWEST OPERATIONS (at 1M rows)
+------------------------------------------------------------
+ 1. sort_single_column                          0.378 s
+ 2. applymap                                    0.430 s
+ 3. nunique                                     0.562 s
+ 4. string_split                                0.598 s
+ 5. memory_usage                                0.609 s
+ 6. sort_multi_column                           0.642 s
+ 7. to_numpy                                    1.764 s
+ 8. merge_inner                                 4.711 s
+ 9. merge_left                                  7.996 s
+10. apply_row                                  13.404 s
+
+------------------------------------------------------------
+SCALING ANALYSIS
+------------------------------------------------------------
+
+Linear:
+  - apply_row
+  - copy_deep
+  - fillna
+  - merge_inner
+  - merge_left
+  ... and 7 more
+
+Sub-linear:
+  - applymap
+  - between_filter
+  - complex_filter
+  - concat_axis0
+  - concat_axis1
+  ... and 36 more
+
+Sub-linear (very efficient):
+  - add_columns
+  - apply_column
+  - column_access
+  - complex_arithmetic
+  - create_from_dict
+  ... and 19 more

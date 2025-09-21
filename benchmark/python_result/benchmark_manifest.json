@@ -1,0 +1,3495 @@
+{
+  "benchmark_info": {
+    "library": "pandas",
+    "version": "2.3.2",
+    "numpy_version": "2.3.3",
+    "timestamp": "2025-09-21T15:23:12.868517",
+    "system_info": {
+      "cpu_count": 32,
+      "memory_gb": 125.69327545166016
+    }
+  },
+  "data_sizes": [
+    1000,
+    10000,
+    100000,
+    1000000
+  ],
+  "operations_summary": {
+    "add_columns": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00017175799985125195,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00017783900148060638,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00032428899976366665,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0015411740005220054,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.31764489995340606,
+        "std": 0.27314522582985135,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "apply_column": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006833950010332046,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007243630006996682,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0010310990001016762,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.005579527000008966,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.3039751952911444,
+        "std": 0.30804516838732127,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "apply_row": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.014095128000917612,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.14719082199917466,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 100000,
+          "time": 1.2828457840005285,
+          "memory_delta": 1.30078125
+        },
+        {
+          "size": 1000000,
+          "time": 13.40428596199854,
+          "memory_delta": 100.640625
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9927248867297651,
+        "std": 0.037074582194793725,
+        "interpretation": "Linear"
+      }
+    },
+    "applymap": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0010832589996425668,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.004527486000370118,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.041647498999736854,
+          "memory_delta": 0.8828125
+        },
+        {
+          "size": 1000000,
+          "time": 0.42978725300054066,
+          "memory_delta": 1.00390625
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8661737416190335,
+        "std": 0.17447073305697355,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "between_filter": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007355849993473385,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0011264509994362015,
+          "memory_delta": 0.75
+        },
+        {
+          "size": 100000,
+          "time": 0.004083017998709693,
+          "memory_delta": 1.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.08701906999885978,
+          "memory_delta": 72.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.690993857789298,
+        "std": 0.47605486263779034,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "column_access": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0002640940001583658,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0001183360000140965,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00011240499952691607,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0001225140003953129,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": -0.11119093794750763,
+        "std": 0.1696645491870077,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "complex_arithmetic": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00033076200088544283,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00035710200063476805,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0007480189997295383,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0064146410004468635,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.4292189151219614,
+        "std": 0.37528331504228224,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "complex_filter": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007226500001706881,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0012693740009126486,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.007470075999663095,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.07048035400111985,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6630466898732773,
+        "std": 0.30745362828603323,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "concat_axis0": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005334390007192269,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0009558659985486884,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.006329849000394461,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.16344121700058167,
+          "memory_delta": 228.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8287589409485614,
+        "std": 0.47305117306879496,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "concat_axis1": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0004480360003071837,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0008704619995114626,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.007400934000543202,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.18102988899954653,
+          "memory_delta": 274.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8688124578551348,
+        "std": 0.45113216362939496,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "copy_deep": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00015481599984923378,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0003631529998529004,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.006082066000089981,
+          "memory_delta": 6.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.08207910200144397,
+          "memory_delta": 122.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9081389181359608,
+        "std": 0.3822502164790195,
+        "interpretation": "Linear"
+      }
+    },
+    "correlation": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005193919987505069,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0009130439993896289,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00517621600010898,
+          "memory_delta": 3.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.04757361599877186,
+          "memory_delta": 30.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.653956969239211,
+        "std": 0.3016001878025073,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "covariance": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007487599996238714,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007912210003269138,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0025149230004899437,
+          "memory_delta": 1.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.025636546000896487,
+          "memory_delta": 15.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5115056257025619,
+        "std": 0.4019248643064136,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "create_from_dict": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0002969170000142185,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0002109830002154922,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00042142399979638867,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.003910778999852482,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.3732094035183291,
+        "std": 0.45847130667066566,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "create_from_numpy": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0004430560002219863,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0018469970000296598,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.01773099199999706,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.1793598149997706,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8690888415999941,
+        "std": 0.17637123779987812,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "crosstab": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0026709810008469503,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.003211282999473042,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.011938489999010926,
+          "memory_delta": 5.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.11701935800010688,
+          "memory_delta": 0.18359375
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5471956374346686,
+        "std": 0.3723945147784074,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "cummax": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.000465469000118901,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0005657109995809151,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0023917770013213158,
+          "memory_delta": 2.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.01566162400013127,
+          "memory_delta": 13.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5089820102460486,
+        "std": 0.3098741847554736,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "cumprod": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0004739150008390425,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0004952259987476282,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0010451960006321315,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.005927612000959925,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.36572643766064256,
+        "std": 0.3013114154841371,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "cumsum": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005578450000029989,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0005608309984381776,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0016464340005768463,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.013026640999669326,
+          "memory_delta": 9.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.4561062999305794,
+        "std": 0.3658701313987273,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "datetime_diff": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00030361999961314723,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0003511300001264317,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0008526689998689108,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.012134307000451372,
+          "memory_delta": 13.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5338948677029604,
+        "std": 0.45726386854770407,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "datetime_extract_components": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006261259986786172,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0010245370012853527,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.005701047999536968,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.05852322900136642,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6568888475924045,
+        "std": 0.33154575536355724,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "datetime_extract_year": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0003615400000853697,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0005745479993493063,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0015756990014779149,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.01498309799899289,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5391484221002483,
+        "std": 0.32513285682356274,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "describe": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.011735633001080714,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 10000,
+          "time": 0.014099206000537379,
+          "memory_delta": -0.48828125
+        },
+        {
+          "size": 100000,
+          "time": 0.03971712199927424,
+          "memory_delta": 7.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.3600338810010726,
+          "memory_delta": -53.03125
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.49561228409299124,
+        "std": 0.35977276867497726,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "diff": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00017471399951318745,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00015807199997652788,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00034114200025214814,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0012497170009737602,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.2848279907813833,
+        "std": 0.250383192038173,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "drop_duplicates": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0009225720004906179,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0013512209989130497,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 100000,
+          "time": 0.007322575000216602,
+          "memory_delta": 3.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.06480743200154393,
+          "memory_delta": 30.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6155415143182205,
+        "std": 0.32974250233272073,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "dropna": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.000744581999242655,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.002059282000118401,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.01680982299876632,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.19746531500095443,
+          "memory_delta": 78.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8078594299012479,
+        "std": 0.26676478176806095,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "duplicated": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00015806200099177659,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00020452099852263927,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0006208949998836033,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.005504493999978877,
+          "memory_delta": 0.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5139633090212455,
+        "std": 0.34194404621779295,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "ewm_mean": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0002663489995029522,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0003182380005455343,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.000873859000421362,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.007337343999097357,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.48002927031850157,
+        "std": 0.346936922552074,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "expanding_sum": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0002503279993106844,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0003365829998074332,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0011442649993114173,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.010023134000221035,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5341647027141533,
+        "std": 0.33227651380589357,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "fillna": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005069680009910371,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0021489339997060597,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.021092091001264635,
+          "memory_delta": 3.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.29193726500125194,
+          "memory_delta": 160.43359375
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9201029956050882,
+        "std": 0.21586426623173016,
+        "interpretation": "Linear"
+      }
+    },
+    "groupby_multi_agg": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0020764359996974235,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0022701550005876925,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0058477080001466675,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.04340060799950152,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.4400590879482442,
+        "std": 0.34019408560144754,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "groupby_multi_column": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007886160001362441,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0014336080002976814,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 100000,
+          "time": 0.006231531000594259,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.08964746099991316,
+          "memory_delta": -22.6171875
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6852241365952079,
+        "std": 0.3682679337147111,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "groupby_single_agg": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006688880002911901,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 10000,
+          "time": 0.0009966130000975681,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.003034996001588297,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.039146342998719774,
+          "memory_delta": 22.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5891125973941232,
+        "std": 0.38987655691771017,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "groupby_transform": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006584980001207441,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007776449983794009,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0031945509999786736,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.04388435200053209,
+          "memory_delta": 30.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.60791840986099,
+        "std": 0.43507789172749656,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "iloc_range": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00011488999916764442,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 8.670599891047459e-05,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 7.895099952293094e-05,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 9.738600056152791e-05,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": -0.023928565218053616,
+        "std": 0.08791149949693841,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "iloc_row": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0003341979991091648,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00015853299919399433,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0001676399988355115,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.00018775900025502779,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": -0.08346769374601538,
+        "std": 0.17030536484257852,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "interpolate": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0009627189992897911,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0014798460015299497,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.006613671001105104,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.08661518299959425,
+          "memory_delta": 35.984375
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6513648281930688,
+        "std": 0.379849131008972,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "isin_filter": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005923509997955989,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0009517679991404293,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00480497600074159,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.07699544699971739,
+          "memory_delta": 72.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.7046286396071658,
+        "std": 0.40776863448042744,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "loc_condition": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0009538020003674319,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.000725594998584711,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.003341540999826975,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.039534903999083326,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5391741532101201,
+        "std": 0.49439667215313815,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "map_operation": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00043500100036908407,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0006598799991479609,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0021770670009573223,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.01639455300028203,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5254031081228595,
+        "std": 0.2841239009505155,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "mean": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007098260011844104,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.000645002000965178,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0012206209994474193,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.008258221998403315,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.3552448832594873,
+        "std": 0.36022241052792636,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "melt": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0015989830008038552,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.001928794001287315,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0019628190002549672,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.001843842001107987,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.020626618975253263,
+        "std": 0.04528274262730597,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "memory_usage": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0013483249986165902,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0067050950001430465,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.06535609699858469,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.6091297740003938,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8849717471720652,
+        "std": 0.13342828389112646,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "merge_inner": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.005798623998998664,
+          "memory_delta": 5.203125
+        },
+        {
+          "size": 10000,
+          "time": 0.04883735799921851,
+          "memory_delta": 27.98046875
+        },
+        {
+          "size": 100000,
+          "time": 0.4303505679999944,
+          "memory_delta": 304.1953125
+        },
+        {
+          "size": 1000000,
+          "time": 4.710957710000002,
+          "memory_delta": 2760.31640625
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9699280856588409,
+        "std": 0.049695324911560375,
+        "interpretation": "Linear"
+      }
+    },
+    "merge_left": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.004553787000986631,
+          "memory_delta": 3.75
+        },
+        {
+          "size": 10000,
+          "time": 0.07544306000090728,
+          "memory_delta": 66.5859375
+        },
+        {
+          "size": 100000,
+          "time": 0.7280579070011299,
+          "memory_delta": 363.7734375
+        },
+        {
+          "size": 1000000,
+          "time": 7.996215098999528,
+          "memory_delta": 3094.74609375
+        }
+      ],
+      "scaling_factor": {
+        "average": 1.0815039183740156,
+        "std": 0.10006198799876143,
+        "interpretation": "Linear"
+      }
+    },
+    "min_max": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0010261999996146187,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.001006282000162173,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0021780790011689533,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.009977766001611599,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.3292671014999867,
+        "std": 0.27334468378240945,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "multi_column_access": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0010380519997852389,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 10000,
+          "time": 0.0008587400006945245,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0065571520008234074,
+          "memory_delta": 5.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.08019140099895594,
+          "memory_delta": 53.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6293028971748783,
+        "std": 0.5101022097939322,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "multiply_columns": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0001401369991071988,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00015573800010315608,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.000354476998836617,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.002086794998831465,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.3909756579842614,
+        "std": 0.29655579437127544,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "nlargest": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0011059620010200888,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0014138799997454043,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0087920709993341,
+          "memory_delta": 4.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.12836758500088763,
+          "memory_delta": -30.38671875
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6882383884096367,
+        "std": 0.43819040055602604,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "nsmallest": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0009485320006206166,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0014620729998569004,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.008805477000350947,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.15434098500008986,
+          "memory_delta": 0.0703125
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.7371430934385043,
+        "std": 0.43208645375617405,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "nunique": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0019924759999412345,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 10000,
+          "time": 0.005022031000407878,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.03250750299957872,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.5616114940003172,
+          "memory_delta": 2.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8166809628854432,
+        "std": 0.34130450647663546,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "pct_change": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00048071800119942054,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0004546790005406365,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.001893276001283084,
+          "memory_delta": 2.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.014525173000947689,
+          "memory_delta": 23.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.49341030949633463,
+        "std": 0.3816963267193336,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "pivot_table": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.002877566001188825,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.002793645000565448,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0028755509993061423,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0028113389998907223,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": -0.003370692089431422,
+        "std": 0.011326010364937635,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "quantiles": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0008337419985764427,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0010974859997077147,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.005014266000216594,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.039052263000485254,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5568715088063199,
+        "std": 0.32349199907512616,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "rank": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0002853149999282323,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.000972676998571842,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.009524881001198082,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.14422482999907515,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9012384770672028,
+        "std": 0.27185048375893867,
+        "interpretation": "Linear"
+      }
+    },
+    "rank_pct": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00024551900060032494,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0009278819998144172,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.009751363000759738,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.14518109599885065,
+          "memory_delta": 7.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9239416543476197,
+        "std": 0.25269900905469506,
+        "interpretation": "Linear"
+      }
+    },
+    "reindex": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.000524552000570111,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0017010489991662325,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.01711667900053726,
+          "memory_delta": 4.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.31599055100014084,
+          "memory_delta": 68.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9266285161621814,
+        "std": 0.3130174853757028,
+        "interpretation": "Linear"
+      }
+    },
+    "reset_index": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006678459994873265,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0010638520016073016,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.01609625099990808,
+          "memory_delta": 25.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.1788801209986559,
+          "memory_delta": 236.4765625
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8092952503852092,
+        "std": 0.4327496940331518,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "rolling_mean": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.000363244000254781,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.00042989100074919406,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0013454200015985407,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.012004608001007,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5063831778063271,
+        "std": 0.3582512247566062,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "rolling_std": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.000302407999697607,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0004549690002022544,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.001930456999616581,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.018519802999435342,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5956810290460152,
+        "std": 0.3292498663410404,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "sample_frac": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005362940009945305,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0010368000002927147,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.00486184500005038,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.04658285300138232,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6462743815818467,
+        "std": 0.2843295122267941,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "sample_rows": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005902379998588003,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.000919937001526705,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.002257701999042183,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.015558316999886301,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.47364514992666074,
+        "std": 0.270120261335972,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "set_index": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0004390980011521606,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007332610002777074,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.007119898000382818,
+          "memory_delta": 9.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.07418874999893887,
+          "memory_delta": 91.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.7425921978725906,
+        "std": 0.3678342067451575,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "shift": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0001529219989606645,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.00016283100012515206,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0002766289999271976,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0011883400002261624,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.29682358319952135,
+        "std": 0.2517592357430784,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "simple_filter": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007914720008557197,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007236519995785784,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0032825790003698785,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.05950844099970709,
+          "memory_delta": 56.75
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.6253810056429369,
+        "std": 0.5300703117380376,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "sort_index": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00029118599923094735,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0013129470007697819,
+          "memory_delta": 1.5
+        },
+        {
+          "size": 100000,
+          "time": 0.009090691000892548,
+          "memory_delta": 13.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.10947056999975757,
+          "memory_delta": 137.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8583756299861168,
+        "std": 0.1746342128645086,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "sort_multi_column": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0012259119994268985,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0037415360002341913,
+          "memory_delta": 1.5
+        },
+        {
+          "size": 100000,
+          "time": 0.03903776399965864,
+          "memory_delta": 14.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.6419465669987403,
+          "memory_delta": 129.5390625
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9063465282233892,
+        "std": 0.30894215884442894,
+        "interpretation": "Linear"
+      }
+    },
+    "sort_single_column": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005807489997096127,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.002132833000359824,
+          "memory_delta": 1.0
+        },
+        {
+          "size": 100000,
+          "time": 0.017669355000180076,
+          "memory_delta": 3.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.377539113000239,
+          "memory_delta": 145.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.9376578269022557,
+        "std": 0.3125182468314301,
+        "interpretation": "Linear"
+      }
+    },
+    "stack": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0014556300011463463,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.002482431000316865,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.0061199880001368,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.0023129880009946646,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.06704079393472007,
+        "std": 0.35232381365926274,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "std": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007808609989297111,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0010175730003538774,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 100000,
+          "time": 0.0033146499990834855,
+          "memory_delta": 3.25
+        },
+        {
+          "size": 1000000,
+          "time": 0.029690403000131482,
+          "memory_delta": 30.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5266807868334579,
+        "std": 0.34191943399990593,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "string_contains": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005205639990890631,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.002096383999742102,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.017779875999622163,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.1782438229984109,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.8448467861054271,
+        "std": 0.1721719052536822,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "string_replace": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.00042095399840036407,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0020154789999651257,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.019411122000747127,
+          "memory_delta": 3.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.20027462100006233,
+          "memory_delta": 58.25
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.892463759853635,
+        "std": 0.15062850900255204,
+        "interpretation": "Sub-linear"
+      }
+    },
+    "string_split": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0005935940007475438,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.003911088999302592,
+          "memory_delta": 1.75
+        },
+        {
+          "size": 100000,
+          "time": 0.06787274300040735,
+          "memory_delta": 22.75
+        },
+        {
+          "size": 1000000,
+          "time": 0.5976752820006368,
+          "memory_delta": 227.5
+        }
+      ],
+      "scaling_factor": {
+        "average": 1.0009919307010386,
+        "std": 0.17624712070296109,
+        "interpretation": "Linear"
+      }
+    },
+    "sum": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0007400230006169295,
+          "memory_delta": 0.25
+        },
+        {
+          "size": 10000,
+          "time": 0.0007727159991191002,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.002074861999062705,
+          "memory_delta": 2.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.016595353999946383,
+          "memory_delta": 23.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.45024710089007186,
+        "std": 0.3612957862693065,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "to_dict": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.006353303000651067,
+          "memory_delta": 1.0
+        },
+        {
+          "size": 10000,
+          "time": 0.006131158999778563,
+          "memory_delta": 0.75
+        },
+        {
+          "size": 100000,
+          "time": 0.00648812200051907,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 1000000,
+          "time": 0.005872024999916903,
+          "memory_delta": 0.25
+        }
+      ],
+      "scaling_factor": {
+        "average": -0.01140389074145129,
+        "std": 0.027870883473751214,
+        "interpretation": "Sub-linear (very efficient)"
+      }
+    },
+    "to_numpy": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0016175999990082346,
+          "memory_delta": 0.5
+        },
+        {
+          "size": 10000,
+          "time": 0.014866662000713404,
+          "memory_delta": 5.5
+        },
+        {
+          "size": 100000,
+          "time": 0.17833617700125615,
+          "memory_delta": 83.0
+        },
+        {
+          "size": 1000000,
+          "time": 1.7635711639995861,
+          "memory_delta": 744.1796875
+        }
+      ],
+      "scaling_factor": {
+        "average": 1.0125072837066547,
+        "std": 0.04879577448837051,
+        "interpretation": "Linear"
+      }
+    },
+    "value_counts": {
+      "timings": [
+        {
+          "size": 1000,
+          "time": 0.0006598610016226303,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 10000,
+          "time": 0.0007877240004745545,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 100000,
+          "time": 0.004060463999849162,
+          "memory_delta": 0.0
+        },
+        {
+          "size": 1000000,
+          "time": 0.03874470200025826,
+          "memory_delta": 0.0
+        }
+      ],
+      "scaling_factor": {
+        "average": 0.5895866209988122,
+        "std": 0.3785933925294256,
+        "interpretation": "Sub-linear"
+      }
+    }
+  },
+  "detailed_results": {
+    "size_1000": {
+      "create_from_dict": {
+        "time_seconds": 0.0002969170000142185,
+        "memory_delta_mb": 0.0
+      },
+      "create_from_numpy": {
+        "time_seconds": 0.0004430560002219863,
+        "memory_delta_mb": 0.0
+      },
+      "column_access": {
+        "time_seconds": 0.0002640940001583658,
+        "memory_delta_mb": 0.25
+      },
+      "multi_column_access": {
+        "time_seconds": 0.0010380519997852389,
+        "memory_delta_mb": 0.5
+      },
+      "iloc_row": {
+        "time_seconds": 0.0003341979991091648,
+        "memory_delta_mb": 0.0
+      },
+      "iloc_range": {
+        "time_seconds": 0.00011488999916764442,
+        "memory_delta_mb": 0.0
+      },
+      "loc_condition": {
+        "time_seconds": 0.0009538020003674319,
+        "memory_delta_mb": 0.25
+      },
+      "simple_filter": {
+        "time_seconds": 0.0007914720008557197,
+        "memory_delta_mb": 0.0
+      },
+      "complex_filter": {
+        "time_seconds": 0.0007226500001706881,
+        "memory_delta_mb": 0.0
+      },
+      "isin_filter": {
+        "time_seconds": 0.0005923509997955989,
+        "memory_delta_mb": 0.0
+      },
+      "between_filter": {
+        "time_seconds": 0.0007355849993473385,
+        "memory_delta_mb": 0.0
+      },
+      "sum": {
+        "time_seconds": 0.0007400230006169295,
+        "memory_delta_mb": 0.25
+      },
+      "mean": {
+        "time_seconds": 0.0007098260011844104,
+        "memory_delta_mb": 0.0
+      },
+      "std": {
+        "time_seconds": 0.0007808609989297111,
+        "memory_delta_mb": 0.0
+      },
+      "min_max": {
+        "time_seconds": 0.0010261999996146187,
+        "memory_delta_mb": 0.0
+      },
+      "quantiles": {
+        "time_seconds": 0.0008337419985764427,
+        "memory_delta_mb": 0.25
+      },
+      "describe": {
+        "time_seconds": 0.011735633001080714,
+        "memory_delta_mb": 0.5
+      },
+      "groupby_single_agg": {
+        "time_seconds": 0.0006688880002911901,
+        "memory_delta_mb": 0.5
+      },
+      "groupby_multi_agg": {
+        "time_seconds": 0.0020764359996974235,
+        "memory_delta_mb": 0.25
+      },
+      "groupby_multi_column": {
+        "time_seconds": 0.0007886160001362441,
+        "memory_delta_mb": 0.25
+      },
+      "groupby_transform": {
+        "time_seconds": 0.0006584980001207441,
+        "memory_delta_mb": 0.0
+      },
+      "sort_single_column": {
+        "time_seconds": 0.0005807489997096127,
+        "memory_delta_mb": 0.0
+      },
+      "sort_multi_column": {
+        "time_seconds": 0.0012259119994268985,
+        "memory_delta_mb": 0.25
+      },
+      "sort_index": {
+        "time_seconds": 0.00029118599923094735,
+        "memory_delta_mb": 0.25
+      },
+      "merge_inner": {
+        "time_seconds": 0.005798623998998664,
+        "memory_delta_mb": 5.203125
+      },
+      "merge_left": {
+        "time_seconds": 0.004553787000986631,
+        "memory_delta_mb": 3.75
+      },
+      "concat_axis0": {
+        "time_seconds": 0.0005334390007192269,
+        "memory_delta_mb": 0.0
+      },
+      "concat_axis1": {
+        "time_seconds": 0.0004480360003071837,
+        "memory_delta_mb": 0.0
+      },
+      "apply_row": {
+        "time_seconds": 0.014095128000917612,
+        "memory_delta_mb": 0.0
+      },
+      "apply_column": {
+        "time_seconds": 0.0006833950010332046,
+        "memory_delta_mb": 0.0
+      },
+      "map_operation": {
+        "time_seconds": 0.00043500100036908407,
+        "memory_delta_mb": 0.0
+      },
+      "applymap": {
+        "time_seconds": 0.0010832589996425668,
+        "memory_delta_mb": 0.0
+      },
+      "rolling_mean": {
+        "time_seconds": 0.000363244000254781,
+        "memory_delta_mb": 0.25
+      },
+      "rolling_std": {
+        "time_seconds": 0.000302407999697607,
+        "memory_delta_mb": 0.0
+      },
+      "expanding_sum": {
+        "time_seconds": 0.0002503279993106844,
+        "memory_delta_mb": 0.0
+      },
+      "ewm_mean": {
+        "time_seconds": 0.0002663489995029522,
+        "memory_delta_mb": 0.0
+      },
+      "pivot_table": {
+        "time_seconds": 0.002877566001188825,
+        "memory_delta_mb": 0.0
+      },
+      "melt": {
+        "time_seconds": 0.0015989830008038552,
+        "memory_delta_mb": 0.0
+      },
+      "stack": {
+        "time_seconds": 0.0014556300011463463,
+        "memory_delta_mb": 0.0
+      },
+      "dropna": {
+        "time_seconds": 0.000744581999242655,
+        "memory_delta_mb": 0.0
+      },
+      "fillna": {
+        "time_seconds": 0.0005069680009910371,
+        "memory_delta_mb": 0.0
+      },
+      "interpolate": {
+        "time_seconds": 0.0009627189992897911,
+        "memory_delta_mb": 0.0
+      },
+      "add_columns": {
+        "time_seconds": 0.00017175799985125195,
+        "memory_delta_mb": 0.0
+      },
+      "multiply_columns": {
+        "time_seconds": 0.0001401369991071988,
+        "memory_delta_mb": 0.0
+      },
+      "complex_arithmetic": {
+        "time_seconds": 0.00033076200088544283,
+        "memory_delta_mb": 0.0
+      },
+      "string_contains": {
+        "time_seconds": 0.0005205639990890631,
+        "memory_delta_mb": 0.0
+      },
+      "string_replace": {
+        "time_seconds": 0.00042095399840036407,
+        "memory_delta_mb": 0.0
+      },
+      "string_split": {
+        "time_seconds": 0.0005935940007475438,
+        "memory_delta_mb": 0.25
+      },
+      "datetime_extract_year": {
+        "time_seconds": 0.0003615400000853697,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_extract_components": {
+        "time_seconds": 0.0006261259986786172,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_diff": {
+        "time_seconds": 0.00030361999961314723,
+        "memory_delta_mb": 0.0
+      },
+      "correlation": {
+        "time_seconds": 0.0005193919987505069,
+        "memory_delta_mb": 0.25
+      },
+      "covariance": {
+        "time_seconds": 0.0007487599996238714,
+        "memory_delta_mb": 0.0
+      },
+      "value_counts": {
+        "time_seconds": 0.0006598610016226303,
+        "memory_delta_mb": 0.0
+      },
+      "nunique": {
+        "time_seconds": 0.0019924759999412345,
+        "memory_delta_mb": 0.5
+      },
+      "set_index": {
+        "time_seconds": 0.0004390980011521606,
+        "memory_delta_mb": 0.0
+      },
+      "reset_index": {
+        "time_seconds": 0.0006678459994873265,
+        "memory_delta_mb": 0.0
+      },
+      "reindex": {
+        "time_seconds": 0.000524552000570111,
+        "memory_delta_mb": 0.0
+      },
+      "drop_duplicates": {
+        "time_seconds": 0.0009225720004906179,
+        "memory_delta_mb": 0.0
+      },
+      "duplicated": {
+        "time_seconds": 0.00015806200099177659,
+        "memory_delta_mb": 0.0
+      },
+      "sample_rows": {
+        "time_seconds": 0.0005902379998588003,
+        "memory_delta_mb": 0.0
+      },
+      "sample_frac": {
+        "time_seconds": 0.0005362940009945305,
+        "memory_delta_mb": 0.0
+      },
+      "rank": {
+        "time_seconds": 0.0002853149999282323,
+        "memory_delta_mb": 0.25
+      },
+      "rank_pct": {
+        "time_seconds": 0.00024551900060032494,
+        "memory_delta_mb": 0.0
+      },
+      "cumsum": {
+        "time_seconds": 0.0005578450000029989,
+        "memory_delta_mb": 0.0
+      },
+      "cumprod": {
+        "time_seconds": 0.0004739150008390425,
+        "memory_delta_mb": 0.0
+      },
+      "cummax": {
+        "time_seconds": 0.000465469000118901,
+        "memory_delta_mb": 0.0
+      },
+      "shift": {
+        "time_seconds": 0.0001529219989606645,
+        "memory_delta_mb": 0.0
+      },
+      "diff": {
+        "time_seconds": 0.00017471399951318745,
+        "memory_delta_mb": 0.0
+      },
+      "pct_change": {
+        "time_seconds": 0.00048071800119942054,
+        "memory_delta_mb": 0.0
+      },
+      "crosstab": {
+        "time_seconds": 0.0026709810008469503,
+        "memory_delta_mb": 0.0
+      },
+      "memory_usage": {
+        "time_seconds": 0.0013483249986165902,
+        "memory_delta_mb": 0.0
+      },
+      "copy_deep": {
+        "time_seconds": 0.00015481599984923378,
+        "memory_delta_mb": 0.0
+      },
+      "to_dict": {
+        "time_seconds": 0.006353303000651067,
+        "memory_delta_mb": 1.0
+      },
+      "to_numpy": {
+        "time_seconds": 0.0016175999990082346,
+        "memory_delta_mb": 0.5
+      },
+      "nlargest": {
+        "time_seconds": 0.0011059620010200888,
+        "memory_delta_mb": 0.25
+      },
+      "nsmallest": {
+        "time_seconds": 0.0009485320006206166,
+        "memory_delta_mb": 0.0
+      }
+    },
+    "size_10000": {
+      "create_from_dict": {
+        "time_seconds": 0.0002109830002154922,
+        "memory_delta_mb": 0.0
+      },
+      "create_from_numpy": {
+        "time_seconds": 0.0018469970000296598,
+        "memory_delta_mb": 0.0
+      },
+      "column_access": {
+        "time_seconds": 0.0001183360000140965,
+        "memory_delta_mb": 0.0
+      },
+      "multi_column_access": {
+        "time_seconds": 0.0008587400006945245,
+        "memory_delta_mb": 0.0
+      },
+      "iloc_row": {
+        "time_seconds": 0.00015853299919399433,
+        "memory_delta_mb": 0.0
+      },
+      "iloc_range": {
+        "time_seconds": 8.670599891047459e-05,
+        "memory_delta_mb": 0.0
+      },
+      "loc_condition": {
+        "time_seconds": 0.000725594998584711,
+        "memory_delta_mb": 0.0
+      },
+      "simple_filter": {
+        "time_seconds": 0.0007236519995785784,
+        "memory_delta_mb": 0.0
+      },
+      "complex_filter": {
+        "time_seconds": 0.0012693740009126486,
+        "memory_delta_mb": 0.0
+      },
+      "isin_filter": {
+        "time_seconds": 0.0009517679991404293,
+        "memory_delta_mb": 0.0
+      },
+      "between_filter": {
+        "time_seconds": 0.0011264509994362015,
+        "memory_delta_mb": 0.75
+      },
+      "sum": {
+        "time_seconds": 0.0007727159991191002,
+        "memory_delta_mb": 0.0
+      },
+      "mean": {
+        "time_seconds": 0.000645002000965178,
+        "memory_delta_mb": 0.0
+      },
+      "std": {
+        "time_seconds": 0.0010175730003538774,
+        "memory_delta_mb": 0.5
+      },
+      "min_max": {
+        "time_seconds": 0.001006282000162173,
+        "memory_delta_mb": 0.0
+      },
+      "quantiles": {
+        "time_seconds": 0.0010974859997077147,
+        "memory_delta_mb": 0.0
+      },
+      "describe": {
+        "time_seconds": 0.014099206000537379,
+        "memory_delta_mb": -0.48828125
+      },
+      "groupby_single_agg": {
+        "time_seconds": 0.0009966130000975681,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_multi_agg": {
+        "time_seconds": 0.0022701550005876925,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_multi_column": {
+        "time_seconds": 0.0014336080002976814,
+        "memory_delta_mb": 0.25
+      },
+      "groupby_transform": {
+        "time_seconds": 0.0007776449983794009,
+        "memory_delta_mb": 0.0
+      },
+      "sort_single_column": {
+        "time_seconds": 0.002132833000359824,
+        "memory_delta_mb": 1.0
+      },
+      "sort_multi_column": {
+        "time_seconds": 0.0037415360002341913,
+        "memory_delta_mb": 1.5
+      },
+      "sort_index": {
+        "time_seconds": 0.0013129470007697819,
+        "memory_delta_mb": 1.5
+      },
+      "merge_inner": {
+        "time_seconds": 0.04883735799921851,
+        "memory_delta_mb": 27.98046875
+      },
+      "merge_left": {
+        "time_seconds": 0.07544306000090728,
+        "memory_delta_mb": 66.5859375
+      },
+      "concat_axis0": {
+        "time_seconds": 0.0009558659985486884,
+        "memory_delta_mb": 0.0
+      },
+      "concat_axis1": {
+        "time_seconds": 0.0008704619995114626,
+        "memory_delta_mb": 0.0
+      },
+      "apply_row": {
+        "time_seconds": 0.14719082199917466,
+        "memory_delta_mb": 0.25
+      },
+      "apply_column": {
+        "time_seconds": 0.0007243630006996682,
+        "memory_delta_mb": 0.0
+      },
+      "map_operation": {
+        "time_seconds": 0.0006598799991479609,
+        "memory_delta_mb": 0.0
+      },
+      "applymap": {
+        "time_seconds": 0.004527486000370118,
+        "memory_delta_mb": 0.0
+      },
+      "rolling_mean": {
+        "time_seconds": 0.00042989100074919406,
+        "memory_delta_mb": 0.0
+      },
+      "rolling_std": {
+        "time_seconds": 0.0004549690002022544,
+        "memory_delta_mb": 0.0
+      },
+      "expanding_sum": {
+        "time_seconds": 0.0003365829998074332,
+        "memory_delta_mb": 0.0
+      },
+      "ewm_mean": {
+        "time_seconds": 0.0003182380005455343,
+        "memory_delta_mb": 0.0
+      },
+      "pivot_table": {
+        "time_seconds": 0.002793645000565448,
+        "memory_delta_mb": 0.0
+      },
+      "melt": {
+        "time_seconds": 0.001928794001287315,
+        "memory_delta_mb": 0.0
+      },
+      "stack": {
+        "time_seconds": 0.002482431000316865,
+        "memory_delta_mb": 0.0
+      },
+      "dropna": {
+        "time_seconds": 0.002059282000118401,
+        "memory_delta_mb": 0.0
+      },
+      "fillna": {
+        "time_seconds": 0.0021489339997060597,
+        "memory_delta_mb": 0.0
+      },
+      "interpolate": {
+        "time_seconds": 0.0014798460015299497,
+        "memory_delta_mb": 0.0
+      },
+      "add_columns": {
+        "time_seconds": 0.00017783900148060638,
+        "memory_delta_mb": 0.0
+      },
+      "multiply_columns": {
+        "time_seconds": 0.00015573800010315608,
+        "memory_delta_mb": 0.0
+      },
+      "complex_arithmetic": {
+        "time_seconds": 0.00035710200063476805,
+        "memory_delta_mb": 0.0
+      },
+      "string_contains": {
+        "time_seconds": 0.002096383999742102,
+        "memory_delta_mb": 0.0
+      },
+      "string_replace": {
+        "time_seconds": 0.0020154789999651257,
+        "memory_delta_mb": 0.0
+      },
+      "string_split": {
+        "time_seconds": 0.003911088999302592,
+        "memory_delta_mb": 1.75
+      },
+      "datetime_extract_year": {
+        "time_seconds": 0.0005745479993493063,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_extract_components": {
+        "time_seconds": 0.0010245370012853527,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_diff": {
+        "time_seconds": 0.0003511300001264317,
+        "memory_delta_mb": 0.0
+      },
+      "correlation": {
+        "time_seconds": 0.0009130439993896289,
+        "memory_delta_mb": 0.0
+      },
+      "covariance": {
+        "time_seconds": 0.0007912210003269138,
+        "memory_delta_mb": 0.0
+      },
+      "value_counts": {
+        "time_seconds": 0.0007877240004745545,
+        "memory_delta_mb": 0.0
+      },
+      "nunique": {
+        "time_seconds": 0.005022031000407878,
+        "memory_delta_mb": 0.0
+      },
+      "set_index": {
+        "time_seconds": 0.0007332610002777074,
+        "memory_delta_mb": 0.0
+      },
+      "reset_index": {
+        "time_seconds": 0.0010638520016073016,
+        "memory_delta_mb": 0.0
+      },
+      "reindex": {
+        "time_seconds": 0.0017010489991662325,
+        "memory_delta_mb": 0.0
+      },
+      "drop_duplicates": {
+        "time_seconds": 0.0013512209989130497,
+        "memory_delta_mb": 0.25
+      },
+      "duplicated": {
+        "time_seconds": 0.00020452099852263927,
+        "memory_delta_mb": 0.0
+      },
+      "sample_rows": {
+        "time_seconds": 0.000919937001526705,
+        "memory_delta_mb": 0.0
+      },
+      "sample_frac": {
+        "time_seconds": 0.0010368000002927147,
+        "memory_delta_mb": 0.0
+      },
+      "rank": {
+        "time_seconds": 0.000972676998571842,
+        "memory_delta_mb": 0.0
+      },
+      "rank_pct": {
+        "time_seconds": 0.0009278819998144172,
+        "memory_delta_mb": 0.0
+      },
+      "cumsum": {
+        "time_seconds": 0.0005608309984381776,
+        "memory_delta_mb": 0.0
+      },
+      "cumprod": {
+        "time_seconds": 0.0004952259987476282,
+        "memory_delta_mb": 0.0
+      },
+      "cummax": {
+        "time_seconds": 0.0005657109995809151,
+        "memory_delta_mb": 0.0
+      },
+      "shift": {
+        "time_seconds": 0.00016283100012515206,
+        "memory_delta_mb": 0.0
+      },
+      "diff": {
+        "time_seconds": 0.00015807199997652788,
+        "memory_delta_mb": 0.0
+      },
+      "pct_change": {
+        "time_seconds": 0.0004546790005406365,
+        "memory_delta_mb": 0.0
+      },
+      "crosstab": {
+        "time_seconds": 0.003211282999473042,
+        "memory_delta_mb": 0.0
+      },
+      "memory_usage": {
+        "time_seconds": 0.0067050950001430465,
+        "memory_delta_mb": 0.0
+      },
+      "copy_deep": {
+        "time_seconds": 0.0003631529998529004,
+        "memory_delta_mb": 0.0
+      },
+      "to_dict": {
+        "time_seconds": 0.006131158999778563,
+        "memory_delta_mb": 0.75
+      },
+      "to_numpy": {
+        "time_seconds": 0.014866662000713404,
+        "memory_delta_mb": 5.5
+      },
+      "nlargest": {
+        "time_seconds": 0.0014138799997454043,
+        "memory_delta_mb": 0.0
+      },
+      "nsmallest": {
+        "time_seconds": 0.0014620729998569004,
+        "memory_delta_mb": 0.0
+      }
+    },
+    "size_100000": {
+      "create_from_dict": {
+        "time_seconds": 0.00042142399979638867,
+        "memory_delta_mb": 0.0
+      },
+      "create_from_numpy": {
+        "time_seconds": 0.01773099199999706,
+        "memory_delta_mb": 0.0
+      },
+      "column_access": {
+        "time_seconds": 0.00011240499952691607,
+        "memory_delta_mb": 0.0
+      },
+      "multi_column_access": {
+        "time_seconds": 0.0065571520008234074,
+        "memory_delta_mb": 5.0
+      },
+      "iloc_row": {
+        "time_seconds": 0.0001676399988355115,
+        "memory_delta_mb": 0.0
+      },
+      "iloc_range": {
+        "time_seconds": 7.895099952293094e-05,
+        "memory_delta_mb": 0.0
+      },
+      "loc_condition": {
+        "time_seconds": 0.003341540999826975,
+        "memory_delta_mb": 0.0
+      },
+      "simple_filter": {
+        "time_seconds": 0.0032825790003698785,
+        "memory_delta_mb": 0.0
+      },
+      "complex_filter": {
+        "time_seconds": 0.007470075999663095,
+        "memory_delta_mb": 0.0
+      },
+      "isin_filter": {
+        "time_seconds": 0.00480497600074159,
+        "memory_delta_mb": 0.0
+      },
+      "between_filter": {
+        "time_seconds": 0.004083017998709693,
+        "memory_delta_mb": 1.0
+      },
+      "sum": {
+        "time_seconds": 0.002074861999062705,
+        "memory_delta_mb": 2.5
+      },
+      "mean": {
+        "time_seconds": 0.0012206209994474193,
+        "memory_delta_mb": 0.0
+      },
+      "std": {
+        "time_seconds": 0.0033146499990834855,
+        "memory_delta_mb": 3.25
+      },
+      "min_max": {
+        "time_seconds": 0.0021780790011689533,
+        "memory_delta_mb": 0.0
+      },
+      "quantiles": {
+        "time_seconds": 0.005014266000216594,
+        "memory_delta_mb": 0.0
+      },
+      "describe": {
+        "time_seconds": 0.03971712199927424,
+        "memory_delta_mb": 7.5
+      },
+      "groupby_single_agg": {
+        "time_seconds": 0.003034996001588297,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_multi_agg": {
+        "time_seconds": 0.0058477080001466675,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_multi_column": {
+        "time_seconds": 0.006231531000594259,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_transform": {
+        "time_seconds": 0.0031945509999786736,
+        "memory_delta_mb": 0.0
+      },
+      "sort_single_column": {
+        "time_seconds": 0.017669355000180076,
+        "memory_delta_mb": 3.25
+      },
+      "sort_multi_column": {
+        "time_seconds": 0.03903776399965864,
+        "memory_delta_mb": 14.5
+      },
+      "sort_index": {
+        "time_seconds": 0.009090691000892548,
+        "memory_delta_mb": 13.75
+      },
+      "merge_inner": {
+        "time_seconds": 0.4303505679999944,
+        "memory_delta_mb": 304.1953125
+      },
+      "merge_left": {
+        "time_seconds": 0.7280579070011299,
+        "memory_delta_mb": 363.7734375
+      },
+      "concat_axis0": {
+        "time_seconds": 0.006329849000394461,
+        "memory_delta_mb": 0.0
+      },
+      "concat_axis1": {
+        "time_seconds": 0.007400934000543202,
+        "memory_delta_mb": 0.0
+      },
+      "apply_row": {
+        "time_seconds": 1.2828457840005285,
+        "memory_delta_mb": 1.30078125
+      },
+      "apply_column": {
+        "time_seconds": 0.0010310990001016762,
+        "memory_delta_mb": 0.0
+      },
+      "map_operation": {
+        "time_seconds": 0.0021770670009573223,
+        "memory_delta_mb": 0.0
+      },
+      "applymap": {
+        "time_seconds": 0.041647498999736854,
+        "memory_delta_mb": 0.8828125
+      },
+      "rolling_mean": {
+        "time_seconds": 0.0013454200015985407,
+        "memory_delta_mb": 0.0
+      },
+      "rolling_std": {
+        "time_seconds": 0.001930456999616581,
+        "memory_delta_mb": 0.0
+      },
+      "expanding_sum": {
+        "time_seconds": 0.0011442649993114173,
+        "memory_delta_mb": 0.0
+      },
+      "ewm_mean": {
+        "time_seconds": 0.000873859000421362,
+        "memory_delta_mb": 0.0
+      },
+      "pivot_table": {
+        "time_seconds": 0.0028755509993061423,
+        "memory_delta_mb": 0.0
+      },
+      "melt": {
+        "time_seconds": 0.0019628190002549672,
+        "memory_delta_mb": 0.0
+      },
+      "stack": {
+        "time_seconds": 0.0061199880001368,
+        "memory_delta_mb": 0.0
+      },
+      "dropna": {
+        "time_seconds": 0.01680982299876632,
+        "memory_delta_mb": 0.0
+      },
+      "fillna": {
+        "time_seconds": 0.021092091001264635,
+        "memory_delta_mb": 3.0
+      },
+      "interpolate": {
+        "time_seconds": 0.006613671001105104,
+        "memory_delta_mb": 0.0
+      },
+      "add_columns": {
+        "time_seconds": 0.00032428899976366665,
+        "memory_delta_mb": 0.0
+      },
+      "multiply_columns": {
+        "time_seconds": 0.000354476998836617,
+        "memory_delta_mb": 0.0
+      },
+      "complex_arithmetic": {
+        "time_seconds": 0.0007480189997295383,
+        "memory_delta_mb": 0.0
+      },
+      "string_contains": {
+        "time_seconds": 0.017779875999622163,
+        "memory_delta_mb": 0.0
+      },
+      "string_replace": {
+        "time_seconds": 0.019411122000747127,
+        "memory_delta_mb": 3.75
+      },
+      "string_split": {
+        "time_seconds": 0.06787274300040735,
+        "memory_delta_mb": 22.75
+      },
+      "datetime_extract_year": {
+        "time_seconds": 0.0015756990014779149,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_extract_components": {
+        "time_seconds": 0.005701047999536968,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_diff": {
+        "time_seconds": 0.0008526689998689108,
+        "memory_delta_mb": 0.0
+      },
+      "correlation": {
+        "time_seconds": 0.00517621600010898,
+        "memory_delta_mb": 3.0
+      },
+      "covariance": {
+        "time_seconds": 0.0025149230004899437,
+        "memory_delta_mb": 1.5
+      },
+      "value_counts": {
+        "time_seconds": 0.004060463999849162,
+        "memory_delta_mb": 0.0
+      },
+      "nunique": {
+        "time_seconds": 0.03250750299957872,
+        "memory_delta_mb": 0.0
+      },
+      "set_index": {
+        "time_seconds": 0.007119898000382818,
+        "memory_delta_mb": 9.25
+      },
+      "reset_index": {
+        "time_seconds": 0.01609625099990808,
+        "memory_delta_mb": 25.75
+      },
+      "reindex": {
+        "time_seconds": 0.01711667900053726,
+        "memory_delta_mb": 4.0
+      },
+      "drop_duplicates": {
+        "time_seconds": 0.007322575000216602,
+        "memory_delta_mb": 3.0
+      },
+      "duplicated": {
+        "time_seconds": 0.0006208949998836033,
+        "memory_delta_mb": 0.0
+      },
+      "sample_rows": {
+        "time_seconds": 0.002257701999042183,
+        "memory_delta_mb": 0.0
+      },
+      "sample_frac": {
+        "time_seconds": 0.00486184500005038,
+        "memory_delta_mb": 0.0
+      },
+      "rank": {
+        "time_seconds": 0.009524881001198082,
+        "memory_delta_mb": 0.25
+      },
+      "rank_pct": {
+        "time_seconds": 0.009751363000759738,
+        "memory_delta_mb": 0.0
+      },
+      "cumsum": {
+        "time_seconds": 0.0016464340005768463,
+        "memory_delta_mb": 0.5
+      },
+      "cumprod": {
+        "time_seconds": 0.0010451960006321315,
+        "memory_delta_mb": 0.0
+      },
+      "cummax": {
+        "time_seconds": 0.0023917770013213158,
+        "memory_delta_mb": 2.25
+      },
+      "shift": {
+        "time_seconds": 0.0002766289999271976,
+        "memory_delta_mb": 0.0
+      },
+      "diff": {
+        "time_seconds": 0.00034114200025214814,
+        "memory_delta_mb": 0.0
+      },
+      "pct_change": {
+        "time_seconds": 0.001893276001283084,
+        "memory_delta_mb": 2.25
+      },
+      "crosstab": {
+        "time_seconds": 0.011938489999010926,
+        "memory_delta_mb": 5.75
+      },
+      "memory_usage": {
+        "time_seconds": 0.06535609699858469,
+        "memory_delta_mb": 0.0
+      },
+      "copy_deep": {
+        "time_seconds": 0.006082066000089981,
+        "memory_delta_mb": 6.5
+      },
+      "to_dict": {
+        "time_seconds": 0.00648812200051907,
+        "memory_delta_mb": 0.5
+      },
+      "to_numpy": {
+        "time_seconds": 0.17833617700125615,
+        "memory_delta_mb": 83.0
+      },
+      "nlargest": {
+        "time_seconds": 0.0087920709993341,
+        "memory_delta_mb": 4.75
+      },
+      "nsmallest": {
+        "time_seconds": 0.008805477000350947,
+        "memory_delta_mb": 0.0
+      }
+    },
+    "size_1000000": {
+      "create_from_dict": {
+        "time_seconds": 0.003910778999852482,
+        "memory_delta_mb": 0.0
+      },
+      "create_from_numpy": {
+        "time_seconds": 0.1793598149997706,
+        "memory_delta_mb": 0.0
+      },
+      "column_access": {
+        "time_seconds": 0.0001225140003953129,
+        "memory_delta_mb": 0.0
+      },
+      "multi_column_access": {
+        "time_seconds": 0.08019140099895594,
+        "memory_delta_mb": 53.25
+      },
+      "iloc_row": {
+        "time_seconds": 0.00018775900025502779,
+        "memory_delta_mb": 0.0
+      },
+      "iloc_range": {
+        "time_seconds": 9.738600056152791e-05,
+        "memory_delta_mb": 0.0
+      },
+      "loc_condition": {
+        "time_seconds": 0.039534903999083326,
+        "memory_delta_mb": 0.0
+      },
+      "simple_filter": {
+        "time_seconds": 0.05950844099970709,
+        "memory_delta_mb": 56.75
+      },
+      "complex_filter": {
+        "time_seconds": 0.07048035400111985,
+        "memory_delta_mb": 0.0
+      },
+      "isin_filter": {
+        "time_seconds": 0.07699544699971739,
+        "memory_delta_mb": 72.5
+      },
+      "between_filter": {
+        "time_seconds": 0.08701906999885978,
+        "memory_delta_mb": 72.5
+      },
+      "sum": {
+        "time_seconds": 0.016595353999946383,
+        "memory_delta_mb": 23.0
+      },
+      "mean": {
+        "time_seconds": 0.008258221998403315,
+        "memory_delta_mb": 0.0
+      },
+      "std": {
+        "time_seconds": 0.029690403000131482,
+        "memory_delta_mb": 30.5
+      },
+      "min_max": {
+        "time_seconds": 0.009977766001611599,
+        "memory_delta_mb": 0.0
+      },
+      "quantiles": {
+        "time_seconds": 0.039052263000485254,
+        "memory_delta_mb": 0.0
+      },
+      "describe": {
+        "time_seconds": 0.3600338810010726,
+        "memory_delta_mb": -53.03125
+      },
+      "groupby_single_agg": {
+        "time_seconds": 0.039146342998719774,
+        "memory_delta_mb": 22.75
+      },
+      "groupby_multi_agg": {
+        "time_seconds": 0.04340060799950152,
+        "memory_delta_mb": 0.0
+      },
+      "groupby_multi_column": {
+        "time_seconds": 0.08964746099991316,
+        "memory_delta_mb": -22.6171875
+      },
+      "groupby_transform": {
+        "time_seconds": 0.04388435200053209,
+        "memory_delta_mb": 30.25
+      },
+      "sort_single_column": {
+        "time_seconds": 0.377539113000239,
+        "memory_delta_mb": 145.0
+      },
+      "sort_multi_column": {
+        "time_seconds": 0.6419465669987403,
+        "memory_delta_mb": 129.5390625
+      },
+      "sort_index": {
+        "time_seconds": 0.10947056999975757,
+        "memory_delta_mb": 137.5
+      },
+      "merge_inner": {
+        "time_seconds": 4.710957710000002,
+        "memory_delta_mb": 2760.31640625
+      },
+      "merge_left": {
+        "time_seconds": 7.996215098999528,
+        "memory_delta_mb": 3094.74609375
+      },
+      "concat_axis0": {
+        "time_seconds": 0.16344121700058167,
+        "memory_delta_mb": 228.75
+      },
+      "concat_axis1": {
+        "time_seconds": 0.18102988899954653,
+        "memory_delta_mb": 274.75
+      },
+      "apply_row": {
+        "time_seconds": 13.40428596199854,
+        "memory_delta_mb": 100.640625
+      },
+      "apply_column": {
+        "time_seconds": 0.005579527000008966,
+        "memory_delta_mb": 0.0
+      },
+      "map_operation": {
+        "time_seconds": 0.01639455300028203,
+        "memory_delta_mb": 0.0
+      },
+      "applymap": {
+        "time_seconds": 0.42978725300054066,
+        "memory_delta_mb": 1.00390625
+      },
+      "rolling_mean": {
+        "time_seconds": 0.012004608001007,
+        "memory_delta_mb": 0.0
+      },
+      "rolling_std": {
+        "time_seconds": 0.018519802999435342,
+        "memory_delta_mb": 0.0
+      },
+      "expanding_sum": {
+        "time_seconds": 0.010023134000221035,
+        "memory_delta_mb": 0.0
+      },
+      "ewm_mean": {
+        "time_seconds": 0.007337343999097357,
+        "memory_delta_mb": 0.0
+      },
+      "pivot_table": {
+        "time_seconds": 0.0028113389998907223,
+        "memory_delta_mb": 0.0
+      },
+      "melt": {
+        "time_seconds": 0.001843842001107987,
+        "memory_delta_mb": 0.0
+      },
+      "stack": {
+        "time_seconds": 0.0023129880009946646,
+        "memory_delta_mb": 0.0
+      },
+      "dropna": {
+        "time_seconds": 0.19746531500095443,
+        "memory_delta_mb": 78.0
+      },
+      "fillna": {
+        "time_seconds": 0.29193726500125194,
+        "memory_delta_mb": 160.43359375
+      },
+      "interpolate": {
+        "time_seconds": 0.08661518299959425,
+        "memory_delta_mb": 35.984375
+      },
+      "add_columns": {
+        "time_seconds": 0.0015411740005220054,
+        "memory_delta_mb": 0.0
+      },
+      "multiply_columns": {
+        "time_seconds": 0.002086794998831465,
+        "memory_delta_mb": 0.0
+      },
+      "complex_arithmetic": {
+        "time_seconds": 0.0064146410004468635,
+        "memory_delta_mb": 0.0
+      },
+      "string_contains": {
+        "time_seconds": 0.1782438229984109,
+        "memory_delta_mb": 0.0
+      },
+      "string_replace": {
+        "time_seconds": 0.20027462100006233,
+        "memory_delta_mb": 58.25
+      },
+      "string_split": {
+        "time_seconds": 0.5976752820006368,
+        "memory_delta_mb": 227.5
+      },
+      "datetime_extract_year": {
+        "time_seconds": 0.01498309799899289,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_extract_components": {
+        "time_seconds": 0.05852322900136642,
+        "memory_delta_mb": 0.0
+      },
+      "datetime_diff": {
+        "time_seconds": 0.012134307000451372,
+        "memory_delta_mb": 13.75
+      },
+      "correlation": {
+        "time_seconds": 0.04757361599877186,
+        "memory_delta_mb": 30.5
+      },
+      "covariance": {
+        "time_seconds": 0.025636546000896487,
+        "memory_delta_mb": 15.25
+      },
+      "value_counts": {
+        "time_seconds": 0.03874470200025826,
+        "memory_delta_mb": 0.0
+      },
+      "nunique": {
+        "time_seconds": 0.5616114940003172,
+        "memory_delta_mb": 2.25
+      },
+      "set_index": {
+        "time_seconds": 0.07418874999893887,
+        "memory_delta_mb": 91.5
+      },
+      "reset_index": {
+        "time_seconds": 0.1788801209986559,
+        "memory_delta_mb": 236.4765625
+      },
+      "reindex": {
+        "time_seconds": 0.31599055100014084,
+        "memory_delta_mb": 68.5
+      },
+      "drop_duplicates": {
+        "time_seconds": 0.06480743200154393,
+        "memory_delta_mb": 30.5
+      },
+      "duplicated": {
+        "time_seconds": 0.005504493999978877,
+        "memory_delta_mb": 0.5
+      },
+      "sample_rows": {
+        "time_seconds": 0.015558316999886301,
+        "memory_delta_mb": 0.0
+      },
+      "sample_frac": {
+        "time_seconds": 0.04658285300138232,
+        "memory_delta_mb": 0.0
+      },
+      "rank": {
+        "time_seconds": 0.14422482999907515,
+        "memory_delta_mb": 0.0
+      },
+      "rank_pct": {
+        "time_seconds": 0.14518109599885065,
+        "memory_delta_mb": 7.25
+      },
+      "cumsum": {
+        "time_seconds": 0.013026640999669326,
+        "memory_delta_mb": 9.0
+      },
+      "cumprod": {
+        "time_seconds": 0.005927612000959925,
+        "memory_delta_mb": 0.0
+      },
+      "cummax": {
+        "time_seconds": 0.01566162400013127,
+        "memory_delta_mb": 13.75
+      },
+      "shift": {
+        "time_seconds": 0.0011883400002261624,
+        "memory_delta_mb": 0.0
+      },
+      "diff": {
+        "time_seconds": 0.0012497170009737602,
+        "memory_delta_mb": 0.0
+      },
+      "pct_change": {
+        "time_seconds": 0.014525173000947689,
+        "memory_delta_mb": 23.0
+      },
+      "crosstab": {
+        "time_seconds": 0.11701935800010688,
+        "memory_delta_mb": 0.18359375
+      },
+      "memory_usage": {
+        "time_seconds": 0.6091297740003938,
+        "memory_delta_mb": 0.0
+      },
+      "copy_deep": {
+        "time_seconds": 0.08207910200144397,
+        "memory_delta_mb": 122.0
+      },
+      "to_dict": {
+        "time_seconds": 0.005872024999916903,
+        "memory_delta_mb": 0.25
+      },
+      "to_numpy": {
+        "time_seconds": 1.7635711639995861,
+        "memory_delta_mb": 744.1796875
+      },
+      "nlargest": {
+        "time_seconds": 0.12836758500088763,
+        "memory_delta_mb": -30.38671875
+      },
+      "nsmallest": {
+        "time_seconds": 0.15434098500008986,
+        "memory_delta_mb": 0.0703125
+      }
+    }
+  }
+}

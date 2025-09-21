@@ -1,0 +1,1242 @@
+{
+  "size_1000": {
+    "create_from_dict": {
+      "time_seconds": 0.0002969170000142185,
+      "memory_delta_mb": 0.0
+    },
+    "create_from_numpy": {
+      "time_seconds": 0.0004430560002219863,
+      "memory_delta_mb": 0.0
+    },
+    "column_access": {
+      "time_seconds": 0.0002640940001583658,
+      "memory_delta_mb": 0.25
+    },
+    "multi_column_access": {
+      "time_seconds": 0.0010380519997852389,
+      "memory_delta_mb": 0.5
+    },
+    "iloc_row": {
+      "time_seconds": 0.0003341979991091648,
+      "memory_delta_mb": 0.0
+    },
+    "iloc_range": {
+      "time_seconds": 0.00011488999916764442,
+      "memory_delta_mb": 0.0
+    },
+    "loc_condition": {
+      "time_seconds": 0.0009538020003674319,
+      "memory_delta_mb": 0.25
+    },
+    "simple_filter": {
+      "time_seconds": 0.0007914720008557197,
+      "memory_delta_mb": 0.0
+    },
+    "complex_filter": {
+      "time_seconds": 0.0007226500001706881,
+      "memory_delta_mb": 0.0
+    },
+    "isin_filter": {
+      "time_seconds": 0.0005923509997955989,
+      "memory_delta_mb": 0.0
+    },
+    "between_filter": {
+      "time_seconds": 0.0007355849993473385,
+      "memory_delta_mb": 0.0
+    },
+    "sum": {
+      "time_seconds": 0.0007400230006169295,
+      "memory_delta_mb": 0.25
+    },
+    "mean": {
+      "time_seconds": 0.0007098260011844104,
+      "memory_delta_mb": 0.0
+    },
+    "std": {
+      "time_seconds": 0.0007808609989297111,
+      "memory_delta_mb": 0.0
+    },
+    "min_max": {
+      "time_seconds": 0.0010261999996146187,
+      "memory_delta_mb": 0.0
+    },
+    "quantiles": {
+      "time_seconds": 0.0008337419985764427,
+      "memory_delta_mb": 0.25
+    },
+    "describe": {
+      "time_seconds": 0.011735633001080714,
+      "memory_delta_mb": 0.5
+    },
+    "groupby_single_agg": {
+      "time_seconds": 0.0006688880002911901,
+      "memory_delta_mb": 0.5
+    },
+    "groupby_multi_agg": {
+      "time_seconds": 0.0020764359996974235,
+      "memory_delta_mb": 0.25
+    },
+    "groupby_multi_column": {
+      "time_seconds": 0.0007886160001362441,
+      "memory_delta_mb": 0.25
+    },
+    "groupby_transform": {
+      "time_seconds": 0.0006584980001207441,
+      "memory_delta_mb": 0.0
+    },
+    "sort_single_column": {
+      "time_seconds": 0.0005807489997096127,
+      "memory_delta_mb": 0.0
+    },
+    "sort_multi_column": {
+      "time_seconds": 0.0012259119994268985,
+      "memory_delta_mb": 0.25
+    },
+    "sort_index": {
+      "time_seconds": 0.00029118599923094735,
+      "memory_delta_mb": 0.25
+    },
+    "merge_inner": {
+      "time_seconds": 0.005798623998998664,
+      "memory_delta_mb": 5.203125
+    },
+    "merge_left": {
+      "time_seconds": 0.004553787000986631,
+      "memory_delta_mb": 3.75
+    },
+    "concat_axis0": {
+      "time_seconds": 0.0005334390007192269,
+      "memory_delta_mb": 0.0
+    },
+    "concat_axis1": {
+      "time_seconds": 0.0004480360003071837,
+      "memory_delta_mb": 0.0
+    },
+    "apply_row": {
+      "time_seconds": 0.014095128000917612,
+      "memory_delta_mb": 0.0
+    },
+    "apply_column": {
+      "time_seconds": 0.0006833950010332046,
+      "memory_delta_mb": 0.0
+    },
+    "map_operation": {
+      "time_seconds": 0.00043500100036908407,
+      "memory_delta_mb": 0.0
+    },
+    "applymap": {
+      "time_seconds": 0.0010832589996425668,
+      "memory_delta_mb": 0.0
+    },
+    "rolling_mean": {
+      "time_seconds": 0.000363244000254781,
+      "memory_delta_mb": 0.25
+    },
+    "rolling_std": {
+      "time_seconds": 0.000302407999697607,
+      "memory_delta_mb": 0.0
+    },
+    "expanding_sum": {
+      "time_seconds": 0.0002503279993106844,
+      "memory_delta_mb": 0.0
+    },
+    "ewm_mean": {
+      "time_seconds": 0.0002663489995029522,
+      "memory_delta_mb": 0.0
+    },
+    "pivot_table": {
+      "time_seconds": 0.002877566001188825,
+      "memory_delta_mb": 0.0
+    },
+    "melt": {
+      "time_seconds": 0.0015989830008038552,
+      "memory_delta_mb": 0.0
+    },
+    "stack": {
+      "time_seconds": 0.0014556300011463463,
+      "memory_delta_mb": 0.0
+    },
+    "dropna": {
+      "time_seconds": 0.000744581999242655,
+      "memory_delta_mb": 0.0
+    },
+    "fillna": {
+      "time_seconds": 0.0005069680009910371,
+      "memory_delta_mb": 0.0
+    },
+    "interpolate": {
+      "time_seconds": 0.0009627189992897911,
+      "memory_delta_mb": 0.0
+    },
+    "add_columns": {
+      "time_seconds": 0.00017175799985125195,
+      "memory_delta_mb": 0.0
+    },
+    "multiply_columns": {
+      "time_seconds": 0.0001401369991071988,
+      "memory_delta_mb": 0.0
+    },
+    "complex_arithmetic": {
+      "time_seconds": 0.00033076200088544283,
+      "memory_delta_mb": 0.0
+    },
+    "string_contains": {
+      "time_seconds": 0.0005205639990890631,
+      "memory_delta_mb": 0.0
+    },
+    "string_replace": {
+      "time_seconds": 0.00042095399840036407,
+      "memory_delta_mb": 0.0
+    },
+    "string_split": {
+      "time_seconds": 0.0005935940007475438,
+      "memory_delta_mb": 0.25
+    },
+    "datetime_extract_year": {
+      "time_seconds": 0.0003615400000853697,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_extract_components": {
+      "time_seconds": 0.0006261259986786172,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_diff": {
+      "time_seconds": 0.00030361999961314723,
+      "memory_delta_mb": 0.0
+    },
+    "correlation": {
+      "time_seconds": 0.0005193919987505069,
+      "memory_delta_mb": 0.25
+    },
+    "covariance": {
+      "time_seconds": 0.0007487599996238714,
+      "memory_delta_mb": 0.0
+    },
+    "value_counts": {
+      "time_seconds": 0.0006598610016226303,
+      "memory_delta_mb": 0.0
+    },
+    "nunique": {
+      "time_seconds": 0.0019924759999412345,
+      "memory_delta_mb": 0.5
+    },
+    "set_index": {
+      "time_seconds": 0.0004390980011521606,
+      "memory_delta_mb": 0.0
+    },
+    "reset_index": {
+      "time_seconds": 0.0006678459994873265,
+      "memory_delta_mb": 0.0
+    },
+    "reindex": {
+      "time_seconds": 0.000524552000570111,
+      "memory_delta_mb": 0.0
+    },
+    "drop_duplicates": {
+      "time_seconds": 0.0009225720004906179,
+      "memory_delta_mb": 0.0
+    },
+    "duplicated": {
+      "time_seconds": 0.00015806200099177659,
+      "memory_delta_mb": 0.0
+    },
+    "sample_rows": {
+      "time_seconds": 0.0005902379998588003,
+      "memory_delta_mb": 0.0
+    },
+    "sample_frac": {
+      "time_seconds": 0.0005362940009945305,
+      "memory_delta_mb": 0.0
+    },
+    "rank": {
+      "time_seconds": 0.0002853149999282323,
+      "memory_delta_mb": 0.25
+    },
+    "rank_pct": {
+      "time_seconds": 0.00024551900060032494,
+      "memory_delta_mb": 0.0
+    },
+    "cumsum": {
+      "time_seconds": 0.0005578450000029989,
+      "memory_delta_mb": 0.0
+    },
+    "cumprod": {
+      "time_seconds": 0.0004739150008390425,
+      "memory_delta_mb": 0.0
+    },
+    "cummax": {
+      "time_seconds": 0.000465469000118901,
+      "memory_delta_mb": 0.0
+    },
+    "shift": {
+      "time_seconds": 0.0001529219989606645,
+      "memory_delta_mb": 0.0
+    },
+    "diff": {
+      "time_seconds": 0.00017471399951318745,
+      "memory_delta_mb": 0.0
+    },
+    "pct_change": {
+      "time_seconds": 0.00048071800119942054,
+      "memory_delta_mb": 0.0
+    },
+    "crosstab": {
+      "time_seconds": 0.0026709810008469503,
+      "memory_delta_mb": 0.0
+    },
+    "memory_usage": {
+      "time_seconds": 0.0013483249986165902,
+      "memory_delta_mb": 0.0
+    },
+    "copy_deep": {
+      "time_seconds": 0.00015481599984923378,
+      "memory_delta_mb": 0.0
+    },
+    "to_dict": {
+      "time_seconds": 0.006353303000651067,
+      "memory_delta_mb": 1.0
+    },
+    "to_numpy": {
+      "time_seconds": 0.0016175999990082346,
+      "memory_delta_mb": 0.5
+    },
+    "nlargest": {
+      "time_seconds": 0.0011059620010200888,
+      "memory_delta_mb": 0.25
+    },
+    "nsmallest": {
+      "time_seconds": 0.0009485320006206166,
+      "memory_delta_mb": 0.0
+    }
+  },
+  "size_10000": {
+    "create_from_dict": {
+      "time_seconds": 0.0002109830002154922,
+      "memory_delta_mb": 0.0
+    },
+    "create_from_numpy": {
+      "time_seconds": 0.0018469970000296598,
+      "memory_delta_mb": 0.0
+    },
+    "column_access": {
+      "time_seconds": 0.0001183360000140965,
+      "memory_delta_mb": 0.0
+    },
+    "multi_column_access": {
+      "time_seconds": 0.0008587400006945245,
+      "memory_delta_mb": 0.0
+    },
+    "iloc_row": {
+      "time_seconds": 0.00015853299919399433,
+      "memory_delta_mb": 0.0
+    },
+    "iloc_range": {
+      "time_seconds": 8.670599891047459e-05,
+      "memory_delta_mb": 0.0
+    },
+    "loc_condition": {
+      "time_seconds": 0.000725594998584711,
+      "memory_delta_mb": 0.0
+    },
+    "simple_filter": {
+      "time_seconds": 0.0007236519995785784,
+      "memory_delta_mb": 0.0
+    },
+    "complex_filter": {
+      "time_seconds": 0.0012693740009126486,
+      "memory_delta_mb": 0.0
+    },
+    "isin_filter": {
+      "time_seconds": 0.0009517679991404293,
+      "memory_delta_mb": 0.0
+    },
+    "between_filter": {
+      "time_seconds": 0.0011264509994362015,
+      "memory_delta_mb": 0.75
+    },
+    "sum": {
+      "time_seconds": 0.0007727159991191002,
+      "memory_delta_mb": 0.0
+    },
+    "mean": {
+      "time_seconds": 0.000645002000965178,
+      "memory_delta_mb": 0.0
+    },
+    "std": {
+      "time_seconds": 0.0010175730003538774,
+      "memory_delta_mb": 0.5
+    },
+    "min_max": {
+      "time_seconds": 0.001006282000162173,
+      "memory_delta_mb": 0.0
+    },
+    "quantiles": {
+      "time_seconds": 0.0010974859997077147,
+      "memory_delta_mb": 0.0
+    },
+    "describe": {
+      "time_seconds": 0.014099206000537379,
+      "memory_delta_mb": -0.48828125
+    },
+    "groupby_single_agg": {
+      "time_seconds": 0.0009966130000975681,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_multi_agg": {
+      "time_seconds": 0.0022701550005876925,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_multi_column": {
+      "time_seconds": 0.0014336080002976814,
+      "memory_delta_mb": 0.25
+    },
+    "groupby_transform": {
+      "time_seconds": 0.0007776449983794009,
+      "memory_delta_mb": 0.0
+    },
+    "sort_single_column": {
+      "time_seconds": 0.002132833000359824,
+      "memory_delta_mb": 1.0
+    },
+    "sort_multi_column": {
+      "time_seconds": 0.0037415360002341913,
+      "memory_delta_mb": 1.5
+    },
+    "sort_index": {
+      "time_seconds": 0.0013129470007697819,
+      "memory_delta_mb": 1.5
+    },
+    "merge_inner": {
+      "time_seconds": 0.04883735799921851,
+      "memory_delta_mb": 27.98046875
+    },
+    "merge_left": {
+      "time_seconds": 0.07544306000090728,
+      "memory_delta_mb": 66.5859375
+    },
+    "concat_axis0": {
+      "time_seconds": 0.0009558659985486884,
+      "memory_delta_mb": 0.0
+    },
+    "concat_axis1": {
+      "time_seconds": 0.0008704619995114626,
+      "memory_delta_mb": 0.0
+    },
+    "apply_row": {
+      "time_seconds": 0.14719082199917466,
+      "memory_delta_mb": 0.25
+    },
+    "apply_column": {
+      "time_seconds": 0.0007243630006996682,
+      "memory_delta_mb": 0.0
+    },
+    "map_operation": {
+      "time_seconds": 0.0006598799991479609,
+      "memory_delta_mb": 0.0
+    },
+    "applymap": {
+      "time_seconds": 0.004527486000370118,
+      "memory_delta_mb": 0.0
+    },
+    "rolling_mean": {
+      "time_seconds": 0.00042989100074919406,
+      "memory_delta_mb": 0.0
+    },
+    "rolling_std": {
+      "time_seconds": 0.0004549690002022544,
+      "memory_delta_mb": 0.0
+    },
+    "expanding_sum": {
+      "time_seconds": 0.0003365829998074332,
+      "memory_delta_mb": 0.0
+    },
+    "ewm_mean": {
+      "time_seconds": 0.0003182380005455343,
+      "memory_delta_mb": 0.0
+    },
+    "pivot_table": {
+      "time_seconds": 0.002793645000565448,
+      "memory_delta_mb": 0.0
+    },
+    "melt": {
+      "time_seconds": 0.001928794001287315,
+      "memory_delta_mb": 0.0
+    },
+    "stack": {
+      "time_seconds": 0.002482431000316865,
+      "memory_delta_mb": 0.0
+    },
+    "dropna": {
+      "time_seconds": 0.002059282000118401,
+      "memory_delta_mb": 0.0
+    },
+    "fillna": {
+      "time_seconds": 0.0021489339997060597,
+      "memory_delta_mb": 0.0
+    },
+    "interpolate": {
+      "time_seconds": 0.0014798460015299497,
+      "memory_delta_mb": 0.0
+    },
+    "add_columns": {
+      "time_seconds": 0.00017783900148060638,
+      "memory_delta_mb": 0.0
+    },
+    "multiply_columns": {
+      "time_seconds": 0.00015573800010315608,
+      "memory_delta_mb": 0.0
+    },
+    "complex_arithmetic": {
+      "time_seconds": 0.00035710200063476805,
+      "memory_delta_mb": 0.0
+    },
+    "string_contains": {
+      "time_seconds": 0.002096383999742102,
+      "memory_delta_mb": 0.0
+    },
+    "string_replace": {
+      "time_seconds": 0.0020154789999651257,
+      "memory_delta_mb": 0.0
+    },
+    "string_split": {
+      "time_seconds": 0.003911088999302592,
+      "memory_delta_mb": 1.75
+    },
+    "datetime_extract_year": {
+      "time_seconds": 0.0005745479993493063,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_extract_components": {
+      "time_seconds": 0.0010245370012853527,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_diff": {
+      "time_seconds": 0.0003511300001264317,
+      "memory_delta_mb": 0.0
+    },
+    "correlation": {
+      "time_seconds": 0.0009130439993896289,
+      "memory_delta_mb": 0.0
+    },
+    "covariance": {
+      "time_seconds": 0.0007912210003269138,
+      "memory_delta_mb": 0.0
+    },
+    "value_counts": {
+      "time_seconds": 0.0007877240004745545,
+      "memory_delta_mb": 0.0
+    },
+    "nunique": {
+      "time_seconds": 0.005022031000407878,
+      "memory_delta_mb": 0.0
+    },
+    "set_index": {
+      "time_seconds": 0.0007332610002777074,
+      "memory_delta_mb": 0.0
+    },
+    "reset_index": {
+      "time_seconds": 0.0010638520016073016,
+      "memory_delta_mb": 0.0
+    },
+    "reindex": {
+      "time_seconds": 0.0017010489991662325,
+      "memory_delta_mb": 0.0
+    },
+    "drop_duplicates": {
+      "time_seconds": 0.0013512209989130497,
+      "memory_delta_mb": 0.25
+    },
+    "duplicated": {
+      "time_seconds": 0.00020452099852263927,
+      "memory_delta_mb": 0.0
+    },
+    "sample_rows": {
+      "time_seconds": 0.000919937001526705,
+      "memory_delta_mb": 0.0
+    },
+    "sample_frac": {
+      "time_seconds": 0.0010368000002927147,
+      "memory_delta_mb": 0.0
+    },
+    "rank": {
+      "time_seconds": 0.000972676998571842,
+      "memory_delta_mb": 0.0
+    },
+    "rank_pct": {
+      "time_seconds": 0.0009278819998144172,
+      "memory_delta_mb": 0.0
+    },
+    "cumsum": {
+      "time_seconds": 0.0005608309984381776,
+      "memory_delta_mb": 0.0
+    },
+    "cumprod": {
+      "time_seconds": 0.0004952259987476282,
+      "memory_delta_mb": 0.0
+    },
+    "cummax": {
+      "time_seconds": 0.0005657109995809151,
+      "memory_delta_mb": 0.0
+    },
+    "shift": {
+      "time_seconds": 0.00016283100012515206,
+      "memory_delta_mb": 0.0
+    },
+    "diff": {
+      "time_seconds": 0.00015807199997652788,
+      "memory_delta_mb": 0.0
+    },
+    "pct_change": {
+      "time_seconds": 0.0004546790005406365,
+      "memory_delta_mb": 0.0
+    },
+    "crosstab": {
+      "time_seconds": 0.003211282999473042,
+      "memory_delta_mb": 0.0
+    },
+    "memory_usage": {
+      "time_seconds": 0.0067050950001430465,
+      "memory_delta_mb": 0.0
+    },
+    "copy_deep": {
+      "time_seconds": 0.0003631529998529004,
+      "memory_delta_mb": 0.0
+    },
+    "to_dict": {
+      "time_seconds": 0.006131158999778563,
+      "memory_delta_mb": 0.75
+    },
+    "to_numpy": {
+      "time_seconds": 0.014866662000713404,
+      "memory_delta_mb": 5.5
+    },
+    "nlargest": {
+      "time_seconds": 0.0014138799997454043,
+      "memory_delta_mb": 0.0
+    },
+    "nsmallest": {
+      "time_seconds": 0.0014620729998569004,
+      "memory_delta_mb": 0.0
+    }
+  },
+  "size_100000": {
+    "create_from_dict": {
+      "time_seconds": 0.00042142399979638867,
+      "memory_delta_mb": 0.0
+    },
+    "create_from_numpy": {
+      "time_seconds": 0.01773099199999706,
+      "memory_delta_mb": 0.0
+    },
+    "column_access": {
+      "time_seconds": 0.00011240499952691607,
+      "memory_delta_mb": 0.0
+    },
+    "multi_column_access": {
+      "time_seconds": 0.0065571520008234074,
+      "memory_delta_mb": 5.0
+    },
+    "iloc_row": {
+      "time_seconds": 0.0001676399988355115,
+      "memory_delta_mb": 0.0
+    },
+    "iloc_range": {
+      "time_seconds": 7.895099952293094e-05,
+      "memory_delta_mb": 0.0
+    },
+    "loc_condition": {
+      "time_seconds": 0.003341540999826975,
+      "memory_delta_mb": 0.0
+    },
+    "simple_filter": {
+      "time_seconds": 0.0032825790003698785,
+      "memory_delta_mb": 0.0
+    },
+    "complex_filter": {
+      "time_seconds": 0.007470075999663095,
+      "memory_delta_mb": 0.0
+    },
+    "isin_filter": {
+      "time_seconds": 0.00480497600074159,
+      "memory_delta_mb": 0.0
+    },
+    "between_filter": {
+      "time_seconds": 0.004083017998709693,
+      "memory_delta_mb": 1.0
+    },
+    "sum": {
+      "time_seconds": 0.002074861999062705,
+      "memory_delta_mb": 2.5
+    },
+    "mean": {
+      "time_seconds": 0.0012206209994474193,
+      "memory_delta_mb": 0.0
+    },
+    "std": {
+      "time_seconds": 0.0033146499990834855,
+      "memory_delta_mb": 3.25
+    },
+    "min_max": {
+      "time_seconds": 0.0021780790011689533,
+      "memory_delta_mb": 0.0
+    },
+    "quantiles": {
+      "time_seconds": 0.005014266000216594,
+      "memory_delta_mb": 0.0
+    },
+    "describe": {
+      "time_seconds": 0.03971712199927424,
+      "memory_delta_mb": 7.5
+    },
+    "groupby_single_agg": {
+      "time_seconds": 0.003034996001588297,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_multi_agg": {
+      "time_seconds": 0.0058477080001466675,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_multi_column": {
+      "time_seconds": 0.006231531000594259,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_transform": {
+      "time_seconds": 0.0031945509999786736,
+      "memory_delta_mb": 0.0
+    },
+    "sort_single_column": {
+      "time_seconds": 0.017669355000180076,
+      "memory_delta_mb": 3.25
+    },
+    "sort_multi_column": {
+      "time_seconds": 0.03903776399965864,
+      "memory_delta_mb": 14.5
+    },
+    "sort_index": {
+      "time_seconds": 0.009090691000892548,
+      "memory_delta_mb": 13.75
+    },
+    "merge_inner": {
+      "time_seconds": 0.4303505679999944,
+      "memory_delta_mb": 304.1953125
+    },
+    "merge_left": {
+      "time_seconds": 0.7280579070011299,
+      "memory_delta_mb": 363.7734375
+    },
+    "concat_axis0": {
+      "time_seconds": 0.006329849000394461,
+      "memory_delta_mb": 0.0
+    },
+    "concat_axis1": {
+      "time_seconds": 0.007400934000543202,
+      "memory_delta_mb": 0.0
+    },
+    "apply_row": {
+      "time_seconds": 1.2828457840005285,
+      "memory_delta_mb": 1.30078125
+    },
+    "apply_column": {
+      "time_seconds": 0.0010310990001016762,
+      "memory_delta_mb": 0.0
+    },
+    "map_operation": {
+      "time_seconds": 0.0021770670009573223,
+      "memory_delta_mb": 0.0
+    },
+    "applymap": {
+      "time_seconds": 0.041647498999736854,
+      "memory_delta_mb": 0.8828125
+    },
+    "rolling_mean": {
+      "time_seconds": 0.0013454200015985407,
+      "memory_delta_mb": 0.0
+    },
+    "rolling_std": {
+      "time_seconds": 0.001930456999616581,
+      "memory_delta_mb": 0.0
+    },
+    "expanding_sum": {
+      "time_seconds": 0.0011442649993114173,
+      "memory_delta_mb": 0.0
+    },
+    "ewm_mean": {
+      "time_seconds": 0.000873859000421362,
+      "memory_delta_mb": 0.0
+    },
+    "pivot_table": {
+      "time_seconds": 0.0028755509993061423,
+      "memory_delta_mb": 0.0
+    },
+    "melt": {
+      "time_seconds": 0.0019628190002549672,
+      "memory_delta_mb": 0.0
+    },
+    "stack": {
+      "time_seconds": 0.0061199880001368,
+      "memory_delta_mb": 0.0
+    },
+    "dropna": {
+      "time_seconds": 0.01680982299876632,
+      "memory_delta_mb": 0.0
+    },
+    "fillna": {
+      "time_seconds": 0.021092091001264635,
+      "memory_delta_mb": 3.0
+    },
+    "interpolate": {
+      "time_seconds": 0.006613671001105104,
+      "memory_delta_mb": 0.0
+    },
+    "add_columns": {
+      "time_seconds": 0.00032428899976366665,
+      "memory_delta_mb": 0.0
+    },
+    "multiply_columns": {
+      "time_seconds": 0.000354476998836617,
+      "memory_delta_mb": 0.0
+    },
+    "complex_arithmetic": {
+      "time_seconds": 0.0007480189997295383,
+      "memory_delta_mb": 0.0
+    },
+    "string_contains": {
+      "time_seconds": 0.017779875999622163,
+      "memory_delta_mb": 0.0
+    },
+    "string_replace": {
+      "time_seconds": 0.019411122000747127,
+      "memory_delta_mb": 3.75
+    },
+    "string_split": {
+      "time_seconds": 0.06787274300040735,
+      "memory_delta_mb": 22.75
+    },
+    "datetime_extract_year": {
+      "time_seconds": 0.0015756990014779149,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_extract_components": {
+      "time_seconds": 0.005701047999536968,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_diff": {
+      "time_seconds": 0.0008526689998689108,
+      "memory_delta_mb": 0.0
+    },
+    "correlation": {
+      "time_seconds": 0.00517621600010898,
+      "memory_delta_mb": 3.0
+    },
+    "covariance": {
+      "time_seconds": 0.0025149230004899437,
+      "memory_delta_mb": 1.5
+    },
+    "value_counts": {
+      "time_seconds": 0.004060463999849162,
+      "memory_delta_mb": 0.0
+    },
+    "nunique": {
+      "time_seconds": 0.03250750299957872,
+      "memory_delta_mb": 0.0
+    },
+    "set_index": {
+      "time_seconds": 0.007119898000382818,
+      "memory_delta_mb": 9.25
+    },
+    "reset_index": {
+      "time_seconds": 0.01609625099990808,
+      "memory_delta_mb": 25.75
+    },
+    "reindex": {
+      "time_seconds": 0.01711667900053726,
+      "memory_delta_mb": 4.0
+    },
+    "drop_duplicates": {
+      "time_seconds": 0.007322575000216602,
+      "memory_delta_mb": 3.0
+    },
+    "duplicated": {
+      "time_seconds": 0.0006208949998836033,
+      "memory_delta_mb": 0.0
+    },
+    "sample_rows": {
+      "time_seconds": 0.002257701999042183,
+      "memory_delta_mb": 0.0
+    },
+    "sample_frac": {
+      "time_seconds": 0.00486184500005038,
+      "memory_delta_mb": 0.0
+    },
+    "rank": {
+      "time_seconds": 0.009524881001198082,
+      "memory_delta_mb": 0.25
+    },
+    "rank_pct": {
+      "time_seconds": 0.009751363000759738,
+      "memory_delta_mb": 0.0
+    },
+    "cumsum": {
+      "time_seconds": 0.0016464340005768463,
+      "memory_delta_mb": 0.5
+    },
+    "cumprod": {
+      "time_seconds": 0.0010451960006321315,
+      "memory_delta_mb": 0.0
+    },
+    "cummax": {
+      "time_seconds": 0.0023917770013213158,
+      "memory_delta_mb": 2.25
+    },
+    "shift": {
+      "time_seconds": 0.0002766289999271976,
+      "memory_delta_mb": 0.0
+    },
+    "diff": {
+      "time_seconds": 0.00034114200025214814,
+      "memory_delta_mb": 0.0
+    },
+    "pct_change": {
+      "time_seconds": 0.001893276001283084,
+      "memory_delta_mb": 2.25
+    },
+    "crosstab": {
+      "time_seconds": 0.011938489999010926,
+      "memory_delta_mb": 5.75
+    },
+    "memory_usage": {
+      "time_seconds": 0.06535609699858469,
+      "memory_delta_mb": 0.0
+    },
+    "copy_deep": {
+      "time_seconds": 0.006082066000089981,
+      "memory_delta_mb": 6.5
+    },
+    "to_dict": {
+      "time_seconds": 0.00648812200051907,
+      "memory_delta_mb": 0.5
+    },
+    "to_numpy": {
+      "time_seconds": 0.17833617700125615,
+      "memory_delta_mb": 83.0
+    },
+    "nlargest": {
+      "time_seconds": 0.0087920709993341,
+      "memory_delta_mb": 4.75
+    },
+    "nsmallest": {
+      "time_seconds": 0.008805477000350947,
+      "memory_delta_mb": 0.0
+    }
+  },
+  "size_1000000": {
+    "create_from_dict": {
+      "time_seconds": 0.003910778999852482,
+      "memory_delta_mb": 0.0
+    },
+    "create_from_numpy": {
+      "time_seconds": 0.1793598149997706,
+      "memory_delta_mb": 0.0
+    },
+    "column_access": {
+      "time_seconds": 0.0001225140003953129,
+      "memory_delta_mb": 0.0
+    },
+    "multi_column_access": {
+      "time_seconds": 0.08019140099895594,
+      "memory_delta_mb": 53.25
+    },
+    "iloc_row": {
+      "time_seconds": 0.00018775900025502779,
+      "memory_delta_mb": 0.0
+    },
+    "iloc_range": {
+      "time_seconds": 9.738600056152791e-05,
+      "memory_delta_mb": 0.0
+    },
+    "loc_condition": {
+      "time_seconds": 0.039534903999083326,
+      "memory_delta_mb": 0.0
+    },
+    "simple_filter": {
+      "time_seconds": 0.05950844099970709,
+      "memory_delta_mb": 56.75
+    },
+    "complex_filter": {
+      "time_seconds": 0.07048035400111985,
+      "memory_delta_mb": 0.0
+    },
+    "isin_filter": {
+      "time_seconds": 0.07699544699971739,
+      "memory_delta_mb": 72.5
+    },
+    "between_filter": {
+      "time_seconds": 0.08701906999885978,
+      "memory_delta_mb": 72.5
+    },
+    "sum": {
+      "time_seconds": 0.016595353999946383,
+      "memory_delta_mb": 23.0
+    },
+    "mean": {
+      "time_seconds": 0.008258221998403315,
+      "memory_delta_mb": 0.0
+    },
+    "std": {
+      "time_seconds": 0.029690403000131482,
+      "memory_delta_mb": 30.5
+    },
+    "min_max": {
+      "time_seconds": 0.009977766001611599,
+      "memory_delta_mb": 0.0
+    },
+    "quantiles": {
+      "time_seconds": 0.039052263000485254,
+      "memory_delta_mb": 0.0
+    },
+    "describe": {
+      "time_seconds": 0.3600338810010726,
+      "memory_delta_mb": -53.03125
+    },
+    "groupby_single_agg": {
+      "time_seconds": 0.039146342998719774,
+      "memory_delta_mb": 22.75
+    },
+    "groupby_multi_agg": {
+      "time_seconds": 0.04340060799950152,
+      "memory_delta_mb": 0.0
+    },
+    "groupby_multi_column": {
+      "time_seconds": 0.08964746099991316,
+      "memory_delta_mb": -22.6171875
+    },
+    "groupby_transform": {
+      "time_seconds": 0.04388435200053209,
+      "memory_delta_mb": 30.25
+    },
+    "sort_single_column": {
+      "time_seconds": 0.377539113000239,
+      "memory_delta_mb": 145.0
+    },
+    "sort_multi_column": {
+      "time_seconds": 0.6419465669987403,
+      "memory_delta_mb": 129.5390625
+    },
+    "sort_index": {
+      "time_seconds": 0.10947056999975757,
+      "memory_delta_mb": 137.5
+    },
+    "merge_inner": {
+      "time_seconds": 4.710957710000002,
+      "memory_delta_mb": 2760.31640625
+    },
+    "merge_left": {
+      "time_seconds": 7.996215098999528,
+      "memory_delta_mb": 3094.74609375
+    },
+    "concat_axis0": {
+      "time_seconds": 0.16344121700058167,
+      "memory_delta_mb": 228.75
+    },
+    "concat_axis1": {
+      "time_seconds": 0.18102988899954653,
+      "memory_delta_mb": 274.75
+    },
+    "apply_row": {
+      "time_seconds": 13.40428596199854,
+      "memory_delta_mb": 100.640625
+    },
+    "apply_column": {
+      "time_seconds": 0.005579527000008966,
+      "memory_delta_mb": 0.0
+    },
+    "map_operation": {
+      "time_seconds": 0.01639455300028203,
+      "memory_delta_mb": 0.0
+    },
+    "applymap": {
+      "time_seconds": 0.42978725300054066,
+      "memory_delta_mb": 1.00390625
+    },
+    "rolling_mean": {
+      "time_seconds": 0.012004608001007,
+      "memory_delta_mb": 0.0
+    },
+    "rolling_std": {
+      "time_seconds": 0.018519802999435342,
+      "memory_delta_mb": 0.0
+    },
+    "expanding_sum": {
+      "time_seconds": 0.010023134000221035,
+      "memory_delta_mb": 0.0
+    },
+    "ewm_mean": {
+      "time_seconds": 0.007337343999097357,
+      "memory_delta_mb": 0.0
+    },
+    "pivot_table": {
+      "time_seconds": 0.0028113389998907223,
+      "memory_delta_mb": 0.0
+    },
+    "melt": {
+      "time_seconds": 0.001843842001107987,
+      "memory_delta_mb": 0.0
+    },
+    "stack": {
+      "time_seconds": 0.0023129880009946646,
+      "memory_delta_mb": 0.0
+    },
+    "dropna": {
+      "time_seconds": 0.19746531500095443,
+      "memory_delta_mb": 78.0
+    },
+    "fillna": {
+      "time_seconds": 0.29193726500125194,
+      "memory_delta_mb": 160.43359375
+    },
+    "interpolate": {
+      "time_seconds": 0.08661518299959425,
+      "memory_delta_mb": 35.984375
+    },
+    "add_columns": {
+      "time_seconds": 0.0015411740005220054,
+      "memory_delta_mb": 0.0
+    },
+    "multiply_columns": {
+      "time_seconds": 0.002086794998831465,
+      "memory_delta_mb": 0.0
+    },
+    "complex_arithmetic": {
+      "time_seconds": 0.0064146410004468635,
+      "memory_delta_mb": 0.0
+    },
+    "string_contains": {
+      "time_seconds": 0.1782438229984109,
+      "memory_delta_mb": 0.0
+    },
+    "string_replace": {
+      "time_seconds": 0.20027462100006233,
+      "memory_delta_mb": 58.25
+    },
+    "string_split": {
+      "time_seconds": 0.5976752820006368,
+      "memory_delta_mb": 227.5
+    },
+    "datetime_extract_year": {
+      "time_seconds": 0.01498309799899289,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_extract_components": {
+      "time_seconds": 0.05852322900136642,
+      "memory_delta_mb": 0.0
+    },
+    "datetime_diff": {
+      "time_seconds": 0.012134307000451372,
+      "memory_delta_mb": 13.75
+    },
+    "correlation": {
+      "time_seconds": 0.04757361599877186,
+      "memory_delta_mb": 30.5
+    },
+    "covariance": {
+      "time_seconds": 0.025636546000896487,
+      "memory_delta_mb": 15.25
+    },
+    "value_counts": {
+      "time_seconds": 0.03874470200025826,
+      "memory_delta_mb": 0.0
+    },
+    "nunique": {
+      "time_seconds": 0.5616114940003172,
+      "memory_delta_mb": 2.25
+    },
+    "set_index": {
+      "time_seconds": 0.07418874999893887,
+      "memory_delta_mb": 91.5
+    },
+    "reset_index": {
+      "time_seconds": 0.1788801209986559,
+      "memory_delta_mb": 236.4765625
+    },
+    "reindex": {
+      "time_seconds": 0.31599055100014084,
+      "memory_delta_mb": 68.5
+    },
+    "drop_duplicates": {
+      "time_seconds": 0.06480743200154393,
+      "memory_delta_mb": 30.5
+    },
+    "duplicated": {
+      "time_seconds": 0.005504493999978877,
+      "memory_delta_mb": 0.5
+    },
+    "sample_rows": {
+      "time_seconds": 0.015558316999886301,
+      "memory_delta_mb": 0.0
+    },
+    "sample_frac": {
+      "time_seconds": 0.04658285300138232,
+      "memory_delta_mb": 0.0
+    },
+    "rank": {
+      "time_seconds": 0.14422482999907515,
+      "memory_delta_mb": 0.0
+    },
+    "rank_pct": {
+      "time_seconds": 0.14518109599885065,
+      "memory_delta_mb": 7.25
+    },
+    "cumsum": {
+      "time_seconds": 0.013026640999669326,
+      "memory_delta_mb": 9.0
+    },
+    "cumprod": {
+      "time_seconds": 0.005927612000959925,
+      "memory_delta_mb": 0.0
+    },
+    "cummax": {
+      "time_seconds": 0.01566162400013127,
+      "memory_delta_mb": 13.75
+    },
+    "shift": {
+      "time_seconds": 0.0011883400002261624,
+      "memory_delta_mb": 0.0
+    },
+    "diff": {
+      "time_seconds": 0.0012497170009737602,
+      "memory_delta_mb": 0.0
+    },
+    "pct_change": {
+      "time_seconds": 0.014525173000947689,
+      "memory_delta_mb": 23.0
+    },
+    "crosstab": {
+      "time_seconds": 0.11701935800010688,
+      "memory_delta_mb": 0.18359375
+    },
+    "memory_usage": {
+      "time_seconds": 0.6091297740003938,
+      "memory_delta_mb": 0.0
+    },
+    "copy_deep": {
+      "time_seconds": 0.08207910200144397,
+      "memory_delta_mb": 122.0
+    },
+    "to_dict": {
+      "time_seconds": 0.005872024999916903,
+      "memory_delta_mb": 0.25
+    },
+    "to_numpy": {
+      "time_seconds": 1.7635711639995861,
+      "memory_delta_mb": 744.1796875
+    },
+    "nlargest": {
+      "time_seconds": 0.12836758500088763,
+      "memory_delta_mb": -30.38671875
+    },
+    "nsmallest": {
+      "time_seconds": 0.15434098500008986,
+      "memory_delta_mb": 0.0703125
+    }
+  }
+}
