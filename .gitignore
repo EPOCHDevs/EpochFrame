@@ -1,7 +1,7 @@
 # IDE files
 .idea
 .vscode
-
+/benchmark/*venv
 
 # Local dev files
 .env
