@@ -1,0 +1,24 @@
+{
+  "family": "epochframe-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "4096",
+  "containerDefinitions": [
+    {
+      "name": "epochframe",
+      "image": "your-ecr-repo/epochframe:latest",
+      "linuxParameters": {
+        "sharedMemorySize": 2048
+      },
+      "environment": [
+        {
+          "name": "ARROW_TEMP_DIR",
+          "value": "/dev/shm"
+        }
+      ],
+      "mountPoints": [],
+      "tmpfs": []
+    }
+  ]
+}

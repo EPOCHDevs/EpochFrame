@@ -58,6 +58,7 @@ find_package(TBB CONFIG REQUIRED)
 find_package(Arrow 21.0.0 CONFIG REQUIRED)
 find_package(ArrowCompute 21.0.0 CONFIG REQUIRED)
 find_package(ArrowAcero 21.0.0 CONFIG REQUIRED)
+find_package(DuckDB REQUIRED)
 find_package(Parquet 21.0.0 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 

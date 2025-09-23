@@ -4,6 +4,11 @@
 //
 
 #include "epoch_frame/dataframe.h"
+#include "epoch_frame/serialization.h"
+#include <algorithm>
+#include <filesystem>
+#include <chrono>
+#include <iostream>
 
 #include <arrow/array/array_base.h>
 #include <arrow/array/concatenate.h>
@@ -11,6 +16,9 @@
 #include <arrow/table.h>
 #include <arrow/type_fwd.h>
 #include <unordered_set>
+
+// SQL engine for query interface
+#include "duckdb/sql_engine.h"
 
 #include "common/methods_helper.h"
 #include "epoch_core/macros.h"
@@ -21,6 +29,7 @@
 #include "epoch_frame/factory/table_factory.h"
 #include "epoch_frame/index.h"
 #include "epoch_frame/series.h"
+#include "epoch_frame/array.h"
 #include "methods/arith.h"
 #include <tabulate/table.hpp>
 
@@ -743,6 +752,266 @@ namespace epoch_frame
                 return AssertResultIsOk(_table->RemoveColumn(location));
             });
         return DataFrame(m_index, table);
+    }
+
+    // Helper function to create table with index column
+    static std::shared_ptr<arrow::Table> add_index_to_table(
+        const IndexPtr& index,
+        const std::shared_ptr<arrow::Table>& table,
+        const std::string& index_name)
+    {
+        if (index_name.empty()) {
+            return table;
+        }
+
+        // Get index as arrow array
+        auto index_array = index->array().as_chunked_array();
+
+        // Create a field for the index
+        auto index_field = arrow::field(index_name, index_array->type());
+
+        // Build new schema with index as first column
+        std::vector<std::shared_ptr<arrow::Field>> fields;
+        fields.push_back(index_field);
+        for (const auto& field : table->schema()->fields()) {
+            fields.push_back(field);
+        }
+        auto new_schema = arrow::schema(fields);
+
+        // Build new column vector with index as first column
+        std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
+        columns.push_back(index_array);
+        for (int i = 0; i < table->num_columns(); i++) {
+            columns.push_back(table->column(i));
+        }
+
+        return arrow::Table::Make(new_schema, columns);
+    }
+
+    // SQL Query Interface Implementation
+    DataFrame DataFrame::query(const std::string& sql, const std::string& index_name) const
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Create table with index column if requested
+        auto table_with_index = add_index_to_table(m_index, m_table, index_name);
+
+        // Register this dataframe's table
+        engine.register_table("df", table_with_index);
+
+        // Execute the query
+        auto result_table = engine.query(sql);
+
+        // Clean up temporary table
+        engine.drop_table("df");
+
+        // Return new DataFrame with query results
+        // Check if the index column is in the result
+        IndexPtr result_index;
+        if (!index_name.empty() && result_table->num_columns() > 0) {
+            // Look for the index column in the results
+            auto field_names = result_table->schema()->field_names();
+            auto it = std::find(field_names.begin(), field_names.end(), index_name);
+
+            if (it != field_names.end()) {
+                // Found the index column - extract it and remove from table
+                int index_col_idx = std::distance(field_names.begin(), it);
+                auto index_column = result_table->column(index_col_idx);
+
+                // Create index from the column
+                result_index = factory::index::make_index(index_column, std::nullopt, index_name);
+
+                // Remove index column from the result table
+                auto result = result_table->RemoveColumn(index_col_idx);
+                if (result.ok()) {
+                    result_table = result.ValueOrDie();
+                }
+            }
+        }
+
+        // If no index was extracted, create a range index
+        if (!result_index) {
+            result_index = factory::index::from_range(result_table->num_rows());
+        }
+
+        return DataFrame(result_index, result_table);
+    }
+
+    DataFrame DataFrame::query(const std::string& sql,
+                              const std::unordered_map<std::string, DataFrame>& tables,
+                              const std::string& index_name) const
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Create table with index column if requested
+        auto table_with_index = add_index_to_table(m_index, m_table, index_name);
+
+        // Register this dataframe as "df" (the default table name for single-table queries)
+        engine.register_table("df", table_with_index);
+
+        // Register additional tables
+        std::vector<std::string> registered_tables = {"df"};
+        for (const auto& [name, dataframe] : tables)
+        {
+            // Add index to each table using the same index_name
+            auto table_with_idx = add_index_to_table(dataframe.index(), dataframe.table(), index_name);
+            engine.register_table(name, table_with_idx);
+            registered_tables.push_back(name);
+        }
+
+        try
+        {
+            // Execute the query
+            auto result_table = engine.query(sql);
+
+            // Clean up all temporary tables
+            for (const auto& table_name : registered_tables)
+            {
+                engine.drop_table(table_name);
+            }
+
+            // Return new DataFrame with query results
+            // Check if the index column is in the result
+            IndexPtr result_index;
+            if (!index_name.empty() && result_table->num_columns() > 0) {
+                // Look for the index column in the results
+                auto field_names = result_table->schema()->field_names();
+                auto it = std::find(field_names.begin(), field_names.end(), index_name);
+
+                if (it != field_names.end()) {
+                    // Found the index column - extract it and remove from table
+                    int index_col_idx = std::distance(field_names.begin(), it);
+                    auto index_column = result_table->column(index_col_idx);
+
+                    // Create index from the column
+                    result_index = factory::index::make_index(index_column, std::nullopt, index_name);
+
+                    // Remove index column from the result table
+                    auto result = result_table->RemoveColumn(index_col_idx);
+                    if (result.ok()) {
+                        result_table = result.ValueOrDie();
+                    }
+                }
+            }
+
+            // If no index was extracted, create a range index
+            if (!result_index) {
+                result_index = factory::index::from_range(result_table->num_rows());
+            }
+
+            return DataFrame(result_index, result_table);
+        }
+        catch (...)
+        {
+            // Clean up all temporary tables in case of error
+            for (const auto& table_name : registered_tables)
+            {
+                try
+                {
+                    engine.drop_table(table_name);
+                }
+                catch (...)
+                {
+                    // Ignore cleanup errors
+                }
+            }
+            throw; // Re-throw the original exception
+        }
+    }
+
+    DataFrame DataFrame::sql(const std::string& sql)
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Execute the query directly (assumes tables are already registered)
+        auto result_table = engine.query(sql);
+
+        // Create index for the result
+        auto index = factory::index::from_range(result_table->num_rows());
+
+        return DataFrame(index, result_table);
+    }
+
+    DataFrame DataFrame::sql(const std::string& sql,
+                            const std::unordered_map<std::string, DataFrame>& tables,
+                            const std::string& index_name)
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Register all provided tables
+        std::vector<std::string> registered_tables;
+        for (const auto& [name, dataframe] : tables)
+        {
+            // Add index to each table using the same index_name
+            auto table_with_idx = add_index_to_table(dataframe.index(), dataframe.table(), index_name);
+            engine.register_table(name, table_with_idx);
+            registered_tables.push_back(name);
+        }
+
+        try
+        {
+            // Execute the query
+            auto result_table = engine.query(sql);
+
+            // Clean up all temporary tables
+            for (const auto& table_name : registered_tables)
+            {
+                engine.drop_table(table_name);
+            }
+
+            // Create index for the result
+            auto index = factory::index::from_range(result_table->num_rows());
+
+            return DataFrame(index, result_table);
+        }
+        catch (...)
+        {
+            // Clean up all temporary tables in case of error
+            for (const auto& table_name : registered_tables)
+            {
+                try
+                {
+                    engine.drop_table(table_name);
+                }
+                catch (...)
+                {
+                    // Ignore cleanup errors
+                }
+            }
+            throw; // Re-throw the original exception
+        }
+    }
+
+
+    // Simple SQL interface - works directly with .arrows files
+    DataFrame DataFrame::sql_simple(const std::string& sql) {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Execute the query directly - assumes .arrows files are referenced in SQL
+        auto result_table = engine.query(sql);
+
+        // Create index for the result
+        auto index = factory::index::from_range(result_table->num_rows());
+
+        return DataFrame(index, result_table);
+    }
+
+    // Helper for writing DataFrame to .arrows file using existing serialization
+    void DataFrame::write_arrows(const std::string& file_path, bool include_index) const {
+        // Use existing serialization with Arrow IPC stream format (.arrows)
+        ArrowWriteOptions options;
+        options.include_index = include_index;
+        options.index_label = "index";
+
+        auto status = write_arrow(*this, file_path, options);
+        if (!status.ok()) {
+            throw std::runtime_error("Failed to write .arrows file: " + status.ToString());
+        }
     }
 
 } // namespace epoch_frame

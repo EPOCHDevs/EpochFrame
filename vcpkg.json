@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "dependencies": [
     "catch2",
+    "duckdb",
     "glaze",
     "trompeloeil",
     "tabulate",
     "tbb",
     "spdlog",
+    "flatcc",
     {
       "name": "arrow",
       "features": [

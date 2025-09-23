@@ -10,6 +10,7 @@ target_include_directories(epoch_frame_test
 
 add_subdirectory(calendar)
 add_subdirectory(date_time)
+add_subdirectory(duckdb)
 add_subdirectory(factory)
 add_subdirectory(index)
 add_subdirectory(dataframe)

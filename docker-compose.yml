@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  epochframe:
+    build: .
+    # Option 1: Increase shared memory
+    shm_size: '2gb'
+
+    # Option 2: Mount tmpfs for in-memory temp files
+    tmpfs:
+      - /tmp:size=2G
+
+    environment:
+      - ARROW_TEMP_DIR=/tmp
+
+    # Option 3: Use volumes for specific paths
+    volumes:
+      - type: tmpfs
+        target: /arrow_temp
+        tmpfs:
+          size: 2147483648  # 2GB in bytes
