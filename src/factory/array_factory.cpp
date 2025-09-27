@@ -30,9 +30,9 @@ namespace epoch_frame::factory::array
         auto builder = result.MoveValueUnsafe();
         AssertStatusIsOk(builder->Reserve(scalarVector.size()));
 
-        for (auto const& scalar : scalarVector)
-        {
-            AssertStatusIsOk(builder->AppendScalar(*scalar.value()));
+        for (auto const& scalar : scalarVector) {
+            if (scalar.is_valid()) (void)builder->AppendScalar(*scalar.value());
+            else (void)builder->AppendNull();
         }
 
         return AssertContiguousArrayResultIsOk(builder->Finish());
