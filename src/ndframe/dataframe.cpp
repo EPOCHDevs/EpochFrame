@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 #include <arrow/array/array_base.h>
 #include <arrow/array/concatenate.h>
@@ -754,251 +755,200 @@ namespace epoch_frame
         return DataFrame(m_index, table);
     }
 
-    // Helper function to create table with index column
-    static std::shared_ptr<arrow::Table> add_index_to_table(
-        const IndexPtr& index,
-        const std::shared_ptr<arrow::Table>& table,
-        const std::string& index_name)
-    {
-        if (index_name.empty()) {
-            return table;
-        }
-
-        // Get index as arrow array
-        auto index_array = index->array().as_chunked_array();
-
-        // Create a field for the index
-        auto index_field = arrow::field(index_name, index_array->type());
-
-        // Build new schema with index as first column
-        std::vector<std::shared_ptr<arrow::Field>> fields;
-        fields.push_back(index_field);
-        for (const auto& field : table->schema()->fields()) {
-            fields.push_back(field);
-        }
-        auto new_schema = arrow::schema(fields);
-
-        // Build new column vector with index as first column
-        std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
-        columns.push_back(index_array);
-        for (int i = 0; i < table->num_columns(); i++) {
-            columns.push_back(table->column(i));
-        }
-
-        return arrow::Table::Make(new_schema, columns);
-    }
 
     // SQL Query Interface Implementation
-    DataFrame DataFrame::query(const std::string& sql, const std::string& index_name) const
+    std::shared_ptr<arrow::Table> DataFrame::query(const std::string& sql, const std::string& table_name) const
     {
         // Get SQL engine instance
         auto& engine = SQLEngine::get();
 
-        // Create table with index column if requested
-        auto table_with_index = add_index_to_table(m_index, m_table, index_name);
+        // Generate unique table name with thread ID to avoid collisions
+        std::string unique_name = table_name + "_" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
-        // Register this dataframe's table
-        engine.register_table("df", table_with_index);
+        try {
+            // Register this dataframe's table
+            engine.register_table(unique_name, m_table);
 
-        // Execute the query
-        auto result_table = engine.query(sql);
+            // Replace user's table_name with unique_name in SQL
+            std::string modified_sql = sql;
+            // Simple string replacement - more sophisticated parsing could be added
+            size_t pos = 0;
+            while ((pos = modified_sql.find(table_name, pos)) != std::string::npos) {
+                // Check if this is a word boundary to avoid partial matches
+                bool is_word_start = (pos == 0 || !std::isalnum(modified_sql[pos-1]));
+                bool is_word_end = (pos + table_name.length() >= modified_sql.length() ||
+                                   !std::isalnum(modified_sql[pos + table_name.length()]));
 
-        // Clean up temporary table
-        engine.drop_table("df");
-
-        // Return new DataFrame with query results
-        // Check if the index column is in the result
-        IndexPtr result_index;
-        if (!index_name.empty() && result_table->num_columns() > 0) {
-            // Look for the index column in the results
-            auto field_names = result_table->schema()->field_names();
-            auto it = std::find(field_names.begin(), field_names.end(), index_name);
-
-            if (it != field_names.end()) {
-                // Found the index column - extract it and remove from table
-                int index_col_idx = std::distance(field_names.begin(), it);
-                auto index_column = result_table->column(index_col_idx);
-
-                // Create index from the column
-                result_index = factory::index::make_index(index_column, std::nullopt, index_name);
-
-                // Remove index column from the result table
-                auto result = result_table->RemoveColumn(index_col_idx);
-                if (result.ok()) {
-                    result_table = result.ValueOrDie();
+                if (is_word_start && is_word_end) {
+                    modified_sql.replace(pos, table_name.length(), unique_name);
+                    pos += unique_name.length();
+                } else {
+                    pos += table_name.length();
                 }
             }
-        }
 
-        // If no index was extracted, create a range index
-        if (!result_index) {
-            result_index = factory::index::from_range(result_table->num_rows());
-        }
+            // Execute the query
+            auto result_table = engine.query(modified_sql);
 
-        return DataFrame(result_index, result_table);
+            // Clean up temporary table
+            engine.drop_table(unique_name);
+
+            return result_table;
+        }
+        catch (...) {
+            // Ensure cleanup on exception
+            try {
+                engine.drop_table(unique_name);
+            } catch (...) {}
+            throw;
+        }
     }
 
-    DataFrame DataFrame::query(const std::string& sql,
-                              const std::unordered_map<std::string, DataFrame>& tables,
-                              const std::string& index_name) const
+    std::shared_ptr<arrow::Table> DataFrame::query(const std::string& sql,
+                                                  const std::string& table_name,
+                                                  const std::unordered_map<std::string, DataFrame>& tables) const
     {
         // Get SQL engine instance
         auto& engine = SQLEngine::get();
 
-        // Create table with index column if requested
-        auto table_with_index = add_index_to_table(m_index, m_table, index_name);
+        // Generate unique names to avoid collisions
+        auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+        std::string unique_main_name = table_name + "_" + std::to_string(thread_id);
 
-        // Register this dataframe as "df" (the default table name for single-table queries)
-        engine.register_table("df", table_with_index);
+        std::vector<std::string> registered_tables;
+        std::unordered_map<std::string, std::string> name_mapping; // original -> unique
 
-        // Register additional tables
-        std::vector<std::string> registered_tables = {"df"};
-        for (const auto& [name, dataframe] : tables)
-        {
-            // Add index to each table using the same index_name
-            auto table_with_idx = add_index_to_table(dataframe.index(), dataframe.table(), index_name);
-            engine.register_table(name, table_with_idx);
-            registered_tables.push_back(name);
-        }
+        try {
+            // Register this dataframe
+            engine.register_table(unique_main_name, m_table);
+            registered_tables.push_back(unique_main_name);
+            name_mapping[table_name] = unique_main_name;
 
-        try
-        {
-            // Execute the query
-            auto result_table = engine.query(sql);
-
-            // Clean up all temporary tables
-            for (const auto& table_name : registered_tables)
-            {
-                engine.drop_table(table_name);
+            // Register additional tables with unique names
+            for (const auto& [name, dataframe] : tables) {
+                std::string unique_name = name + "_" + std::to_string(thread_id);
+                engine.register_table(unique_name, dataframe.table());
+                registered_tables.push_back(unique_name);
+                name_mapping[name] = unique_name;
             }
 
-            // Return new DataFrame with query results
-            // Check if the index column is in the result
-            IndexPtr result_index;
-            if (!index_name.empty() && result_table->num_columns() > 0) {
-                // Look for the index column in the results
-                auto field_names = result_table->schema()->field_names();
-                auto it = std::find(field_names.begin(), field_names.end(), index_name);
+            // Replace all table names in SQL with unique names
+            std::string modified_sql = sql;
+            for (const auto& [original, unique] : name_mapping) {
+                size_t pos = 0;
+                while ((pos = modified_sql.find(original, pos)) != std::string::npos) {
+                    // Check if this is a word boundary to avoid partial matches
+                    bool is_word_start = (pos == 0 || !std::isalnum(modified_sql[pos-1]));
+                    bool is_word_end = (pos + original.length() >= modified_sql.length() ||
+                                       !std::isalnum(modified_sql[pos + original.length()]));
 
-                if (it != field_names.end()) {
-                    // Found the index column - extract it and remove from table
-                    int index_col_idx = std::distance(field_names.begin(), it);
-                    auto index_column = result_table->column(index_col_idx);
-
-                    // Create index from the column
-                    result_index = factory::index::make_index(index_column, std::nullopt, index_name);
-
-                    // Remove index column from the result table
-                    auto result = result_table->RemoveColumn(index_col_idx);
-                    if (result.ok()) {
-                        result_table = result.ValueOrDie();
+                    if (is_word_start && is_word_end) {
+                        modified_sql.replace(pos, original.length(), unique);
+                        pos += unique.length();
+                    } else {
+                        pos += original.length();
                     }
                 }
             }
 
-            // If no index was extracted, create a range index
-            if (!result_index) {
-                result_index = factory::index::from_range(result_table->num_rows());
-            }
-
-            return DataFrame(result_index, result_table);
-        }
-        catch (...)
-        {
-            // Clean up all temporary tables in case of error
-            for (const auto& table_name : registered_tables)
-            {
-                try
-                {
-                    engine.drop_table(table_name);
-                }
-                catch (...)
-                {
-                    // Ignore cleanup errors
-                }
-            }
-            throw; // Re-throw the original exception
-        }
-    }
-
-    DataFrame DataFrame::sql(const std::string& sql)
-    {
-        // Get SQL engine instance
-        auto& engine = SQLEngine::get();
-
-        // Execute the query directly (assumes tables are already registered)
-        auto result_table = engine.query(sql);
-
-        // Create index for the result
-        auto index = factory::index::from_range(result_table->num_rows());
-
-        return DataFrame(index, result_table);
-    }
-
-    DataFrame DataFrame::sql(const std::string& sql,
-                            const std::unordered_map<std::string, DataFrame>& tables,
-                            const std::string& index_name)
-    {
-        // Get SQL engine instance
-        auto& engine = SQLEngine::get();
-
-        // Register all provided tables
-        std::vector<std::string> registered_tables;
-        for (const auto& [name, dataframe] : tables)
-        {
-            // Add index to each table using the same index_name
-            auto table_with_idx = add_index_to_table(dataframe.index(), dataframe.table(), index_name);
-            engine.register_table(name, table_with_idx);
-            registered_tables.push_back(name);
-        }
-
-        try
-        {
             // Execute the query
-            auto result_table = engine.query(sql);
+            auto result_table = engine.query(modified_sql);
 
             // Clean up all temporary tables
-            for (const auto& table_name : registered_tables)
-            {
+            for (const auto& table_name : registered_tables) {
                 engine.drop_table(table_name);
             }
 
-            // Create index for the result
-            auto index = factory::index::from_range(result_table->num_rows());
-
-            return DataFrame(index, result_table);
+            return result_table;
         }
-        catch (...)
-        {
+        catch (...) {
             // Clean up all temporary tables in case of error
-            for (const auto& table_name : registered_tables)
-            {
-                try
-                {
+            for (const auto& table_name : registered_tables) {
+                try {
                     engine.drop_table(table_name);
-                }
-                catch (...)
-                {
-                    // Ignore cleanup errors
+                } catch (...) {}
+            }
+            throw;
+        }
+    }
+
+    std::shared_ptr<arrow::Table> DataFrame::sql(const std::string& sql)
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Execute the query directly
+        return engine.query(sql);
+    }
+
+    std::shared_ptr<arrow::Table> DataFrame::sql(const std::string& sql,
+                                                const std::unordered_map<std::string, DataFrame>& tables)
+    {
+        // Get SQL engine instance
+        auto& engine = SQLEngine::get();
+
+        // Generate unique names to avoid collisions
+        auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+        std::vector<std::string> registered_tables;
+        std::unordered_map<std::string, std::string> name_mapping; // original -> unique
+
+        try {
+            // Register all provided tables with unique names
+            for (const auto& [name, dataframe] : tables) {
+                std::string unique_name = name + "_" + std::to_string(thread_id);
+                engine.register_table(unique_name, dataframe.table());
+                registered_tables.push_back(unique_name);
+                name_mapping[name] = unique_name;
+            }
+
+            // Replace all table names in SQL with unique names
+            std::string modified_sql = sql;
+            for (const auto& [original, unique] : name_mapping) {
+                size_t pos = 0;
+                while ((pos = modified_sql.find(original, pos)) != std::string::npos) {
+                    // Check if this is a word boundary to avoid partial matches
+                    bool is_word_start = (pos == 0 || !std::isalnum(modified_sql[pos-1]));
+                    bool is_word_end = (pos + original.length() >= modified_sql.length() ||
+                                       !std::isalnum(modified_sql[pos + original.length()]));
+
+                    if (is_word_start && is_word_end) {
+                        modified_sql.replace(pos, original.length(), unique);
+                        pos += unique.length();
+                    } else {
+                        pos += original.length();
+                    }
                 }
             }
-            throw; // Re-throw the original exception
+
+            // Execute the query
+            auto result_table = engine.query(modified_sql);
+
+            // Clean up all temporary tables
+            for (const auto& table_name : registered_tables) {
+                engine.drop_table(table_name);
+            }
+
+            return result_table;
+        }
+        catch (...) {
+            // Clean up all temporary tables in case of error
+            for (const auto& table_name : registered_tables) {
+                try {
+                    engine.drop_table(table_name);
+                } catch (...) {}
+            }
+            throw;
         }
     }
 
 
     // Simple SQL interface - works directly with .arrows files
-    DataFrame DataFrame::sql_simple(const std::string& sql) {
+    std::shared_ptr<arrow::Table> DataFrame::sql_simple(const std::string& sql) {
         // Get SQL engine instance
         auto& engine = SQLEngine::get();
 
         // Execute the query directly - assumes .arrows files are referenced in SQL
-        auto result_table = engine.query(sql);
-
-        // Create index for the result
-        auto index = factory::index::from_range(result_table->num_rows());
-
-        return DataFrame(index, result_table);
+        return engine.query(sql);
     }
 
     // Helper for writing DataFrame to .arrows file using existing serialization

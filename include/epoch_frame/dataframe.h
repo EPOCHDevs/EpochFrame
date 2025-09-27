@@ -40,113 +40,99 @@ namespace epoch_frame
         using NDFrame<DataFrame, arrow::Table>::set_index;
         DataFrame set_index(std::string const&) const;
 
-        /**
-         * @brief Configuration options for SQL operations
-         *
-         * Controls how temporary .arrows files are managed during SQL operations.
-         * These options are used by the managed SQL interface.
-         */
-        struct SQLOptions {
-            std::string arrow_file_dir = "/tmp/epochframe_sql/";  ///< Directory for temporary .arrows files
-            bool cleanup = true;                                  ///< Auto-delete files after query completion
-            bool debug = false;                                   ///< Print file paths and SQL transformations for debugging
-            std::string file_prefix = "table_";                  ///< Prefix for generated temporary filenames
-        };
 
         /**
-         * @brief Execute SQL query on this DataFrame (managed approach)
+         * @brief Execute SQL query on this DataFrame
          *
-         * Automatically creates temporary .arrows files and registers this DataFrame as "df" in SQL.
-         * Uses DuckDB's nanoarrow extension with proper filtering support.
+         * Registers this DataFrame with the specified table name in SQL.
+         * Returns raw Arrow Table - user handles indexing and DataFrame creation.
          *
-         * @param sql SQL query string. Reference this DataFrame as "df"
-         * @param index_name Optional name for index column (default: "")
-         * @return DataFrame containing query results
+         * @param sql SQL query string
+         * @param table_name Name to register this DataFrame as in SQL
+         * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
          * DataFrame df = load_data();
-         * auto result = df.query("SELECT * FROM df WHERE value > 100");
-         * auto top5 = df.query("SELECT name, value FROM df ORDER BY value DESC LIMIT 5");
+         * auto result_table = df.query("SELECT * FROM sales WHERE value > 100", "sales");
+         * // User decides how to create DataFrame from result_table
          * ```
          */
-        DataFrame query(const std::string& sql, const std::string& index_name = "") const;
+        std::shared_ptr<arrow::Table> query(const std::string& sql, const std::string& table_name) const;
 
         /**
-         * @brief Execute SQL query with multiple DataFrames (managed approach)
+         * @brief Execute SQL query with multiple DataFrames
          *
-         * Automatically creates temporary .arrows files for all DataFrames and registers them
-         * with their specified names in SQL. This DataFrame is available as "df".
+         * Registers this DataFrame with the specified table name plus additional tables.
+         * Returns raw Arrow Table - user handles indexing and DataFrame creation.
          *
-         * @param sql SQL query string. Reference DataFrames by their map keys
-         * @param tables Map of table names to DataFrames
-         * @param index_name Optional name for index column (default: "")
-         * @return DataFrame containing query results
+         * @param sql SQL query string
+         * @param table_name Name to register this DataFrame as in SQL
+         * @param tables Map of additional table names to DataFrames
+         * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
          * DataFrame sales = load_sales();
          * DataFrame products = load_products();
-         * auto result = sales.query(
-         *     "SELECT s.customer, p.name, s.amount FROM df s JOIN products p ON s.product_id = p.id",
+         * auto result_table = sales.query(
+         *     "SELECT s.customer, p.name FROM sales s JOIN products p ON s.product_id = p.id",
+         *     "sales",
          *     {{"products", products}}
          * );
          * ```
          */
-        DataFrame query(const std::string& sql,
-                       const std::unordered_map<std::string, DataFrame>& tables,
-                       const std::string& index_name = "") const;
+        std::shared_ptr<arrow::Table> query(const std::string& sql,
+                                          const std::string& table_name,
+                                          const std::unordered_map<std::string, DataFrame>& tables) const;
 
         /**
          * @brief Execute SQL query without DataFrame context (static method)
          *
-         * Executes SQL directly on DuckDB. Useful for queries that don't reference DataFrames
-         * or when working with existing database tables/views.
+         * Executes SQL directly on DuckDB. Returns raw Arrow Table.
          *
          * @param sql SQL query string
-         * @return DataFrame containing query results
+         * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
-         * auto result = DataFrame::sql("SELECT 1 as id, 'hello' as message");
-         * auto info = DataFrame::sql("SHOW TABLES");
+         * auto result_table = DataFrame::sql("SELECT 1 as id, 'hello' as message");
+         * auto info_table = DataFrame::sql("SHOW TABLES");
          * ```
          */
-        static DataFrame sql(const std::string& sql);
+        static std::shared_ptr<arrow::Table> sql(const std::string& sql);
 
         /**
          * @brief Execute SQL query with multiple DataFrames (static method)
          *
-         * Automatically creates temporary .arrows files for all DataFrames and registers them
-         * with their specified names in SQL.
+         * Registers all provided DataFrames with their specified names in SQL.
+         * Returns raw Arrow Table.
          *
-         * @param sql SQL query string. Reference DataFrames by their map keys
+         * @param sql SQL query string
          * @param tables Map of table names to DataFrames
-         * @param index_name Optional name for index column (default: "index")
-         * @return DataFrame containing query results
+         * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
          * DataFrame sales = load_sales();
          * DataFrame products = load_products();
-         * auto result = DataFrame::sql(
+         * auto result_table = DataFrame::sql(
          *     "SELECT s.customer, p.name FROM sales s JOIN products p ON s.product_id = p.id",
          *     {{"sales", sales}, {"products", products}}
          * );
          * ```
          */
-        static DataFrame sql(const std::string& sql,
-                           const std::unordered_map<std::string, DataFrame>& tables,
-                           const std::string& index_name = "index");
+        static std::shared_ptr<arrow::Table> sql(const std::string& sql,
+                                                const std::unordered_map<std::string, DataFrame>& tables);
 
         /**
-         * @brief Execute SQL query directly on .arrows files (simple approach)
+         * @brief Execute SQL query directly on .arrows files
          *
-         * User manages .arrows files manually. Use read_arrow('file.arrows') in SQL to reference files.
-         * This approach gives full control over file lifecycle and is ideal for persistent workflows.
+         * User manages .arrows files manually. Use read_arrow('file.arrows') in SQL.
+         * Returns raw Arrow Table.
          *
          * @param sql SQL query string using read_arrow() function calls
-         * @return DataFrame containing query results
+         * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
@@ -155,18 +141,14 @@ namespace epoch_frame
          * products_df.write_arrows("products.arrows");
          *
          * // Then query directly
-         * auto result = DataFrame::sql_simple(
+         * auto result_table = DataFrame::sql_simple(
          *     "SELECT s.customer, p.name "
          *     "FROM read_arrow('sales.arrows') s "
          *     "JOIN read_arrow('products.arrows') p ON s.product_id = p.id"
          * );
-         *
-         * // Clean up when done
-         * std::filesystem::remove("sales.arrows");
-         * std::filesystem::remove("products.arrows");
          * ```
          */
-        static DataFrame sql_simple(const std::string& sql);
+        static std::shared_ptr<arrow::Table> sql_simple(const std::string& sql);
 
         /**
          * @brief Write DataFrame to .arrows file for use with sql_simple()
