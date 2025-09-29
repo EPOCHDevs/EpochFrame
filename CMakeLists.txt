@@ -83,8 +83,6 @@ if(BUILD_SHARED_LIBS)
     )
 endif()
 
-target_compile_definitions(epoch_frame PUBLIC -DSPDLOG_USE_STD_FORMAT)
-
 target_include_directories(epoch_frame
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
