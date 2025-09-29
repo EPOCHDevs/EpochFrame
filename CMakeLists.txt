@@ -97,6 +97,7 @@ target_compile_options(epoch_frame PRIVATE -Wall -Wextra -Werror)
 add_subdirectory(src)
 
 if (BUILD_TEST)
+    MESSAGE("EPOCHFRAME TESTING ENABLED")
   add_subdirectory(test)
 endif()
 
