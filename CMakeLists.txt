@@ -46,7 +46,10 @@ if (BUILD_TEST)
   find_package(Catch2 3 REQUIRED)
   find_package(trompeloeil 47 REQUIRED)
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
+  # Only add coverage flags for Debug builds or when explicitly enabled
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
+  endif()
 endif()
 
 # Include the EpochCore dependency
