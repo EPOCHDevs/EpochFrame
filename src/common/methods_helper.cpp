@@ -469,8 +469,6 @@ namespace epoch_frame
 
     DataFrame concat_row(std::vector<FrameOrSeries> const& objs, bool ignore_index, bool intersect)
     {
-        constexpr const char* indexName = "__index__";
-
         std::vector<arrow::TablePtr> tables(objs.size());
         EpochThreadPool::getInstance().execute(
             [&]
@@ -482,15 +480,33 @@ namespace epoch_frame
                         for (size_t i = r.begin(); i != r.end(); ++i)
                         {
                             tables[i] = objs[i].table();
-                            if (!ignore_index)
-                            {
-                                tables[i] = add_column(tables[i], indexName,
-                                                       objs[i].index()->array().value());
-                            }
                         }
                     },
                     tbb::simple_partitioner());
             });
+
+        // Generate unique index column name to avoid collisions
+        const std::string indexName = ignore_index ? "__index__" : get_unique_index_column_name(tables);
+
+        // Add index columns after determining unique name
+        if (!ignore_index)
+        {
+            EpochThreadPool::getInstance().execute(
+                [&]
+                {
+                    tbb::parallel_for(
+                        tbb::blocked_range<size_t>(0UL, objs.size()),
+                        [&](const tbb::blocked_range<size_t>& r)
+                        {
+                            for (size_t i = r.begin(); i != r.end(); ++i)
+                            {
+                                tables[i] = add_column(tables[i], indexName,
+                                                       objs[i].index()->array().value());
+                            }
+                        },
+                        tbb::simple_partitioner());
+                });
+        }
 
         arrow::ConcatenateTablesOptions options;
         options.field_merge_options = arrow::Field::MergeOptions::Permissive();
@@ -678,6 +694,35 @@ namespace epoch_frame
         return duplicate_columns;
     }
 
+    std::string get_unique_index_column_name(std::vector<arrow::TablePtr> const& tables)
+    {
+        // Collect all existing column names from all tables
+        std::unordered_set<std::string> existing_columns;
+        for (const auto& table : tables) {
+            auto col_names = table->ColumnNames();
+            existing_columns.insert(col_names.begin(), col_names.end());
+        }
+
+        // Try the default name first
+        std::string candidate = "__index__";
+        if (!existing_columns.contains(candidate)) {
+            return candidate;
+        }
+
+        // If __index__ exists, try __index_0__, __index_1__, etc.
+        int suffix = 0;
+        while (true) {
+            candidate = "__index_" + std::to_string(suffix) + "__";
+            if (!existing_columns.contains(candidate)) {
+                return candidate;
+            }
+            suffix++;
+            // Safety check to prevent infinite loop
+            AssertFromStream(suffix < 1000,
+                "Unable to find unique index column name after 1000 attempts");
+        }
+    }
+
     bool check_index_overlap(std::vector<IndexPtr> const& indices)
     {
         // Use existing IIndex::intersection() method - handles all Arrow types correctly
@@ -697,13 +742,40 @@ namespace epoch_frame
         ac::JoinType join_type,
         std::string const& index_name)
     {
-        ac::Declaration current{"table_source", ac::TableSourceNodeOptions(tables_with_index[0])};
+        // For single table, just return it
+        if (tables_with_index.size() == 1) {
+            return ac::Declaration{"table_source", ac::TableSourceNodeOptions(tables_with_index[0])};
+        }
+
+        // For 2 tables, use simple join
+        if (tables_with_index.size() == 2) {
+            ac::Declaration left{"table_source", ac::TableSourceNodeOptions(tables_with_index[0])};
+            ac::Declaration right{"table_source", ac::TableSourceNodeOptions(tables_with_index[1])};
+
+            ac::HashJoinNodeOptions join_opts{
+                join_type,
+                /*left_keys=*/{index_name},
+                /*right_keys=*/{index_name},
+                cp::literal(true),
+                "_left_1",
+                "_right_1"
+            };
+
+            return ac::Declaration{
+                "hashjoin",
+                {std::move(left), std::move(right)},
+                std::move(join_opts)
+            };
+        }
+
+        // For 3+ tables, we need to materialize and re-add index column after each join
+        // to avoid Acero's "No match or multiple matches" error
+        arrow::TablePtr current_table = tables_with_index[0];
 
         for (size_t i = 1; i < tables_with_index.size(); i++) {
+            ac::Declaration left{"table_source", ac::TableSourceNodeOptions(current_table)};
             ac::Declaration right{"table_source", ac::TableSourceNodeOptions(tables_with_index[i])};
 
-            // For Acero joins, we need to handle duplicate index columns
-            // Use suffixes to distinguish them, then coalesce later
             std::string left_suffix = "_left_" + std::to_string(i);
             std::string right_suffix = "_right_" + std::to_string(i);
 
@@ -716,14 +788,42 @@ namespace epoch_frame
                 right_suffix
             };
 
-            current = ac::Declaration{
+            ac::Declaration hashjoin{
                 "hashjoin",
-                {std::move(current), std::move(right)},
+                {std::move(left), std::move(right)},
                 std::move(join_opts)
             };
+
+            // Materialize the join result
+            current_table = AssertResultIsOk(ac::DeclarationToTable(hashjoin));
+
+            // Coalesce the index columns and re-add with original name
+            auto index_col_left = current_table->GetColumnByName(index_name + left_suffix);
+            auto index_col_right = current_table->GetColumnByName(index_name + right_suffix);
+
+            if (index_col_left && index_col_right) {
+                auto coalesced = arrow_utils::call_compute_array({index_col_left, index_col_right}, "coalesce");
+
+                // Remove the suffixed index columns
+                auto left_idx = current_table->schema()->GetFieldIndex(index_name + left_suffix);
+                auto right_idx = current_table->schema()->GetFieldIndex(index_name + right_suffix);
+
+                if (left_idx >= 0) {
+                    current_table = AssertResultIsOk(current_table->RemoveColumn(left_idx));
+                    // After removing left, right index shifts down
+                    right_idx = current_table->schema()->GetFieldIndex(index_name + right_suffix);
+                }
+                if (right_idx >= 0) {
+                    current_table = AssertResultIsOk(current_table->RemoveColumn(right_idx));
+                }
+
+                // Add coalesced index back with original name
+                current_table = AssertResultIsOk(
+                    current_table->AddColumn(0, arrow::field(index_name, coalesced->type()), coalesced));
+            }
         }
 
-        return current;
+        return ac::Declaration{"table_source", ac::TableSourceNodeOptions(current_table)};
     }
 
     arrow::ChunkedArrayPtr coalesce_index_columns(
@@ -794,7 +894,8 @@ namespace epoch_frame
         std::vector<IndexPtr> const& indices,
         bool ignore_index)
     {
-        constexpr const char* indexName = "__index__";
+        // Generate unique index column name to avoid collisions with existing columns
+        const std::string indexName = ignore_index ? "__index__" : get_unique_index_column_name(tables);
 
         // Add index columns in parallel
         std::vector<arrow::TablePtr> tables_with_index(tables.size());
@@ -836,7 +937,10 @@ namespace epoch_frame
         JoinType join_type,
         bool ignore_index)
     {
-        constexpr const char* indexName = "__index__";
+        // Generate unique index column name to avoid collisions with existing columns
+        // This is critical: if any input table has a column named "__index__",
+        // Acero's join will fail with "No match or multiple matches for key field reference"
+        const std::string indexName = get_unique_index_column_name(tables);
 
         // Check for duplicate column names
         auto duplicate_columns = check_duplicate_columns(tables);

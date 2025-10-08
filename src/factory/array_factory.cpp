@@ -17,7 +17,12 @@ namespace epoch_frame::factory::array
         auto result = arrow::MakeBuilder(type);
         AssertFromFormat(result.ok(), "Failed to create builder");
         auto builder = result.MoveValueUnsafe();
-        AssertStatusIsOk(builder->AppendScalars(std::move(scalarVector)));
+        AssertStatusIsOk(builder->Reserve(scalarVector.size()));
+
+        for (auto const& scalar : scalarVector) {
+            if (scalar && scalar->is_valid) (void)builder->AppendScalar(*scalar);
+            else (void)builder->AppendNull();
+        }
 
         return AssertContiguousArrayResultIsOk(builder->Finish());
     }

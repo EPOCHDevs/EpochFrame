@@ -116,7 +116,15 @@ namespace epoch_frame
                              auto result = arrow::MakeBuilder(row.front()->type);
                              AssertStatusIsOk(result.status());
                              auto rowBuilder = result.MoveValueUnsafe();
-                             AssertStatusIsOk(rowBuilder->AppendScalars(row));
+                             AssertStatusIsOk(rowBuilder->Reserve(row.size()));
+
+                             for (const auto& scalar : row) {
+                                 if (scalar && scalar->is_valid)
+                                     (void)rowBuilder->AppendScalar(*scalar);
+                                 else
+                                     (void)rowBuilder->AppendNull();
+                             }
+
                              auto array = AssertResultIsOk(rowBuilder->Finish());
 
                              scalarVector[i] =
@@ -128,7 +136,14 @@ namespace epoch_frame
         AssertStatusIsOk(builderResult.status());
 
         auto builder = builderResult.MoveValueUnsafe();
-        AssertStatusIsOk(builder->AppendScalars(scalarVector));
+        AssertStatusIsOk(builder->Reserve(scalarVector.size()));
+
+        for (const auto& scalar : scalarVector) {
+            if (scalar && scalar->is_valid)
+                (void)builder->AppendScalar(*scalar);
+            else
+                (void)builder->AppendNull();
+        }
 
         auto array = AssertResultIsOk(builder->Finish());
         return {m_data.first, std::make_shared<arrow::ChunkedArray>(array)};

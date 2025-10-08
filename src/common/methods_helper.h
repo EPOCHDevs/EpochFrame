@@ -161,6 +161,9 @@ namespace epoch_frame {
 
     arrow::ChunkedArrayPtr get_array(arrow::Table const &table, std::string const &name, arrow::Scalar const &default_value);
 
+    // Helper to generate unique index column name to avoid collisions
+    std::string get_unique_index_column_name(std::vector<arrow::TablePtr> const& tables);
+
     template <typename T>
     std::vector<arrow::Datum> make_datum_vector(std::vector<T> const& v) {
         std::vector<arrow::Datum> result(v.size());

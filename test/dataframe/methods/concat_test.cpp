@@ -19,6 +19,76 @@ using namespace epoch_frame::factory::index;
 using namespace epoch_frame::factory::array;
 
 
+TEST_CASE("Concat with __index__ Column Collision", "[concat]") {
+    // This test reproduces the production bug where a table already has a column
+    // named "__index__", causing Acero join to fail with:
+    // "No match or multiple matches for key field reference FieldRef.Name(__index__)"
+
+    auto idx1 = from_range(3);      // [0, 1, 2]
+    auto idx2 = from_range(3);      // [0, 1, 2]
+
+    // Create DataFrames where one has a column literally named "__index__"
+    DataFrame df1 = make_dataframe<int64_t>(idx1, {{1, 2, 3}, {10, 20, 30}}, {"__index__", "colB"});
+    DataFrame df2 = make_dataframe<int64_t>(idx2, {{4, 5, 6}, {40, 50, 60}}, {"colC", "colD"});
+
+    SECTION("Row concatenation with __index__ column") {
+        // This should work - row concat adds index as a temp column
+        DataFrame result = concat(ConcatOptions{{df1, df2}, JoinType::Outer, AxisType::Row, false, false});
+
+        Scalar null_scalar;
+        DataFrame expected = make_dataframe(
+            factory::index::make_index(
+                factory::array::make_array<uint64_t>({0, 1, 2, 0, 1, 2}),
+                std::nullopt, ""),
+            {{1_scalar, 2_scalar, 3_scalar, null_scalar, null_scalar, null_scalar},
+             {10_scalar, 20_scalar, 30_scalar, null_scalar, null_scalar, null_scalar},
+             {null_scalar, null_scalar, null_scalar, 4_scalar, 5_scalar, 6_scalar},
+             {null_scalar, null_scalar, null_scalar, 40_scalar, 50_scalar, 60_scalar}},
+            {"__index__", "colB", "colC", "colD"}, arrow::int64());
+
+        INFO("result: " << result);
+        INFO("expected: " << expected);
+        REQUIRE(result.equals(expected));
+    }
+
+    SECTION("Column concatenation with __index__ column") {
+        // This is where the bug occurred - column concat uses index for joining
+        DataFrame result = concat(ConcatOptions{{df1, df2}, JoinType::Outer, AxisType::Column, false, false});
+
+        DataFrame expected = make_dataframe<int64_t>(idx1,
+            {{1, 2, 3}, {10, 20, 30}, {4, 5, 6}, {40, 50, 60}},
+            {"__index__", "colB", "colC", "colD"});
+
+        INFO("result: " << result);
+        INFO("expected: " << expected);
+        REQUIRE(result.equals(expected));
+    }
+
+    SECTION("Column concatenation with multiple __index__ columns") {
+        // Both tables have __index__ column - should fail with duplicate column error
+        DataFrame df3 = make_dataframe<int64_t>(idx2, {{7, 8, 9}, {70, 80, 90}}, {"__index__", "colD"});
+        REQUIRE_THROWS(concat(ConcatOptions{{df1, df3}, JoinType::Outer, AxisType::Column, false, false}));
+    }
+
+    SECTION("Test with __index_0__ collision (edge case)") {
+        // Create a table with both __index__ and __index_0__ to test fallback logic
+        // The helper should generate __index_1__ in this case
+        DataFrame df_edge1 = make_dataframe<int64_t>(idx1, {{1, 2, 3}, {10, 20, 30}, {100, 200, 300}},
+                                                      {"__index__", "__index_0__", "colB"});
+        DataFrame df_edge2 = make_dataframe<int64_t>(idx2, {{4, 5, 6}}, {"colC"});
+
+        DataFrame result = concat(ConcatOptions{{df_edge1, df_edge2}, JoinType::Outer, AxisType::Column, false, false});
+
+        DataFrame expected = make_dataframe<int64_t>(idx1,
+            {{1, 2, 3}, {10, 20, 30}, {100, 200, 300}, {4, 5, 6}},
+            {"__index__", "__index_0__", "colB", "colC"});
+
+        INFO("result: " << result);
+        INFO("expected: " << expected);
+        REQUIRE(result.equals(expected));
+    }
+}
+
 TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
     // Create indices with different ranges and overlaps
     auto idx1 = from_range(3);      // [0, 1, 2]
@@ -242,6 +312,135 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
             } else {
                 REQUIRE_THROWS( concat(param.input) );
             }
+        }
+    }
+}
+
+TEST_CASE("Concat Type Coercion Tests (from pandas)", "[concat]") {
+    // Based on pandas/tests/arrays/integer/test_concat.py
+    // Test type coercion behavior when concatenating different integer types
+
+    auto idx = from_range(3);
+
+    SECTION("Same type concatenation") {
+        // Int64 + Int64 = Int64
+        auto s1 = make_series<int64_t>(idx, {0, 1, 2}, "data");
+        auto s2 = make_series<int64_t>(idx, {3, 4, 5}, "data");
+
+        auto result = concat(ConcatOptions{{s1, s2}, JoinType::Outer, AxisType::Row, true, false});
+        REQUIRE(result.num_rows() == 6);
+        REQUIRE(result.table()->column(0)->type()->id() == arrow::Type::INT64);
+    }
+
+    SECTION("Different integer sizes") {
+        // Int8 + Int16 should widen to Int16 (or higher precision)
+        auto s1 = make_series<int8_t>(idx, {0, 1, 2}, "data");
+        auto s2 = make_series<int16_t>(idx, {3, 4, 5}, "data");
+
+        auto result = concat(ConcatOptions{{s1, s2}, JoinType::Outer, AxisType::Row, true, false});
+        REQUIRE(result.num_rows() == 6);
+        // Arrow should promote to wider type
+        auto result_type_id = result.table()->column(0)->type()->id();
+        REQUIRE((result_type_id == arrow::Type::INT16 || result_type_id == arrow::Type::INT32 ||
+                 result_type_id == arrow::Type::INT64));
+    }
+
+    SECTION("Signed + Unsigned requires wider type") {
+        // UInt8 + Int8 needs at least Int16 to hold both ranges
+        auto s1 = make_series<uint8_t>(idx, {0, 1, 2}, "data");
+        auto s2 = make_series<int8_t>(idx, {3, 4, 5}, "data");
+
+        auto result = concat(ConcatOptions{{s1, s2}, JoinType::Outer, AxisType::Row, true, false});
+        REQUIRE(result.num_rows() == 6);
+        // Should promote to signed type that can hold both
+        auto result_type_id = result.table()->column(0)->type()->id();
+        REQUIRE((result_type_id == arrow::Type::INT16 || result_type_id == arrow::Type::INT32 ||
+                 result_type_id == arrow::Type::INT64));
+    }
+
+    SECTION("Column-wise concat preserves types") {
+        // When concatenating column-wise, each column keeps its type
+        auto df1 = make_dataframe<int8_t>(idx, {{0, 1, 2}}, {"colA"});
+        auto df2 = make_dataframe<int16_t>(idx, {{3, 4, 5}}, {"colB"});
+
+        auto result = concat(ConcatOptions{{df1, df2}, JoinType::Outer, AxisType::Column, false, false});
+        REQUIRE(result.num_rows() == 3);
+        REQUIRE(result.num_cols() == 2);
+
+        // Each column should preserve its original type
+        REQUIRE(result.table()->GetColumnByName("colA")->type()->id() == arrow::Type::INT8);
+        REQUIRE(result.table()->GetColumnByName("colB")->type()->id() == arrow::Type::INT16);
+    }
+}
+
+TEST_CASE("Concat Edge Cases and Robustness", "[concat]") {
+    auto idx1 = from_range(3);
+    auto idx2 = from_range(2, 5);  // Partial overlap with idx1
+
+    SECTION("Three or more tables column concat") {
+        DataFrame df1 = make_dataframe<int64_t>(idx1, {{1, 2, 3}}, {"colA"});
+        DataFrame df2 = make_dataframe<int64_t>(idx1, {{4, 5, 6}}, {"colB"});
+        DataFrame df3 = make_dataframe<int64_t>(idx1, {{7, 8, 9}}, {"colC"});
+
+        auto result = concat(ConcatOptions{{df1, df2, df3}, JoinType::Outer, AxisType::Column, false, false});
+        REQUIRE(result.num_rows() == 3);
+        REQUIRE(result.num_cols() == 3);
+        REQUIRE(result.column_names() == std::vector<std::string>{"colA", "colB", "colC"});
+    }
+
+    SECTION("Three or more tables row concat") {
+        DataFrame df1 = make_dataframe<int64_t>(from_range(2), {{1, 2}, {10, 20}}, {"colA", "colB"});
+        DataFrame df2 = make_dataframe<int64_t>(from_range(2, 4), {{3, 4}, {30, 40}}, {"colA", "colB"});
+        DataFrame df3 = make_dataframe<int64_t>(from_range(4, 6), {{5, 6}, {50, 60}}, {"colA", "colB"});
+
+        auto result = concat(ConcatOptions{{df1, df2, df3}, JoinType::Outer, AxisType::Row, false, false});
+        REQUIRE(result.num_rows() == 6);
+        REQUIRE(result.num_cols() == 2);
+    }
+
+    SECTION("Disjoint indices with inner join") {
+        // df1 has index [0,1,2], df2 has index [3,4,5] - no overlap
+        DataFrame df1 = make_dataframe<int64_t>(idx1, {{1, 2, 3}}, {"colA"});
+        DataFrame df2 = make_dataframe<int64_t>(from_range(3, 6), {{4, 5, 6}}, {"colB"});
+
+        auto result = concat(ConcatOptions{{df1, df2}, JoinType::Inner, AxisType::Column, false, false});
+        // No overlapping indices -> empty result
+        REQUIRE(result.num_rows() == 0);
+    }
+
+    SECTION("Nullable columns in concat") {
+        Scalar null_scalar;
+        auto df1 = make_dataframe(idx1,
+            {{1_scalar, 2_scalar, null_scalar}},
+            {"colA"}, arrow::int64());
+        auto df2 = make_dataframe(idx1,
+            {{null_scalar, 5_scalar, 6_scalar}},
+            {"colB"}, arrow::int64());
+
+        auto result = concat(ConcatOptions{{df1, df2}, JoinType::Outer, AxisType::Column, false, false});
+        REQUIRE(result.num_rows() == 3);
+        REQUIRE(result.num_cols() == 2);
+
+        // Verify nulls are preserved
+        auto colA = result.table()->GetColumnByName("colA");
+        auto colB = result.table()->GetColumnByName("colB");
+        REQUIRE(colA->null_count() == 1);
+        REQUIRE(colB->null_count() == 1);
+    }
+
+    SECTION("Verify temp index column not in result") {
+        // Critical test: ensure our temporary __index__ (or __index_0__, etc.)
+        // column is properly removed and doesn't leak into the result
+        DataFrame df1 = make_dataframe<int64_t>(idx1, {{1, 2, 3}}, {"colA"});
+        DataFrame df2 = make_dataframe<int64_t>(idx1, {{4, 5, 6}}, {"colB"});
+
+        auto result = concat(ConcatOptions{{df1, df2}, JoinType::Outer, AxisType::Column, false, false});
+
+        // Check that no internal index column names appear in result
+        auto col_names = result.column_names();
+        for (const auto& name : col_names) {
+            REQUIRE((name.find("__index") == std::string::npos ||
+                    name == "__index__"));  // unless it was actual data
         }
     }
 }

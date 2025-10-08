@@ -158,18 +158,37 @@ namespace epoch_frame::arrow_utils
         AssertFromFormat(builder_result.ok(), "Failed to create builder for array type");
         auto builder = builder_result.MoveValueUnsafe();
 
-        auto x = builder->AppendScalars(scalars);
-        if (x.ok())
+        auto reserve_status = builder->Reserve(scalars.size());
+        if (!reserve_status.ok())
         {
-            return AssertResultIsOk(builder->Finish());
+            throw std::runtime_error("Failed to reserve builder capacity: " +
+                                     reserve_status.message());
         }
-        std::stringstream ss;
-        ss << x.message() << "\nValid Scalar Builder:\n";
+
         for (const auto& scalar : scalars)
         {
-            ss << scalar->ToString() << "\n";
+            if (scalar && scalar->is_valid)
+            {
+                auto append_status = builder->AppendScalar(*scalar);
+                if (!append_status.ok())
+                {
+                    std::stringstream ss;
+                    ss << "Failed to append scalar: " << append_status.message()
+                       << "\nScalar: " << scalar->ToString() << "\n";
+                    throw std::runtime_error(ss.str());
+                }
+            }
+            else
+            {
+                auto append_status = builder->AppendNull();
+                if (!append_status.ok())
+                {
+                    throw std::runtime_error("Failed to append null: " + append_status.message());
+                }
+            }
         }
-        throw std::runtime_error(ss.str());
+
+        return AssertResultIsOk(builder->Finish());
     }
 
     arrow::ChunkedArrayPtr map(const arrow::ChunkedArrayPtr&               array,
