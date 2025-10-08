@@ -101,9 +101,12 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
         {
             "Partial overlap inner join row-wise",
             ConcatOptions{ {df1, df5}, JoinType::Inner, AxisType::Row, false, false },
-            // Row concatenation doesn't care about column names - should handle mismatched columns
-            // df1 has colA, colB; df5 has colC, colD - result has all 4 columns with NULLs
-            make_dataframe(from_range(6),
+            // Row concatenation preserves original indices from each DataFrame
+            // df1 has index [0,1,2] and df5 has index [1,2,3]
+            make_dataframe(
+                factory::index::make_index(
+                    factory::array::make_array<uint64_t>({0, 1, 2, 1, 2, 3}),
+                    std::nullopt, ""),
                 {{1_scalar, 2_scalar, 3_scalar, null_scalar, null_scalar, null_scalar},
                  {10_scalar, 20_scalar, 30_scalar, null_scalar, null_scalar, null_scalar},
                  {null_scalar, null_scalar, null_scalar, 400_scalar, 500_scalar, 600_scalar},
@@ -114,7 +117,10 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
             "Partial overlap outer join row-wise",
             ConcatOptions{ {df1, df5}, JoinType::Outer, AxisType::Row, false, false },
             // Same as inner for row-wise - both handle column differences the same way
-            make_dataframe(from_range(6),
+            make_dataframe(
+                factory::index::make_index(
+                    factory::array::make_array<uint64_t>({0, 1, 2, 1, 2, 3}),
+                    std::nullopt, ""),
                 {{1_scalar, 2_scalar, 3_scalar, null_scalar, null_scalar, null_scalar},
                  {10_scalar, 20_scalar, 30_scalar, null_scalar, null_scalar, null_scalar},
                  {null_scalar, null_scalar, null_scalar, 400_scalar, 500_scalar, 600_scalar},
@@ -223,6 +229,15 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
 
                 INFO("result: " << result);
                 INFO("expected: " << param.expected.value());
+
+                // Verify no extension types in result
+                auto result_schema = result.table()->schema();
+                for (int i = 0; i < result_schema->num_fields(); i++) {
+                    auto field = result_schema->field(i);
+                    auto type = field->type();
+                    CHECK(type->id() != arrow::Type::EXTENSION);
+                }
+
                 REQUIRE(result.equals(param.expected.value()));
             } else {
                 REQUIRE_THROWS( concat(param.input) );

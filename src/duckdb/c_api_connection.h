@@ -45,6 +45,10 @@ public:
 
     // Get singleton instance
     static CAPIConnection& getInstance();
+
+private:
+    // Convert extension types (like arrow.bool8) to regular Arrow types
+    std::shared_ptr<arrow::Table> convertExtensionTypes(std::shared_ptr<arrow::Table> table);
 };
 
 } // namespace epoch_frame

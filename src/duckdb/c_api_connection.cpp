@@ -4,6 +4,8 @@
 #include <arrow/table.h>
 #include <arrow/ipc/writer.h>
 #include <arrow/io/file.h>
+#include <arrow/extension_type.h>
+#include <arrow/compute/api.h>
 #include <stdexcept>
 #include <iostream>
 #include <filesystem>
@@ -231,9 +233,13 @@ std::shared_ptr<arrow::Table> CAPIConnection::query(const std::string& sql) {
         throw std::runtime_error("Failed to create table: " + table_result.status().ToString());
     }
 
+    // Convert extension types to regular Arrow types
+    auto resultTable = table_result.ValueOrDie();
+    resultTable = convertExtensionTypes(resultTable);
+
     // No filter pushdown cleanup needed
 
-    return table_result.ValueOrDie();
+    return resultTable;
 }
 
 void CAPIConnection::execute(const std::string& sql) {
@@ -274,6 +280,121 @@ void CAPIConnection::dropTable(const std::string& table_name) {
 CAPIConnection& CAPIConnection::getInstance() {
     static CAPIConnection instance;
     return instance;
+}
+
+std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_ptr<arrow::Table> table) {
+    if (!table) {
+        return table;
+    }
+
+    // Check if any columns are extension types that need conversion
+    bool hasExtensionTypes = false;
+    auto schema = table->schema();
+
+    for (int i = 0; i < schema->num_fields(); i++) {
+        auto field = schema->field(i);
+        if (field->type()->id() == arrow::Type::EXTENSION) {
+            hasExtensionTypes = true;
+            break;
+        }
+    }
+
+    // If no extension types, return table as-is
+    if (!hasExtensionTypes) {
+        return table;
+    }
+
+    // Convert columns with extension types
+    std::vector<std::shared_ptr<arrow::ChunkedArray>> newColumns;
+    std::vector<std::shared_ptr<arrow::Field>> newFields;
+
+    for (int i = 0; i < table->num_columns(); i++) {
+        auto column = table->column(i);
+        auto field = schema->field(i);
+
+        if (field->type()->id() == arrow::Type::EXTENSION) {
+            auto extType = std::static_pointer_cast<arrow::ExtensionType>(field->type());
+            auto extName = extType->extension_name();
+
+            // Handle arrow.bool8 extension type
+            if (extName == "arrow.bool8") {
+                // The storage type for bool8 is int8
+                // Convert int8 to boolean: 0 = false, non-zero = true
+
+                // Get the storage array (int8)
+                auto extArray = std::static_pointer_cast<arrow::ExtensionArray>(column->chunk(0));
+                auto storageArray = extArray->storage();
+
+                // Convert int8 to boolean using compute function
+                arrow::compute::ExecContext ctx;
+                arrow::Datum input(storageArray);
+
+                // Cast int8 to boolean (0 = false, else = true)
+                auto castResult = arrow::compute::Cast(input, arrow::boolean(), arrow::compute::CastOptions::Safe(), &ctx);
+
+                if (!castResult.ok()) {
+                    // If cast fails, try manual conversion
+                    std::vector<std::shared_ptr<arrow::Array>> boolChunks;
+
+                    for (int j = 0; j < column->num_chunks(); j++) {
+                        auto chunk = column->chunk(j);
+                        auto extChunk = std::static_pointer_cast<arrow::ExtensionArray>(chunk);
+                        auto int8Storage = std::static_pointer_cast<arrow::Int8Array>(extChunk->storage());
+
+                        arrow::BooleanBuilder builder;
+                        auto status = builder.Reserve(int8Storage->length());
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to reserve boolean builder: " + status.ToString());
+                        }
+
+                        for (int64_t k = 0; k < int8Storage->length(); k++) {
+                            if (int8Storage->IsNull(k)) {
+                                status = builder.AppendNull();
+                            } else {
+                                status = builder.Append(int8Storage->Value(k) != 0);
+                            }
+                            if (!status.ok()) {
+                                throw std::runtime_error("Failed to append to boolean builder: " + status.ToString());
+                            }
+                        }
+
+                        std::shared_ptr<arrow::Array> boolArray;
+                        status = builder.Finish(&boolArray);
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to finish boolean builder: " + status.ToString());
+                        }
+                        boolChunks.push_back(boolArray);
+                    }
+
+                    auto boolColumn = arrow::ChunkedArray::Make(boolChunks);
+                    if (!boolColumn.ok()) {
+                        throw std::runtime_error("Failed to create boolean column: " + boolColumn.status().ToString());
+                    }
+                    newColumns.push_back(boolColumn.ValueOrDie());
+                } else {
+                    // Cast succeeded, use the result
+                    auto boolArray = castResult.ValueOrDie().make_array();
+                    newColumns.push_back(std::make_shared<arrow::ChunkedArray>(boolArray));
+                }
+
+                // Create new field with boolean type
+                newFields.push_back(arrow::field(field->name(), arrow::boolean(), field->nullable()));
+            } else {
+                // For other extension types, keep as-is for now
+                // You can add more conversion cases here as needed
+                newColumns.push_back(column);
+                newFields.push_back(field);
+            }
+        } else {
+            // Not an extension type, keep as-is
+            newColumns.push_back(column);
+            newFields.push_back(field);
+        }
+    }
+
+    // Create new table with converted columns
+    auto newSchema = arrow::schema(newFields);
+    return arrow::Table::Make(newSchema, newColumns);
 }
 
 } // namespace epoch_frame

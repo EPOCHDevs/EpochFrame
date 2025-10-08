@@ -676,7 +676,8 @@ namespace epoch_frame
 
                 sql += " FROM " + table_names[0] + " " + join_type +
                       " JOIN " + table_names[1] + " ON " + table_names[0] +
-                      ".__index__ = " + table_names[1] + ".__index__";
+                      ".__index__ = " + table_names[1] + ".__index__" +
+                      " ORDER BY __index__";
             } else {
                 // Multiple tables - chain joins, need to build column list carefully
                 sql = "WITH ";
@@ -710,7 +711,8 @@ namespace epoch_frame
                     }
                     sql += ")";
                 }
-                sql += " SELECT * FROM step" + std::to_string(table_names.size()-1);
+                sql += " SELECT * FROM step" + std::to_string(table_names.size()-1) +
+                      " ORDER BY __index__";
             }
 
             result_table = conn->query(sql);
