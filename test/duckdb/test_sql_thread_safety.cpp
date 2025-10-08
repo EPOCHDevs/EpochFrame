@@ -66,12 +66,12 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
         auto df = create_test_dataframe(1, 1000, "Customer");
         std::atomic<int> success_count{0};
         std::atomic<int> error_count{0};
-        std::vector<std::future<void>> futures;
+        std::vector<std::future<std::string>> futures;
         const int num_threads = 8;
         const int queries_per_thread = 10;
 
         for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-            futures.push_back(std::async(std::launch::async, [&df, &success_count, &error_count, thread_id, queries_per_thread]() {
+            futures.push_back(std::async(std::launch::async, [&df, &success_count, &error_count, thread_id, queries_per_thread]() -> std::string {
                 for (int query_id = 0; query_id < queries_per_thread; ++query_id) {
                     try {
                         // Each thread executes slightly different queries but uses same table name
@@ -81,16 +81,26 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                             "dataset"
                         );
 
-                        // Verify result structure
-                        REQUIRE(result_table != nullptr);
-                        REQUIRE(result_table->num_rows() == 1);
-                        REQUIRE(result_table->num_columns() == 2);
+                        // Verify result structure (without REQUIRE - just check and throw)
+                        if (!result_table) {
+                            throw std::runtime_error("result_table is null");
+                        }
+                        if (result_table->num_rows() != 1) {
+                            throw std::runtime_error("num_rows != 1, got " + std::to_string(result_table->num_rows()));
+                        }
+                        if (result_table->num_columns() != 2) {
+                            throw std::runtime_error("num_columns != 2, got " + std::to_string(result_table->num_columns()));
+                        }
 
                         // Verify we can access the data without corruption
                         auto count_column = result_table->GetColumnByName("count");
                         auto avg_column = result_table->GetColumnByName("avg_val");
-                        REQUIRE(count_column != nullptr);
-                        REQUIRE(avg_column != nullptr);
+                        if (!count_column) {
+                            throw std::runtime_error("count_column is null");
+                        }
+                        if (!avg_column) {
+                            throw std::runtime_error("avg_column is null");
+                        }
 
                         auto count_scalar = count_column->GetScalar(0).ValueOrDie();
                         auto avg_scalar = avg_column->GetScalar(0).ValueOrDie();
@@ -99,27 +109,41 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                         auto count_val = std::static_pointer_cast<arrow::Int64Scalar>(count_scalar)->value;
                         auto avg_val = std::static_pointer_cast<arrow::DoubleScalar>(avg_scalar)->value;
 
-                        REQUIRE(count_val >= 0);
-                        REQUIRE(count_val <= 1000);  // Should not exceed total rows
-                        if (count_val > 0) {
-                            REQUIRE(avg_val > threshold);  // Average should be greater than threshold
+                        if (count_val < 0) {
+                            throw std::runtime_error("count_val < 0");
+                        }
+                        if (count_val > 1000) {
+                            throw std::runtime_error("count_val > 1000");
+                        }
+                        if (count_val > 0 && avg_val <= threshold) {
+                            throw std::runtime_error("avg_val <= threshold");
                         }
 
                         success_count++;
                     } catch (const std::exception& e) {
-                        INFO("Thread " << thread_id << " query " << query_id << " failed: " << e.what());
                         error_count++;
+                        return std::string("Thread ") + std::to_string(thread_id) + " query " + std::to_string(query_id) + " failed: " + e.what();
                     }
                 }
+                return "";
             }));
         }
 
-        // Wait for all threads to complete
+        // Wait for all threads to complete and collect errors
+        std::vector<std::string> errors;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(future.get());
+            auto error = future.get();
+            if (!error.empty()) {
+                errors.push_back(error);
+            }
         }
 
-        // Verify all queries succeeded
+        // Now verify results in the main thread
+        if (!errors.empty()) {
+            for (const auto& error : errors) {
+                INFO(error);
+            }
+        }
         REQUIRE(success_count == num_threads * queries_per_thread);
         REQUIRE(error_count == 0);
     }
@@ -132,7 +156,7 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
         std::atomic<int> success_count{0};
         std::atomic<int> error_count{0};
-        std::vector<std::future<void>> futures;
+        std::vector<std::future<std::string>> futures;
         const int num_threads = 6;
 
         // Create pairs of (DataFrame, table_name)
@@ -143,7 +167,7 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
         };
 
         for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-            futures.push_back(std::async(std::launch::async, [&df_pairs, &success_count, &error_count, thread_id]() {
+            futures.push_back(std::async(std::launch::async, [&df_pairs, &success_count, &error_count, thread_id]() -> std::string {
                 // Each thread picks a different DataFrame cyclically
                 auto& [df_ptr, table_name] = df_pairs[thread_id % df_pairs.size()];
 
@@ -158,23 +182,39 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
                     for (const auto& sql : queries) {
                         auto result_table = df_ptr->query(sql, table_name);
-                        REQUIRE(result_table != nullptr);
-                        REQUIRE(result_table->num_rows() > 0);
-                        REQUIRE(result_table->num_columns() > 0);
+                        if (!result_table) {
+                            throw std::runtime_error("result_table is null");
+                        }
+                        if (result_table->num_rows() <= 0) {
+                            throw std::runtime_error("num_rows <= 0");
+                        }
+                        if (result_table->num_columns() <= 0) {
+                            throw std::runtime_error("num_columns <= 0");
+                        }
                         success_count++;
                     }
                 } catch (const std::exception& e) {
-                    INFO("Thread " << thread_id << " failed: " << e.what());
                     error_count++;
+                    return std::string("Thread ") + std::to_string(thread_id) + " failed: " + e.what();
                 }
+                return "";
             }));
         }
 
         // Wait for all threads to complete
+        std::vector<std::string> errors;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(future.get());
+            auto error = future.get();
+            if (!error.empty()) {
+                errors.push_back(error);
+            }
         }
 
+        if (!errors.empty()) {
+            for (const auto& error : errors) {
+                INFO(error);
+            }
+        }
         REQUIRE(error_count == 0);
         REQUIRE(success_count > 0);
     }
@@ -187,11 +227,11 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
         std::atomic<int> success_count{0};
         std::atomic<int> error_count{0};
-        std::vector<std::future<void>> futures;
+        std::vector<std::future<std::string>> futures;
         const int num_threads = 4;
 
         for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-            futures.push_back(std::async(std::launch::async, [&, thread_id]() {
+            futures.push_back(std::async(std::launch::async, [&, thread_id]() -> std::string {
                 try {
                     // Test various join patterns concurrently
                     std::vector<std::string> join_queries = {
@@ -220,30 +260,48 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                             {"customers", customers_df}
                         });
 
-                        REQUIRE(result_table != nullptr);
-                        REQUIRE(result_table->num_columns() > 0);
+                        if (!result_table) {
+                            throw std::runtime_error("result_table is null");
+                        }
+                        if (result_table->num_columns() <= 0) {
+                            throw std::runtime_error("num_columns <= 0");
+                        }
 
                         // Verify we can access column data without corruption
                         for (int col = 0; col < result_table->num_columns(); ++col) {
                             auto column = result_table->column(col);
-                            REQUIRE(column != nullptr);
-                            REQUIRE(column->length() == result_table->num_rows());
+                            if (!column) {
+                                throw std::runtime_error("column is null");
+                            }
+                            if (column->length() != result_table->num_rows()) {
+                                throw std::runtime_error("column length mismatch");
+                            }
                         }
 
                         success_count++;
                     }
                 } catch (const std::exception& e) {
-                    INFO("Thread " << thread_id << " multi-table join failed: " << e.what());
                     error_count++;
+                    return std::string("Thread ") + std::to_string(thread_id) + " multi-table join failed: " + e.what();
                 }
+                return "";
             }));
         }
 
-        // Wait for all threads to complete
+        // Wait for all threads to complete and collect errors
+        std::vector<std::string> errors;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(future.get());
+            auto error = future.get();
+            if (!error.empty()) {
+                errors.push_back(error);
+            }
         }
 
+        if (!errors.empty()) {
+            for (const auto& error : errors) {
+                INFO(error);
+            }
+        }
         REQUIRE(error_count == 0);
         REQUIRE(success_count > 0);
     }
@@ -255,11 +313,11 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
         std::atomic<int> success_count{0};
         std::atomic<int> error_count{0};
-        std::vector<std::future<void>> futures;
+        std::vector<std::future<std::string>> futures;
         const int num_threads = 6;
 
         for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-            futures.push_back(std::async(std::launch::async, [&, thread_id]() {
+            futures.push_back(std::async(std::launch::async, [&, thread_id]() -> std::string {
                 try {
                     switch (thread_id % 3) {
                         case 0: {
@@ -269,7 +327,9 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                                 "GROUP BY category ORDER BY cnt DESC",
                                 "data_table"
                             );
-                            REQUIRE(result1 != nullptr);
+                            if (!result1) {
+                                throw std::runtime_error("result1 is null");
+                            }
 
                             auto result2 = main_df.query(
                                 "SELECT d.name, r.name as ref_name FROM data_table d "
@@ -277,7 +337,9 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                                 "data_table",
                                 {{"ref_table", ref_df}}
                             );
-                            REQUIRE(result2 != nullptr);
+                            if (!result2) {
+                                throw std::runtime_error("result2 is null");
+                            }
                             success_count += 2;
                             break;
                         }
@@ -285,8 +347,12 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                             // Static method queries
                             auto result1 = DataFrame::sql("SELECT 'thread_" + std::to_string(thread_id) + "' as thread_id, " +
                                                         std::to_string(thread_id * 100) + " as value");
-                            REQUIRE(result1 != nullptr);
-                            REQUIRE(result1->num_rows() == 1);
+                            if (!result1) {
+                                throw std::runtime_error("result1 is null");
+                            }
+                            if (result1->num_rows() != 1) {
+                                throw std::runtime_error("result1 num_rows != 1");
+                            }
 
                             auto result2 = DataFrame::sql(
                                 "SELECT m.category, COUNT(*) as main_count, COUNT(DISTINCT r.id) as ref_count "
@@ -294,7 +360,9 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                                 "GROUP BY m.category",
                                 {{"main_data", main_df}, {"ref_data", ref_df}}
                             );
-                            REQUIRE(result2 != nullptr);
+                            if (!result2) {
+                                throw std::runtime_error("result2 is null");
+                            }
                             success_count += 2;
                             break;
                         }
@@ -313,8 +381,12 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                                 "WHERE m.category <= 3 LIMIT 20"
                             );
 
-                            REQUIRE(result != nullptr);
-                            REQUIRE(result->num_columns() == 3);
+                            if (!result) {
+                                throw std::runtime_error("result is null");
+                            }
+                            if (result->num_columns() != 3) {
+                                throw std::runtime_error("result num_columns != 3");
+                            }
 
                             // Cleanup
                             std::filesystem::remove(main_file);
@@ -325,17 +397,27 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                         }
                     }
                 } catch (const std::exception& e) {
-                    INFO("Thread " << thread_id << " mixed interface test failed: " << e.what());
                     error_count++;
+                    return std::string("Thread ") + std::to_string(thread_id) + " mixed interface test failed: " + e.what();
                 }
+                return "";
             }));
         }
 
-        // Wait for all threads to complete
+        // Wait for all threads to complete and collect errors
+        std::vector<std::string> errors;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(future.get());
+            auto error = future.get();
+            if (!error.empty()) {
+                errors.push_back(error);
+            }
         }
 
+        if (!errors.empty()) {
+            for (const auto& error : errors) {
+                INFO(error);
+            }
+        }
         REQUIRE(error_count == 0);
         REQUIRE(success_count > 0);
     }
@@ -368,9 +450,15 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                         "data"  // Same table name for all threads!
                     );
 
-                    REQUIRE(result_table != nullptr);
-                    REQUIRE(result_table->num_rows() == 1);
-                    REQUIRE(result_table->num_columns() == 2);
+                    if (!result_table) {
+                        throw std::runtime_error("result_table is null");
+                    }
+                    if (result_table->num_rows() != 1) {
+                        throw std::runtime_error("num_rows != 1");
+                    }
+                    if (result_table->num_columns() != 2) {
+                        throw std::runtime_error("num_columns != 2");
+                    }
 
                     auto result_index = factory::index::from_range(result_table->num_rows());
                     DataFrame result(result_index, result_table);
@@ -379,15 +467,18 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                     auto min_id = result.iloc(0, "min_id").value<int32_t>().value();
 
                     // Verify the results match the expected DataFrame
-                    REQUIRE(count == 300);
-                    REQUIRE(min_id == expected_min_id);
+                    if (count != 300) {
+                        throw std::runtime_error("count != 300");
+                    }
+                    if (min_id != expected_min_id) {
+                        throw std::runtime_error("min_id != expected_min_id");
+                    }
 
                     success_count++;
                     return {count, static_cast<double>(min_id)};
                 } catch (const std::exception& e) {
-                    INFO("Thread " << thread_id << " collision test failed: " << e.what());
                     error_count++;
-                    throw;
+                    throw std::runtime_error(std::string("Thread ") + std::to_string(thread_id) + " collision test failed: " + e.what());
                 }
             }));
         }
@@ -395,7 +486,13 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
         // Collect results and verify correctness
         std::vector<std::pair<int64_t, double>> results;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(results.push_back(future.get()));
+            try {
+                results.push_back(future.get());
+            } catch (const std::exception& e) {
+                INFO(e.what());
+                // Still add a dummy result to maintain vector size
+                results.push_back({-1, -1.0});
+            }
         }
 
         REQUIRE(error_count == 0);
@@ -423,14 +520,14 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
         auto df = create_test_dataframe(1, 200, "Fast");
         std::atomic<int> success_count{0};
         std::atomic<int> error_count{0};
-        std::vector<std::future<void>> futures;
+        std::vector<std::future<std::string>> futures;
         const int num_threads = 10;
         const int rapid_queries_per_thread = 50;
 
         auto start_time = std::chrono::high_resolution_clock::now();
 
         for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-            futures.push_back(std::async(std::launch::async, [&df, &success_count, &error_count, thread_id, rapid_queries_per_thread]() {
+            futures.push_back(std::async(std::launch::async, [&df, &success_count, &error_count, thread_id, rapid_queries_per_thread]() -> std::string {
                 std::random_device rd;
                 std::mt19937 gen(rd());
                 std::uniform_int_distribution<> value_dist(100, 500);
@@ -447,30 +544,47 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                             "rapid_table"
                         );
 
-                        REQUIRE(result_table != nullptr);
-                        REQUIRE(result_table->num_rows() == 1);
-                        REQUIRE(result_table->num_columns() == 1);
+                        if (!result_table) {
+                            throw std::runtime_error("result_table is null");
+                        }
+                        if (result_table->num_rows() != 1) {
+                            throw std::runtime_error("num_rows != 1");
+                        }
+                        if (result_table->num_columns() != 1) {
+                            throw std::runtime_error("num_columns != 1");
+                        }
 
                         // Quick validation
                         auto count_column = result_table->GetColumnByName("count");
-                        REQUIRE(count_column != nullptr);
+                        if (!count_column) {
+                            throw std::runtime_error("count_column is null");
+                        }
                         auto count_scalar = count_column->GetScalar(0).ValueOrDie();
                         auto count_val = std::static_pointer_cast<arrow::Int64Scalar>(count_scalar)->value;
-                        REQUIRE(count_val >= 0);
-                        REQUIRE(count_val <= 200);
+                        if (count_val < 0) {
+                            throw std::runtime_error("count_val < 0");
+                        }
+                        if (count_val > 200) {
+                            throw std::runtime_error("count_val > 200");
+                        }
 
                         success_count++;
                     } catch (const std::exception& e) {
-                        INFO("Thread " << thread_id << " rapid query " << i << " failed: " << e.what());
                         error_count++;
+                        return std::string("Thread ") + std::to_string(thread_id) + " rapid query " + std::to_string(i) + " failed: " + e.what();
                     }
                 }
+                return "";
             }));
         }
 
-        // Wait for all threads to complete
+        // Wait for all threads to complete and collect errors
+        std::vector<std::string> errors;
         for (auto& future : futures) {
-            REQUIRE_NOTHROW(future.get());
+            auto error = future.get();
+            if (!error.empty()) {
+                errors.push_back(error);
+            }
         }
 
         auto end_time = std::chrono::high_resolution_clock::now();
@@ -478,6 +592,11 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
         INFO("Completed " << (num_threads * rapid_queries_per_thread) << " queries in " << duration.count() << "ms");
 
+        if (!errors.empty()) {
+            for (const auto& error : errors) {
+                INFO(error);
+            }
+        }
         REQUIRE(success_count == num_threads * rapid_queries_per_thread);
         REQUIRE(error_count == 0);
     }

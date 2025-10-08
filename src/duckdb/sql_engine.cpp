@@ -8,7 +8,7 @@ namespace epoch_frame {
 class DuckDBEngine : public SQLEngine {
 private:
     CAPIConnection& get_connection() {
-        return CAPIConnection::getInstance();
+        return CAPIConnection::getThreadLocal();
     }
 
 public:

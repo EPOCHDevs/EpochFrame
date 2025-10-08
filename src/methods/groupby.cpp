@@ -275,8 +275,8 @@ namespace epoch_frame
     AggOperations::apply_agg(std::string const&                                      agg_name,
                              const std::shared_ptr<arrow::compute::FunctionOptions>& /* option */) const
     {
-        // Register the table with DuckDB
-        auto& conn = CAPIConnection::getInstance();
+        // Register the table with DuckDB (thread-local connection)
+        auto& conn = CAPIConnection::getThreadLocal();
 
         // Handle empty column names by temporarily renaming them
         auto table = m_grouper->table();
@@ -358,8 +358,8 @@ namespace epoch_frame
         std::vector<std::string> const&                                      agg_names,
         const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& /* options */) const
     {
-        // Register the table with DuckDB
-        auto& conn = CAPIConnection::getInstance();
+        // Register the table with DuckDB (thread-local connection)
+        auto& conn = CAPIConnection::getThreadLocal();
 
         // Handle empty column names by temporarily renaming them
         auto table = m_grouper->table();

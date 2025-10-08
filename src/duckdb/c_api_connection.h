@@ -43,8 +43,11 @@ public:
     // Drop a table
     void dropTable(const std::string& table_name);
 
-    // Get singleton instance
-    static CAPIConnection& getInstance();
+    // Set max expression depth for DuckDB queries
+    void setMaxExpressionDepth(int depth);
+
+    // Get thread-local instance (one connection per thread for zero contention)
+    static CAPIConnection& getThreadLocal();
 
     // GroupBy query helpers
     std::shared_ptr<arrow::Table> groupByQuery(

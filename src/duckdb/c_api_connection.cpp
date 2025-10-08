@@ -12,6 +12,8 @@
 #include <fstream>
 #include <algorithm>
 #include <unordered_map>
+#include <sstream>
+#include <thread>
 
 namespace epoch_frame {
 
@@ -50,6 +52,10 @@ CAPIConnection::CAPIConnection() : db(nullptr), conn(nullptr) {
 
     duckdb_query(conn, "SET arrow_lossless_conversion = true", &config_result);
     duckdb_destroy_result(&config_result);
+
+    // Set max expression depth to handle large operations (e.g., many resample groups in concat)
+    duckdb_query(conn, "SET max_expression_depth TO 10000", &config_result);
+    duckdb_destroy_result(&config_result);
 }
 
 CAPIConnection::~CAPIConnection() {
@@ -75,7 +81,12 @@ void CAPIConnection::registerArrowTable(const std::string& table_name,
     dropTable(table_name);
 
     // Write table to temporary Arrow IPC file for nanoarrow extension
-    std::string temp_filename = "/tmp/" + table_name + "_" + std::to_string(reinterpret_cast<uintptr_t>(this)) + ".arrows";
+    // Include thread ID for uniqueness in multi-threaded scenarios
+    std::stringstream ss;
+    ss << "/tmp/" << table_name << "_"
+       << std::this_thread::get_id() << "_"
+       << std::to_string(reinterpret_cast<uintptr_t>(this)) << ".arrows";
+    std::string temp_filename = ss.str();
 
     // Create file output stream
     auto file_result = arrow::io::FileOutputStream::Open(temp_filename);
@@ -254,6 +265,17 @@ void CAPIConnection::execute(const std::string& sql) {
     duckdb_destroy_result(&result);
 }
 
+void CAPIConnection::setMaxExpressionDepth(int depth) {
+    std::string sql = "SET max_expression_depth TO " + std::to_string(depth);
+    duckdb_result result;
+    if (duckdb_query(conn, sql.c_str(), &result) != DuckDBSuccess) {
+        std::string error_msg = duckdb_result_error(&result);
+        duckdb_destroy_result(&result);
+        throw std::runtime_error("Failed to set max_expression_depth: " + error_msg);
+    }
+    duckdb_destroy_result(&result);
+}
+
 void CAPIConnection::dropTable(const std::string& table_name) {
     // Try to drop both view and table (ignore errors)
     try {
@@ -279,8 +301,8 @@ void CAPIConnection::dropTable(const std::string& table_name) {
     }
 }
 
-CAPIConnection& CAPIConnection::getInstance() {
-    static CAPIConnection instance;
+CAPIConnection& CAPIConnection::getThreadLocal() {
+    thread_local CAPIConnection instance;
     return instance;
 }
 
@@ -319,7 +341,6 @@ std::shared_ptr<arrow::Table> CAPIConnection::groupByQuery(
     const std::string& table_name,
     const std::vector<std::string>& group_columns,
     const std::vector<std::pair<std::string, std::string>>& agg_functions) {
-
     // Build SELECT clause
     std::string sql = "SELECT ";
 
