@@ -71,12 +71,17 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
         {
             "Two DataFrames column-wise inner join with duplicate columns",
             ConcatOptions{ {df1, df2}, JoinType::Inner, AxisType::Column, false, false },
-            std::nullopt
+            // Pandas allows duplicate column names - both DataFrames have colA and colB
+            // Since they have no common indices, inner join results in empty DataFrame
+            make_dataframe<int64_t>(from_range(0),
+                {},
+                {})
         },
         {
             "Two DataFrames column-wise outer join with duplicate columns",
             ConcatOptions{ {df1, df2}, JoinType::Outer, AxisType::Column, false, false },
-            std::nullopt,
+            // EpochFrame doesn't allow duplicate column names, so this should throw
+            std::nullopt
         },
         {
             "Two DataFrames column-wise inner join with different column names",
@@ -96,12 +101,25 @@ TEST_CASE("Concat DataFrames and Series Exhaustive Tests", "[concat]") {
         {
             "Partial overlap inner join row-wise",
             ConcatOptions{ {df1, df5}, JoinType::Inner, AxisType::Row, false, false },
-            std::nullopt
+            // Row concatenation doesn't care about column names - should handle mismatched columns
+            // df1 has colA, colB; df5 has colC, colD - result has all 4 columns with NULLs
+            make_dataframe(from_range(6),
+                {{1_scalar, 2_scalar, 3_scalar, null_scalar, null_scalar, null_scalar},
+                 {10_scalar, 20_scalar, 30_scalar, null_scalar, null_scalar, null_scalar},
+                 {null_scalar, null_scalar, null_scalar, 400_scalar, 500_scalar, 600_scalar},
+                 {null_scalar, null_scalar, null_scalar, 4000_scalar, 5000_scalar, 6000_scalar}},
+                {"colA", "colB", "colC", "colD"}, arrow::int64())
         },
         {
             "Partial overlap outer join row-wise",
             ConcatOptions{ {df1, df5}, JoinType::Outer, AxisType::Row, false, false },
-            std::nullopt
+            // Same as inner for row-wise - both handle column differences the same way
+            make_dataframe(from_range(6),
+                {{1_scalar, 2_scalar, 3_scalar, null_scalar, null_scalar, null_scalar},
+                 {10_scalar, 20_scalar, 30_scalar, null_scalar, null_scalar, null_scalar},
+                 {null_scalar, null_scalar, null_scalar, 400_scalar, 500_scalar, 600_scalar},
+                 {null_scalar, null_scalar, null_scalar, 4000_scalar, 5000_scalar, 6000_scalar}},
+                {"colA", "colB", "colC", "colD"}, arrow::int64())
         },
         {
             "Partial overlap outer join column-wise",

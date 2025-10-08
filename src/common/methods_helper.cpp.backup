@@ -23,7 +23,6 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/frame_or_series.h"
 #include "epoch_frame/series.h"
-#include "duckdb/c_api_connection.h"
 
 namespace ac = arrow::acero;
 namespace cp = arrow::compute;
@@ -546,200 +545,24 @@ namespace epoch_frame
                        : cleanedObjs.front().to_frame();
         }
 
-        // Use DuckDB for concatenation
-        auto conn = std::make_unique<CAPIConnection>();
-
-        // Register all DataFrames/Series as DuckDB tables
-        std::vector<std::string> table_names;
-        std::vector<IndexPtr> indices;
-        std::vector<std::vector<std::string>> column_names_list;
-
-        for (size_t i = 0; i < cleanedObjs.size(); i++) {
-            std::string table_name = "t" + std::to_string(i);
-            table_names.push_back(table_name);
-
-            DataFrame df = cleanedObjs[i].to_frame();
-            indices.push_back(df.index());
-            column_names_list.push_back(df.column_names());
-
-            // Add index as a column for join operations
-            auto table_with_index = df.table();
-            if (!options.ignore_index && options.axis == AxisType::Column) {
-                auto index_array = df.index()->array().as_chunked_array();
-                auto index_field = arrow::field("__index__", index_array->type());
-                table_with_index = AssertResultIsOk(
-                    table_with_index->AddColumn(0, index_field, index_array));
+        if (options.axis == AxisType::Column)
+        {
+            auto [all_index_equals, merged_index] =
+                combine_index(cleanedObjs, options.joinType == JoinType::Inner);
+            if (all_index_equals)
+            {
+                frame = concat_column_unsafe(cleanedObjs, merged_index, options.ignore_index);
             }
-
-            conn->registerArrowTable(table_name, table_with_index);
-        }
-
-        std::string sql;
-        std::shared_ptr<arrow::Table> result_table;
-
-        if (options.axis == AxisType::Row) {
-            // Row concatenation using UNION ALL
-            // Build column list for consistent schema
-            std::set<std::string> all_columns;
-            for (const auto& col_list : column_names_list) {
-                all_columns.insert(col_list.begin(), col_list.end());
-            }
-
-            // Handle case of no columns (empty dataframes)
-            if (all_columns.empty() || (all_columns.size() == 1 && all_columns.begin()->empty())) {
-                sql = "SELECT * FROM " + table_names[0];
-                for (size_t i = 1; i < table_names.size(); i++) {
-                    sql += " UNION ALL SELECT * FROM " + table_names[i];
-                }
-            } else {
-                // Remove empty strings from all_columns
-                all_columns.erase("");
-
-                if (all_columns.empty()) {
-                    // If all columns were empty strings
-                    sql = "SELECT * FROM " + table_names[0];
-                    for (size_t i = 1; i < table_names.size(); i++) {
-                        sql += " UNION ALL SELECT * FROM " + table_names[i];
-                    }
-                } else {
-                    sql = "SELECT ";
-                    bool first_col = true;
-                    for (const auto& col : all_columns) {
-                        if (!first_col) sql += ", ";
-
-                        // Check if column exists in first table
-                        if (std::find(column_names_list[0].begin(), column_names_list[0].end(), col)
-                            != column_names_list[0].end()) {
-                            sql += "\"" + col + "\"";
-                        } else {
-                            sql += "NULL AS \"" + col + "\"";
-                        }
-                        first_col = false;
-                    }
-                    sql += " FROM " + table_names[0];
-
-                    for (size_t i = 1; i < table_names.size(); i++) {
-                        sql += " UNION ALL SELECT ";
-                        first_col = true;
-                        for (const auto& col : all_columns) {
-                            if (!first_col) sql += ", ";
-
-                            if (std::find(column_names_list[i].begin(), column_names_list[i].end(), col)
-                                != column_names_list[i].end()) {
-                                sql += "\"" + col + "\"";
-                            } else {
-                                sql += "NULL AS \"" + col + "\"";
-                            }
-                            first_col = false;
-                        }
-                        sql += " FROM " + table_names[i];
-                    }
-                }
-            }
-
-            result_table = conn->query(sql);
-
-            // Create concatenated index if not ignoring
-            IndexPtr final_index;
-            if (!options.ignore_index) {
-                std::vector<std::shared_ptr<arrow::Array>> index_arrays;
-                for (const auto& idx : indices) {
-                    index_arrays.push_back(idx->array().value());
-                }
-                auto concat_index = AssertResultIsOk(arrow::Concatenate(index_arrays));
-                final_index = factory::index::make_index(concat_index, std::nullopt, "");
-            } else {
-                final_index = factory::index::from_range(result_table->num_rows());
-            }
-
-            frame = DataFrame(final_index, result_table);
-
-        } else {
-            // Column concatenation using JOIN
-            std::string join_type = (options.joinType == JoinType::Inner) ? "INNER" : "FULL OUTER";
-
-            if (table_names.size() == 2) {
-                // Build explicit column list to avoid duplicating __index__
-                // Use COALESCE to handle null values in __index__ from FULL OUTER JOIN
-                sql = "SELECT COALESCE(" + table_names[0] + ".__index__, " +
-                      table_names[1] + ".__index__) AS __index__";
-
-                // Add columns from first table (excluding __index__)
-                for (const auto& col : column_names_list[0]) {
-                    sql += ", " + table_names[0] + ".\"" + col + "\"";
-                }
-
-                // Add columns from second table (excluding __index__)
-                for (const auto& col : column_names_list[1]) {
-                    sql += ", " + table_names[1] + ".\"" + col + "\"";
-                }
-
-                sql += " FROM " + table_names[0] + " " + join_type +
-                      " JOIN " + table_names[1] + " ON " + table_names[0] +
-                      ".__index__ = " + table_names[1] + ".__index__";
-            } else {
-                // Multiple tables - chain joins, need to build column list carefully
-                sql = "WITH ";
-
-                // First CTE includes all columns from first table
-                sql += "base AS (SELECT * FROM " + table_names[0] + ")";
-
-                for (size_t i = 1; i < table_names.size(); i++) {
-                    sql += ", step" + std::to_string(i) + " AS (SELECT ";
-
-                    // Select all columns from previous step
-                    if (i == 1) {
-                        sql += "base.*";
-                    } else {
-                        sql += "step" + std::to_string(i-1) + ".*";
-                    }
-
-                    // Add new columns from current table (excluding __index__)
-                    for (const auto& col : column_names_list[i]) {
-                        sql += ", " + table_names[i] + ".\"" + col + "\"";
-                    }
-
-                    sql += " FROM ";
-                    if (i == 1) {
-                        sql += "base " + join_type + " JOIN " + table_names[i] +
-                               " ON base.__index__ = " + table_names[i] + ".__index__";
-                    } else {
-                        sql += "step" + std::to_string(i-1) + " " + join_type +
-                               " JOIN " + table_names[i] + " ON step" + std::to_string(i-1) +
-                               ".__index__ = " + table_names[i] + ".__index__";
-                    }
-                    sql += ")";
-                }
-                sql += " SELECT * FROM step" + std::to_string(table_names.size()-1);
-            }
-
-            result_table = conn->query(sql);
-
-            // Extract index from result and remove __index__ column
-            if (!options.ignore_index) {
-                auto index_col_idx = result_table->schema()->GetFieldIndex("__index__");
-                if (index_col_idx >= 0) {
-                    auto index_array = result_table->column(index_col_idx);
-                    auto index = factory::index::make_index(
-                        factory::array::make_contiguous_array(index_array), std::nullopt, "");
-                    result_table = AssertResultIsOk(result_table->RemoveColumn(index_col_idx));
-                    frame = DataFrame(index, result_table);
-                } else {
-                    // Fallback to range index
-                    frame = DataFrame(factory::index::from_range(result_table->num_rows()),
-                                    result_table);
-                }
-            } else {
-                // Remove __index__ column if it exists
-                auto index_col_idx = result_table->schema()->GetFieldIndex("__index__");
-                if (index_col_idx >= 0) {
-                    result_table = AssertResultIsOk(result_table->RemoveColumn(index_col_idx));
-                }
-                frame = DataFrame(factory::index::from_range(result_table->num_rows()),
-                                result_table);
+            else
+            {
+                frame = concat_column_safe(cleanedObjs, merged_index, options.ignore_index);
             }
         }
-
+        else
+        {
+            frame =
+                concat_row(cleanedObjs, options.ignore_index, options.joinType == JoinType::Inner);
+        }
         if (options.sort)
         {
             return options.axis == AxisType::Column ? frame.sort_index() : frame.sort_columns();
@@ -749,113 +572,15 @@ namespace epoch_frame
 
     DataFrame merge(const MergeOptions& options)
     {
-        // Use DuckDB for merge operations
-        auto conn = std::make_unique<CAPIConnection>();
+        // Simplified implementation: Only supports inner join on rows for DataFrames with a common
+        // key column "key". Assumptions: left has columns "key" and "A" and right has columns "key"
+        // and "B".
 
-        // Convert to DataFrames
-        DataFrame df_left  = options.left.to_frame();
-        DataFrame df_right = options.right.to_frame();
+        // Convert to DataFrame (assume left and right are DataFrames).
+        const DataFrame& df_left  = options.left.frame();
+        const DataFrame& df_right = options.right.frame();
 
-        // Register tables with DuckDB
-        // Add index as column if needed
-        auto left_table = df_left.table();
-        auto right_table = df_right.table();
-
-        if (!options.ignore_index) {
-            auto left_index_array = df_left.index()->array().as_chunked_array();
-            auto left_index_field = arrow::field("__left_index__", left_index_array->type());
-            left_table = AssertResultIsOk(
-                left_table->AddColumn(0, left_index_field, left_index_array));
-
-            auto right_index_array = df_right.index()->array().as_chunked_array();
-            auto right_index_field = arrow::field("__right_index__", right_index_array->type());
-            right_table = AssertResultIsOk(
-                right_table->AddColumn(0, right_index_field, right_index_array));
-        }
-
-        conn->registerArrowTable("left_table", left_table);
-        conn->registerArrowTable("right_table", right_table);
-
-        // Build SQL query based on axis and join type
-        std::string sql;
-
-        if (options.axis == AxisType::Row) {
-            // Row-based merge (similar to concat for rows)
-            sql = "SELECT * FROM left_table UNION ALL SELECT * FROM right_table";
-        } else {
-            // Column-based merge (join operation)
-            std::string join_clause;
-            switch (options.joinType) {
-                case JoinType::Inner:
-                    join_clause = "INNER";
-                    break;
-                case JoinType::Outer:
-                    join_clause = "FULL OUTER";
-                    break;
-                default:
-                    join_clause = "INNER";
-            }
-
-            // For column merge, use index-based join if indices are present
-            if (!options.ignore_index) {
-                sql = "SELECT * FROM left_table " + join_clause +
-                      " JOIN right_table ON left_table.__left_index__ = right_table.__right_index__";
-            } else {
-                // Without index, do a cross join (cartesian product) for column concatenation
-                sql = "SELECT * FROM left_table CROSS JOIN right_table";
-            }
-        }
-
-        // Execute query
-        auto result_table = conn->query(sql);
-
-        // Handle index reconstruction
-        IndexPtr final_index;
-        if (!options.ignore_index) {
-            if (options.axis == AxisType::Row) {
-                // For row merge, concatenate indices
-                std::vector<std::shared_ptr<arrow::Array>> index_arrays = {
-                    df_left.index()->array().value(),
-                    df_right.index()->array().value()
-                };
-                auto concat_index = AssertResultIsOk(arrow::Concatenate(index_arrays));
-                final_index = factory::index::make_index(concat_index, std::nullopt, "");
-            } else {
-                // For column merge, use left index or merged index
-                auto left_idx_col = result_table->schema()->GetFieldIndex("__left_index__");
-                auto right_idx_col = result_table->schema()->GetFieldIndex("__right_index__");
-
-                if (left_idx_col >= 0) {
-                    auto index_array = result_table->column(left_idx_col);
-                    final_index = factory::index::make_index(
-                        factory::array::make_contiguous_array(index_array), std::nullopt, "");
-
-                    // Remove index columns from result
-                    if (left_idx_col >= 0) {
-                        result_table = AssertResultIsOk(result_table->RemoveColumn(left_idx_col));
-                    }
-                    if (right_idx_col >= 0) {
-                        // Adjust index after first removal
-                        right_idx_col = result_table->schema()->GetFieldIndex("__right_index__");
-                        if (right_idx_col >= 0) {
-                            result_table = AssertResultIsOk(result_table->RemoveColumn(right_idx_col));
-                        }
-                    }
-                } else {
-                    final_index = df_left.index();
-                }
-            }
-        } else {
-            final_index = factory::index::from_range(result_table->num_rows());
-        }
-
-        DataFrame result(final_index, result_table);
-
-        if (options.sort) {
-            return options.axis == AxisType::Column ? result.sort_index() : result.sort_columns();
-        }
-
-        return result;
+        return df_left;
     }
 
     //----------------------------------------------------------------------

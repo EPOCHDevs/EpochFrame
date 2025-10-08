@@ -44,7 +44,7 @@ CAPIConnection::CAPIConnection() : db(nullptr), conn(nullptr) {
     duckdb_query(conn, "SET arrow_large_buffer_size = false", &config_result);
     duckdb_destroy_result(&config_result);
 
-    duckdb_query(conn, "SET arrow_lossless_conversion = false", &config_result);
+    duckdb_query(conn, "SET arrow_lossless_conversion = true", &config_result);
     duckdb_destroy_result(&config_result);
 }
 
