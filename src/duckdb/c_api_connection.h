@@ -46,6 +46,15 @@ public:
     // Get singleton instance
     static CAPIConnection& getInstance();
 
+    // GroupBy query helpers
+    std::shared_ptr<arrow::Table> groupByQuery(
+        const std::string& table_name,
+        const std::vector<std::string>& group_columns,
+        const std::vector<std::pair<std::string, std::string>>& agg_functions);
+
+    // Helper to map aggregation function names
+    static std::string mapAggregateFunction(const std::string& arrow_agg_name);
+
 private:
     // Convert extension types (like arrow.bool8) to regular Arrow types
     std::shared_ptr<arrow::Table> convertExtensionTypes(std::shared_ptr<arrow::Table> table);

@@ -10,10 +10,9 @@
 #include "epoch_core/macros.h"
 #include "epoch_frame/factory/index_factory.h"
 #include "index/datetime_index.h"
-#include <arrow/acero/exec_plan.h>
-#include <arrow/acero/options.h>
 #include <common/arrow_agg.h>
 #include <common/asserts.h>
+#include "duckdb/c_api_connection.h"
 
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/factory/array_factory.h"
@@ -27,7 +26,6 @@
 namespace epoch_frame
 {
     namespace cp = arrow::compute;
-    namespace ac = arrow::acero;
 
     std::string get_placeholder_name(uint64_t index)
     {
@@ -274,57 +272,71 @@ namespace epoch_frame
     }
 
     arrow::TablePtr
-    AggOperations::apply_agg(std::vector<arrow::compute::Aggregate> const& aggregates) const
-    {
-        ac::Declaration decl = ac::Declaration::Sequence(std::vector{
-            ac::Declaration{"table_source", ac::TableSourceNodeOptions{m_grouper->table()}},
-            ac::Declaration{"aggregate", ac::AggregateNodeOptions{aggregates, m_grouper->keys()}}});
-        // Check if any of the aggregates are ordered operations like "first"
-        bool has_ordered_agg =
-            std::any_of(aggregates.begin(), aggregates.end(), [](const auto& agg)
-                        { return agg.function == "hash_first" || agg.function == "hash_last"; });
-
-        auto result = ac::DeclarationToTable(decl, !has_ordered_agg);
-
-        AssertFromStream(result.ok(),
-                         "Failed to execute declaration: " << result.status().message());
-
-        return result.MoveValueUnsafe();
-    }
-
-    arrow::TablePtr
     AggOperations::apply_agg(std::string const&                                      agg_name,
-                             const std::shared_ptr<arrow::compute::FunctionOptions>& option) const
+                             const std::shared_ptr<arrow::compute::FunctionOptions>& /* option */) const
     {
-        std::vector<cp::Aggregate> aggregates;
-        for (auto const& field : m_grouper->fields())
-        {
-            aggregates.emplace_back(std::format("hash_{}", agg_name), option, field, *field.name());
+        // Register the table with DuckDB
+        auto& conn = CAPIConnection::getInstance();
+        conn.registerArrowTable("grouped_table", m_grouper->table());
+
+        // Build group columns and aggregation functions
+        std::vector<std::string> group_columns;
+        for (auto const& key : m_grouper->keys()) {
+            if (key.name()) {
+                group_columns.push_back(*key.name());
+            }
         }
 
-        return apply_agg(aggregates);
+        // Build aggregation functions for all non-group columns
+        std::vector<std::pair<std::string, std::string>> agg_functions;
+        for (auto const& field : m_grouper->fields()) {
+            if (field.name()) {
+                agg_functions.emplace_back(agg_name, *field.name());
+            }
+        }
+
+        // Execute the GROUP BY query
+        auto result = conn.groupByQuery("grouped_table", group_columns, agg_functions);
+
+        // Clean up
+        conn.dropTable("grouped_table");
+
+        return result;
     }
 
     arrow::TablePtr AggOperations::apply_agg(
         std::vector<std::string> const&                                      agg_names,
-        const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& options) const
+        const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& /* options */) const
     {
-        AssertFromFormat(options.empty() || agg_names.size() == options.size(),
-                         "Agg names and options size must match or be empty");
-        std::vector<cp::Aggregate> aggregates;
-        aggregates.reserve(agg_names.size() * m_grouper->fields().size());
-        for (auto const& [i, agg_name] : std::views::enumerate(agg_names))
-        {
-            for (auto const& field : m_grouper->fields())
-            {
-                aggregates.emplace_back(std::format("hash_{}", agg_name),
-                                        static_cast<size_t>(i) < options.size() ? options[i]
-                                                                                : nullptr,
-                                        field, std::format("{}_{}", *field.name(), agg_name));
+        // Register the table with DuckDB
+        auto& conn = CAPIConnection::getInstance();
+        conn.registerArrowTable("grouped_table", m_grouper->table());
+
+        // Build group columns
+        std::vector<std::string> group_columns;
+        for (auto const& key : m_grouper->keys()) {
+            if (key.name()) {
+                group_columns.push_back(*key.name());
             }
         }
 
-        return apply_agg(aggregates);
+        // Build aggregation functions for all combinations
+        std::vector<std::pair<std::string, std::string>> agg_functions;
+        for (auto const& agg_name : agg_names) {
+            for (auto const& field : m_grouper->fields()) {
+                if (field.name()) {
+                    agg_functions.emplace_back(agg_name, *field.name());
+                }
+            }
+        }
+
+        // Execute the GROUP BY query
+        auto result = conn.groupByQuery("grouped_table", group_columns, agg_functions);
+
+        // Clean up
+        conn.dropTable("grouped_table");
+
+        return result;
     }
 
     DataFrame

@@ -10,6 +10,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <algorithm>
+#include <unordered_map>
 
 namespace epoch_frame {
 
@@ -280,6 +282,102 @@ void CAPIConnection::dropTable(const std::string& table_name) {
 CAPIConnection& CAPIConnection::getInstance() {
     static CAPIConnection instance;
     return instance;
+}
+
+std::string CAPIConnection::mapAggregateFunction(const std::string& arrow_agg_name) {
+    // Map Arrow/Acero aggregate function names to DuckDB SQL functions
+    static const std::unordered_map<std::string, std::string> agg_map = {
+        {"sum", "SUM"},
+        {"mean", "AVG"},
+        {"min", "MIN"},
+        {"max", "MAX"},
+        {"count", "COUNT"},
+        {"count_distinct", "COUNT(DISTINCT "},  // Special handling needed
+        {"std", "STDDEV"},
+        {"stddev", "STDDEV"},
+        {"var", "VARIANCE"},
+        {"variance", "VARIANCE"},
+        {"product", "PRODUCT"},
+        {"any", "BOOL_OR"},
+        {"all", "BOOL_AND"}
+        // Note: "first" and "last" need special window function handling
+    };
+
+    auto it = agg_map.find(arrow_agg_name);
+    if (it != agg_map.end()) {
+        return it->second;
+    }
+
+    // Default: return uppercase version
+    std::string upper = arrow_agg_name;
+    std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+    return upper;
+}
+
+std::shared_ptr<arrow::Table> CAPIConnection::groupByQuery(
+    const std::string& table_name,
+    const std::vector<std::string>& group_columns,
+    const std::vector<std::pair<std::string, std::string>>& agg_functions) {
+
+    // Build SELECT clause
+    std::string sql = "SELECT ";
+
+    // Add group columns first
+    for (size_t i = 0; i < group_columns.size(); i++) {
+        if (i > 0) sql += ", ";
+        sql += "\"" + group_columns[i] + "\"";
+    }
+
+    // Add aggregated columns
+    for (const auto& [agg_name, col_name] : agg_functions) {
+        if (!group_columns.empty() || &agg_name != &agg_functions[0].first) {
+            sql += ", ";
+        }
+
+        std::string sql_func = mapAggregateFunction(agg_name);
+
+        // Special handling for first/last - use window functions
+        if (agg_name == "first" || agg_name == "last") {
+            sql += (agg_name == "first" ? "FIRST_VALUE" : "LAST_VALUE");
+            sql += "(\"" + col_name + "\") OVER (";
+            if (!group_columns.empty()) {
+                sql += "PARTITION BY ";
+                for (size_t i = 0; i < group_columns.size(); i++) {
+                    if (i > 0) sql += ", ";
+                    sql += "\"" + group_columns[i] + "\"";
+                }
+                sql += " ";
+            }
+            sql += "ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
+        } else if (agg_name == "count_distinct") {
+            sql += "COUNT(DISTINCT \"" + col_name + "\") AS \"" + col_name + "_nunique\"";
+        } else {
+            sql += sql_func + "(\"" + col_name + "\") AS \"" + col_name + "_" + agg_name + "\"";
+        }
+    }
+
+    // FROM clause
+    sql += " FROM " + table_name;
+
+    // GROUP BY clause (only if we have group columns and not using window functions)
+    bool has_window_funcs = std::any_of(agg_functions.begin(), agg_functions.end(),
+        [](const auto& p) { return p.first == "first" || p.first == "last"; });
+
+    if (!group_columns.empty()) {
+        if (has_window_funcs) {
+            // For window functions, we need to use DISTINCT to get one row per group
+            sql = "SELECT DISTINCT " + sql.substr(7);  // Replace SELECT with SELECT DISTINCT
+        } else {
+            sql += " GROUP BY ";
+            for (size_t i = 0; i < group_columns.size(); i++) {
+                if (i > 0) sql += ", ";
+                sql += "\"" + group_columns[i] + "\"";
+            }
+        }
+    }
+
+    // Execute the query
+    return query(sql);
 }
 
 std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_ptr<arrow::Table> table) {

@@ -121,9 +121,6 @@ namespace epoch_frame
             std::vector<std::string> const&                                      agg_names,
             const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& options) const;
 
-        [[nodiscard]] arrow::TablePtr
-        apply_agg(std::vector<arrow::compute::Aggregate> const& aggregates) const;
-
         [[nodiscard]] DataFrame
         agg(std::string const&                                      agg_name,
             const std::shared_ptr<arrow::compute::FunctionOptions>& option = nullptr) const;
@@ -302,19 +299,19 @@ namespace epoch_frame
 
         extern template GroupByAgg<DataFrame>
         make_agg_by_key<DataFrame>(arrow::TablePtr table, std::vector<std::string> const& by,
-                                   std::optional<TimeGrouperOptions> options = std::nullopt);
+                                   std::optional<TimeGrouperOptions> options);
         extern template GroupByAgg<DataFrame>
         make_agg_by_array<DataFrame>(arrow::TablePtr table, arrow::ChunkedArrayVector const& by,
-                                     std::optional<TimeGrouperOptions> options = std::nullopt);
+                                     std::optional<TimeGrouperOptions> options);
         extern template GroupByAgg<DataFrame>
         make_agg_by_index<DataFrame>(DataFrame const& table, const TimeGrouperOptions& options);
 
         extern template GroupByAgg<Series>
         make_agg_by_key<Series>(arrow::TablePtr table, std::vector<std::string> const& by,
-                                std::optional<TimeGrouperOptions> options = std::nullopt);
+                                std::optional<TimeGrouperOptions> options);
         extern template GroupByAgg<Series>
         make_agg_by_array<Series>(arrow::TablePtr table, arrow::ChunkedArrayVector const& by,
-                                  std::optional<TimeGrouperOptions> options = std::nullopt);
+                                  std::optional<TimeGrouperOptions> options);
         extern template GroupByAgg<Series>
         make_agg_by_index<Series>(DataFrame const& table, const TimeGrouperOptions& options);
     } // namespace factory::group_by
