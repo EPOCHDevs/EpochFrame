@@ -299,8 +299,9 @@ std::string CAPIConnection::mapAggregateFunction(const std::string& arrow_agg_na
         {"variance", "VARIANCE"},
         {"product", "PRODUCT"},
         {"any", "BOOL_OR"},
-        {"all", "BOOL_AND"}
-        // Note: "first" and "last" need special window function handling
+        {"all", "BOOL_AND"},
+        {"approximate_median", "APPROX_QUANTILE"}
+        // Note: "first" and "last" need special handling
     };
 
     auto it = agg_map.find(arrow_agg_name);
@@ -336,21 +337,19 @@ std::shared_ptr<arrow::Table> CAPIConnection::groupByQuery(
 
         std::string sql_func = mapAggregateFunction(agg_name);
 
-        // Special handling for first/last - use window functions
+        // Special handling for first/last - use aggregation with MIN/MAX on rowid
         if (agg_name == "first" || agg_name == "last") {
-            sql += (agg_name == "first" ? "FIRST_VALUE" : "LAST_VALUE");
-            sql += "(\"" + col_name + "\") OVER (";
-            if (!group_columns.empty()) {
-                sql += "PARTITION BY ";
-                for (size_t i = 0; i < group_columns.size(); i++) {
-                    if (i > 0) sql += ", ";
-                    sql += "\"" + group_columns[i] + "\"";
-                }
-                sql += " ";
+            // Use ARG_MIN/ARG_MAX if available, otherwise use a subquery approach
+            // DuckDB supports FIRST() and LAST() functions directly
+            if (agg_name == "first") {
+                sql += "FIRST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
+            } else {
+                sql += "LAST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
             }
-            sql += "ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
         } else if (agg_name == "count_distinct") {
             sql += "COUNT(DISTINCT \"" + col_name + "\") AS \"" + col_name + "_nunique\"";
+        } else if (agg_name == "approximate_median") {
+            sql += "APPROX_QUANTILE(\"" + col_name + "\", 0.5) AS \"" + col_name + "_" + agg_name + "\"";
         } else {
             sql += sql_func + "(\"" + col_name + "\") AS \"" + col_name + "_" + agg_name + "\"";
         }
@@ -359,20 +358,21 @@ std::shared_ptr<arrow::Table> CAPIConnection::groupByQuery(
     // FROM clause
     sql += " FROM " + table_name;
 
-    // GROUP BY clause (only if we have group columns and not using window functions)
-    bool has_window_funcs = std::any_of(agg_functions.begin(), agg_functions.end(),
-        [](const auto& p) { return p.first == "first" || p.first == "last"; });
-
+    // GROUP BY clause
     if (!group_columns.empty()) {
-        if (has_window_funcs) {
-            // For window functions, we need to use DISTINCT to get one row per group
-            sql = "SELECT DISTINCT " + sql.substr(7);  // Replace SELECT with SELECT DISTINCT
-        } else {
-            sql += " GROUP BY ";
-            for (size_t i = 0; i < group_columns.size(); i++) {
-                if (i > 0) sql += ", ";
-                sql += "\"" + group_columns[i] + "\"";
-            }
+        sql += " GROUP BY ";
+        for (size_t i = 0; i < group_columns.size(); i++) {
+            if (i > 0) sql += ", ";
+            sql += "\"" + group_columns[i] + "\"";
+        }
+    }
+
+    // Add ORDER BY to preserve order of group keys
+    if (!group_columns.empty()) {
+        sql += " ORDER BY ";
+        for (size_t i = 0; i < group_columns.size(); i++) {
+            if (i > 0) sql += ", ";
+            sql += "\"" + group_columns[i] + "\"";
         }
     }
 
@@ -467,7 +467,7 @@ std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_
                     auto boolColumn = arrow::ChunkedArray::Make(boolChunks);
                     if (!boolColumn.ok()) {
                         throw std::runtime_error("Failed to create boolean column: " + boolColumn.status().ToString());
-                    }
+                        }
                     newColumns.push_back(boolColumn.ValueOrDie());
                 } else {
                     // Cast succeeded, use the result
@@ -477,6 +477,98 @@ std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_
 
                 // Create new field with boolean type
                 newFields.push_back(arrow::field(field->name(), arrow::boolean(), field->nullable()));
+            } else if (extName == "arrow.opaque" && extType->Serialize().find("hugeint") != std::string::npos) {
+                // Handle DuckDB HUGEINT extension type (128-bit integer)
+                // HUGEINT is stored as 16-byte fixed-size binary in little-endian format
+                // We'll convert it to int64 if it fits, otherwise to double
+                std::vector<std::shared_ptr<arrow::Array>> convertedChunks;
+
+                for (int j = 0; j < column->num_chunks(); j++) {
+                    auto chunk = column->chunk(j);
+                    auto extChunk = std::static_pointer_cast<arrow::ExtensionArray>(chunk);
+                    auto storageArray = std::static_pointer_cast<arrow::FixedSizeBinaryArray>(extChunk->storage());
+
+                    // Try to convert to int64 first
+                    arrow::Int64Builder int64Builder;
+                    auto status = int64Builder.Reserve(chunk->length());
+                    if (!status.ok()) {
+                        throw std::runtime_error("Failed to reserve int64 builder: " + status.ToString());
+                    }
+
+                    bool all_fit_int64 = true;
+                    for (int64_t k = 0; k < storageArray->length(); k++) {
+                        if (storageArray->IsNull(k)) {
+                            status = int64Builder.AppendNull();
+                        } else {
+                            // Get the 16-byte value
+                            auto bytes = storageArray->GetValue(k);
+                            // Read as little-endian 128-bit: lower 64 bits, then upper 64 bits
+                            int64_t lower = *reinterpret_cast<const int64_t*>(bytes);
+                            int64_t upper = *reinterpret_cast<const int64_t*>(bytes + 8);
+
+                            // Check if value fits in int64
+                            if (upper == 0 || (upper == -1 && lower < 0)) {
+                                status = int64Builder.Append(lower);
+                            } else {
+                                all_fit_int64 = false;
+                                break;
+                            }
+                        }
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to append to int64 builder: " + status.ToString());
+                        }
+                    }
+
+                    if (all_fit_int64) {
+                        std::shared_ptr<arrow::Array> int64Array;
+                        status = int64Builder.Finish(&int64Array);
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to finish int64 builder: " + status.ToString());
+                        }
+                        convertedChunks.push_back(int64Array);
+                    } else {
+                        // Convert to double instead
+                        arrow::DoubleBuilder doubleBuilder;
+                        status = doubleBuilder.Reserve(chunk->length());
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to reserve double builder: " + status.ToString());
+                        }
+
+                        for (int64_t k = 0; k < storageArray->length(); k++) {
+                            if (storageArray->IsNull(k)) {
+                                status = doubleBuilder.AppendNull();
+                            } else {
+                                auto bytes = storageArray->GetValue(k);
+                                int64_t lower = *reinterpret_cast<const int64_t*>(bytes);
+                                int64_t upper = *reinterpret_cast<const int64_t*>(bytes + 8);
+                                // Approximate conversion to double
+                                double value = static_cast<double>(lower) + static_cast<double>(upper) * 18446744073709551616.0;
+                                status = doubleBuilder.Append(value);
+                            }
+                            if (!status.ok()) {
+                                throw std::runtime_error("Failed to append to double builder: " + status.ToString());
+                            }
+                        }
+
+                        std::shared_ptr<arrow::Array> doubleArray;
+                        status = doubleBuilder.Finish(&doubleArray);
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to finish double builder: " + status.ToString());
+                        }
+                        convertedChunks.push_back(doubleArray);
+                    }
+                }
+
+                // Create chunked array from converted chunks
+                auto convertedColumn = arrow::ChunkedArray::Make(convertedChunks);
+                if (!convertedColumn.ok()) {
+                    throw std::runtime_error("Failed to create converted column: " + convertedColumn.status().ToString());
+                }
+                newColumns.push_back(convertedColumn.ValueOrDie());
+
+                // Determine the new type based on the first chunk
+                auto newType = convertedChunks[0]->type();
+                newFields.push_back(arrow::field(field->name(), newType, field->nullable()));
             } else {
                 // For other extension types, keep as-is for now
                 // You can add more conversion cases here as needed

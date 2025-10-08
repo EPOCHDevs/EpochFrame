@@ -277,7 +277,45 @@ namespace epoch_frame
     {
         // Register the table with DuckDB
         auto& conn = CAPIConnection::getInstance();
-        conn.registerArrowTable("grouped_table", m_grouper->table());
+
+        // Handle empty column names by temporarily renaming them
+        auto table = m_grouper->table();
+        std::unordered_map<std::string, std::string> temp_name_map;
+
+        // Check if any columns have empty names and rename them
+        std::vector<std::shared_ptr<arrow::Field>> new_fields;
+        bool has_empty_names = false;
+        for (int i = 0; i < table->schema()->num_fields(); i++) {
+            auto field = table->schema()->field(i);
+            if (field->name().empty()) {
+                std::string temp_name = std::format("__temp_col_{}__", i);
+                temp_name_map[temp_name] = "";
+                new_fields.push_back(arrow::field(temp_name, field->type(), field->nullable()));
+                has_empty_names = true;
+            } else {
+                new_fields.push_back(field);
+            }
+        }
+
+        if (has_empty_names) {
+            auto new_schema = arrow::schema(new_fields);
+            table = arrow::Table::Make(new_schema, table->columns());
+        }
+
+        // Add a rowid column for window functions
+        arrow::Int64Builder rowid_builder;
+        AssertStatusIsOk(rowid_builder.Reserve(table->num_rows()));
+        for (int64_t i = 0; i < table->num_rows(); i++) {
+            AssertStatusIsOk(rowid_builder.Append(i));
+        }
+        auto rowid_array = AssertResultIsOk(rowid_builder.Finish());
+        auto rowid_chunked = std::make_shared<arrow::ChunkedArray>(rowid_array);
+        table = AssertResultIsOk(table->AddColumn(
+            table->num_columns(),
+            arrow::field("rowid", arrow::int64()),
+            rowid_chunked));
+
+        conn.registerArrowTable("grouped_table", table);
 
         // Build group columns and aggregation functions
         std::vector<std::string> group_columns;
@@ -291,7 +329,19 @@ namespace epoch_frame
         std::vector<std::pair<std::string, std::string>> agg_functions;
         for (auto const& field : m_grouper->fields()) {
             if (field.name()) {
-                agg_functions.emplace_back(agg_name, *field.name());
+                std::string col_name = *field.name();
+                // If original name was empty, use the temp name
+                if (col_name.empty() && has_empty_names) {
+                    for (const auto& [temp, orig] : temp_name_map) {
+                        if (orig == col_name) {
+                            col_name = temp;
+                            break;
+                        }
+                    }
+                }
+                if (!col_name.empty()) {
+                    agg_functions.emplace_back(agg_name, col_name);
+                }
             }
         }
 
@@ -310,7 +360,45 @@ namespace epoch_frame
     {
         // Register the table with DuckDB
         auto& conn = CAPIConnection::getInstance();
-        conn.registerArrowTable("grouped_table", m_grouper->table());
+
+        // Handle empty column names by temporarily renaming them
+        auto table = m_grouper->table();
+        std::unordered_map<std::string, std::string> temp_name_map;
+
+        // Check if any columns have empty names and rename them
+        std::vector<std::shared_ptr<arrow::Field>> new_fields;
+        bool has_empty_names = false;
+        for (int i = 0; i < table->schema()->num_fields(); i++) {
+            auto field = table->schema()->field(i);
+            if (field->name().empty()) {
+                std::string temp_name = std::format("__temp_col_{}__", i);
+                temp_name_map[temp_name] = "";
+                new_fields.push_back(arrow::field(temp_name, field->type(), field->nullable()));
+                has_empty_names = true;
+            } else {
+                new_fields.push_back(field);
+            }
+        }
+
+        if (has_empty_names) {
+            auto new_schema = arrow::schema(new_fields);
+            table = arrow::Table::Make(new_schema, table->columns());
+        }
+
+        // Add a rowid column for window functions
+        arrow::Int64Builder rowid_builder2;
+        AssertStatusIsOk(rowid_builder2.Reserve(table->num_rows()));
+        for (int64_t i = 0; i < table->num_rows(); i++) {
+            AssertStatusIsOk(rowid_builder2.Append(i));
+        }
+        auto rowid_array2 = AssertResultIsOk(rowid_builder2.Finish());
+        auto rowid_chunked2 = std::make_shared<arrow::ChunkedArray>(rowid_array2);
+        table = AssertResultIsOk(table->AddColumn(
+            table->num_columns(),
+            arrow::field("rowid", arrow::int64()),
+            rowid_chunked2));
+
+        conn.registerArrowTable("grouped_table", table);
 
         // Build group columns
         std::vector<std::string> group_columns;
@@ -325,7 +413,19 @@ namespace epoch_frame
         for (auto const& agg_name : agg_names) {
             for (auto const& field : m_grouper->fields()) {
                 if (field.name()) {
-                    agg_functions.emplace_back(agg_name, *field.name());
+                    std::string col_name = *field.name();
+                    // If original name was empty, use the temp name
+                    if (col_name.empty() && has_empty_names) {
+                        for (const auto& [temp, orig] : temp_name_map) {
+                            if (orig == col_name) {
+                                col_name = temp;
+                                break;
+                            }
+                        }
+                    }
+                    if (!col_name.empty()) {
+                        agg_functions.emplace_back(agg_name, col_name);
+                    }
                 }
             }
         }
@@ -343,7 +443,66 @@ namespace epoch_frame
     AggOperations::agg(std::string const&                                      agg_name,
                        const std::shared_ptr<arrow::compute::FunctionOptions>& option) const
     {
-        return agg_table_to_dataFrame(apply_agg(agg_name, option));
+        auto result_table = apply_agg(agg_name, option);
+
+        // Rename columns to remove the aggregation suffix and restore temp names
+        std::unordered_map<std::string, std::string> rename_map;
+
+        // First pass: collect all temp name to original name mappings
+        std::unordered_map<std::string, std::string> temp_to_orig;
+        for (auto const& field : m_grouper->fields()) {
+            if (field.name() && field.name()->empty()) {
+                // Find corresponding temp name in result_table schema
+                for (int i = 0; i < result_table->schema()->num_fields(); i++) {
+                    auto result_field = result_table->schema()->field(i);
+                    std::string result_name = result_field->name();
+                    // Check if it's a temp column with agg suffix
+                    if (result_name.starts_with("__temp_col_") && result_name.find("_" + agg_name) != std::string::npos) {
+                        temp_to_orig[result_name] = "";
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Second pass: build rename map
+        for (auto const& field : m_grouper->fields()) {
+            if (field.name()) {
+                std::string col_name = *field.name();
+
+                if (col_name.empty()) {
+                    // Find the corresponding aggregated temp column and map it back to empty string
+                    for (int i = 0; i < result_table->schema()->num_fields(); i++) {
+                        auto result_field = result_table->schema()->field(i);
+                        if (temp_to_orig.count(result_field->name())) {
+                            rename_map[result_field->name()] = col_name;
+                            break;
+                        }
+                    }
+                } else {
+                    std::string agg_col_name = std::format("{}_{}", col_name, agg_name);
+                    rename_map[agg_col_name] = col_name;
+                }
+            }
+        }
+
+        // Get field names and rename them
+        auto schema = result_table->schema();
+        std::vector<std::shared_ptr<arrow::Field>> new_fields;
+        for (int i = 0; i < schema->num_fields(); i++) {
+            auto field = schema->field(i);
+            auto it = rename_map.find(field->name());
+            if (it != rename_map.end()) {
+                new_fields.push_back(arrow::field(it->second, field->type(), field->nullable()));
+            } else {
+                new_fields.push_back(field);
+            }
+        }
+
+        auto new_schema = arrow::schema(new_fields);
+        result_table = arrow::Table::Make(new_schema, result_table->columns());
+
+        return agg_table_to_dataFrame(result_table);
     }
 
     std::unordered_map<std::string, DataFrame> AggOperations::agg(
