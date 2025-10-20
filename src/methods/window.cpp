@@ -407,7 +407,7 @@ namespace epoch_frame
         if constexpr (is_dataframe)
         {
             std::vector<arrow::ChunkedArrayPtr> results(m_data.num_cols());
-            arrow::FieldVector                  fields;
+            arrow::FieldVector                  fields(m_data.num_cols());
 
             auto column_names = m_data.column_names();
             EpochThreadPool::getInstance().execute(
@@ -426,7 +426,7 @@ namespace epoch_frame
                                                   .template to_view<double>();
                                 auto result = std::make_shared<arrow::ChunkedArray>(fn(*values));
                                 results[i]  = result;
-                                fields.push_back(field(column_name, result->type()));
+                                fields[i] = field(column_name, result->type());
                             }
                         },
                         tbb::simple_partitioner());

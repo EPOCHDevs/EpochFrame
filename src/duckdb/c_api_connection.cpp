@@ -1,404 +1,220 @@
 #include "c_api_connection.h"
+#include <duckdb.hpp>
+#include <duckdb/common/arrow/result_arrow_wrapper.hpp>
+#include <duckdb/main/database.hpp>
+#include <duckdb/main/config.hpp>
 #include <arrow/c/bridge.h>
 #include <arrow/record_batch.h>
 #include <arrow/table.h>
-#include <arrow/ipc/writer.h>
-#include <arrow/io/file.h>
 #include <arrow/extension_type.h>
 #include <arrow/compute/api.h>
+#include <arrow/api.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/io/memory.h>
+#include <arrow/io/file.h>
 #include <stdexcept>
 #include <iostream>
-#include <filesystem>
-#include <fstream>
 #include <algorithm>
 #include <unordered_map>
 #include <sstream>
+#include <mutex>
+#include <cctype>
+#include <atomic>
 #include <thread>
+
+// Include nanoarrow extension headers for read_arrow registration
+#include "table_function/read_arrow.hpp"
 
 namespace epoch_frame {
 
-CAPIConnection::CAPIConnection() : db(nullptr), conn(nullptr) {
+// Thread-safe counter for generating unique temporary file names
+static std::atomic<uint64_t> temp_file_counter{0};
+
+CAPIConnection::CAPIConnection() {
+    using namespace duckdb;
+
     // Create in-memory database
-    if (duckdb_open(nullptr, &db) != DuckDBSuccess) {
-        throw std::runtime_error("Failed to create DuckDB database");
-    }
+    db = std::make_unique<DuckDB>(nullptr);
+    conn = std::make_unique<Connection>(*db);
 
-    // Create connection
-    if (duckdb_connect(db, &conn) != DuckDBSuccess) {
-        duckdb_close(&db);
-        db = nullptr;
-        throw std::runtime_error("Failed to create DuckDB connection");
-    }
+    // Register read_arrow function from nanoarrow extension
+    auto& db_instance = db->instance->GetDatabase(*conn->context);
 
-    // Install and load the nanoarrow extension for modern Arrow integration
-    duckdb_result config_result;
+    // Create a minimal ExtensionLoader wrapper to register the function
+    struct MinimalLoader : public ExtensionLoader {
+        MinimalLoader(DatabaseInstance& db_inst) : ExtensionLoader(db_inst, "nanoarrow") {}
+    };
 
-    // Install the arrow extension
-    duckdb_query(conn, "INSTALL arrow", &config_result);
-    duckdb_destroy_result(&config_result);
+    MinimalLoader loader(db_instance);
+    ext_nanoarrow::RegisterReadArrowStream(loader);
 
-    // Load the arrow extension
-    duckdb_query(conn, "LOAD arrow", &config_result);
-    duckdb_destroy_result(&config_result);
+    // Configure DuckDB settings
+    conn->Query("PRAGMA disable_profiling");
+    conn->Query("SET max_expression_depth TO 10000");
+}
 
-    // Apply Python-like settings for better Arrow compatibility
-    // Set object cache to false like Python default
-    duckdb_query(conn, "SET enable_object_cache = false", &config_result);
-    duckdb_destroy_result(&config_result);
+CAPIConnection::CAPIConnection(std::shared_ptr<duckdb::DuckDB> shared_db) {
+    using namespace duckdb;
 
-    // Ensure arrow settings match Python defaults
-    duckdb_query(conn, "SET arrow_large_buffer_size = false", &config_result);
-    duckdb_destroy_result(&config_result);
+    // Use shared database (thread-local connection to shared DB)
+    // Don't store in unique_ptr since we don't own it - just create connection
+    conn = std::make_unique<Connection>(*shared_db);
 
-    duckdb_query(conn, "SET arrow_lossless_conversion = true", &config_result);
-    duckdb_destroy_result(&config_result);
+    // Register read_arrow function from nanoarrow extension (per-connection)
+    auto& db_instance = shared_db->instance->GetDatabase(*conn->context);
 
-    // Set max expression depth to handle large operations (e.g., many resample groups in concat)
-    duckdb_query(conn, "SET max_expression_depth TO 10000", &config_result);
-    duckdb_destroy_result(&config_result);
+    // Create a minimal ExtensionLoader wrapper to register the function
+    struct MinimalLoader : public ExtensionLoader {
+        MinimalLoader(DatabaseInstance& db_inst) : ExtensionLoader(db_inst, "nanoarrow") {}
+    };
+
+    MinimalLoader loader(db_instance);
+    ext_nanoarrow::RegisterReadArrowStream(loader);
+
+    // Configure DuckDB settings
+    conn->Query("SET enable_object_cache = false");
+    conn->Query("SET max_expression_depth TO 10000");
+    conn->Query("PRAGMA disable_profiling");
 }
 
 CAPIConnection::~CAPIConnection() {
-    // Clean up registered tables - no streams to manage with nanoarrow extension
-    registered_tables.clear();
-
-    // Disconnect and close
-    if (conn) {
-        duckdb_disconnect(&conn);
-    }
-    if (db) {
-        duckdb_close(&db);
-    }
+    // IPC buffers are managed by shared_ptr, will be cleaned up automatically
+    // C++ API connections cleaned up automatically by unique_ptr
 }
 
-void CAPIConnection::registerArrowTable(const std::string& table_name,
-                                       std::shared_ptr<arrow::Table> table) {
+std::shared_ptr<arrow::Table> CAPIConnection::query(std::shared_ptr<arrow::Table> table,
+                                                    const std::string& sql) {
     if (!table) {
         throw std::invalid_argument("Arrow table is null");
     }
 
-    // Drop existing table/view if any
-    dropTable(table_name);
+    // Generate unique temporary file name using thread ID and atomic counter
+    auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+    uint64_t file_id = temp_file_counter.fetch_add(1);
+    std::ostringstream temp_file_stream;
+    temp_file_stream << "/tmp/duckdb_arrow_" << thread_id << "_" << file_id << ".arrows";
+    std::string temp_file = temp_file_stream.str();
 
-    // Write table to temporary Arrow IPC file for nanoarrow extension
-    // Include thread ID for uniqueness in multi-threaded scenarios
-    std::stringstream ss;
-    ss << "/tmp/" << table_name << "_"
-       << std::this_thread::get_id() << "_"
-       << std::to_string(reinterpret_cast<uintptr_t>(this)) << ".arrows";
-    std::string temp_filename = ss.str();
+    // Ensure cleanup happens even if exceptions are thrown
+    struct FileCleanup {
+        std::string filename;
+        ~FileCleanup() { std::remove(filename.c_str()); }
+    };
+    FileCleanup cleanup{temp_file};
 
-    // Create file output stream
-    auto file_result = arrow::io::FileOutputStream::Open(temp_filename);
-    if (!file_result.ok()) {
-        throw std::runtime_error("Failed to create temporary file: " + file_result.status().ToString());
-    }
-    auto file_stream = file_result.ValueOrDie();
-
-    // Create IPC writer
-    auto writer_result = arrow::ipc::MakeStreamWriter(file_stream, table->schema());
-    if (!writer_result.ok()) {
-        throw std::runtime_error("Failed to create IPC writer: " + writer_result.status().ToString());
-    }
-    auto writer = writer_result.ValueOrDie();
-
-    // Write table to file
-    auto status = writer->WriteTable(*table);
-    if (!status.ok()) {
-        throw std::runtime_error("Failed to write table: " + status.ToString());
+    // Write Arrow table to temporary file
+    auto output_stream = arrow::io::FileOutputStream::Open(temp_file);
+    if (!output_stream.ok()) {
+        throw std::runtime_error("Failed to create temp file: " + output_stream.status().ToString());
     }
 
-    status = writer->Close();
-    if (!status.ok()) {
-        throw std::runtime_error("Failed to close writer: " + status.ToString());
+    auto writer = arrow::ipc::MakeFileWriter(output_stream.ValueOrDie(), table->schema());
+    if (!writer.ok()) {
+        throw std::runtime_error("Failed to create Arrow writer: " + writer.status().ToString());
     }
 
-    status = file_stream->Close();
-    if (!status.ok()) {
-        throw std::runtime_error("Failed to close file: " + status.ToString());
+    auto write_status = writer.ValueOrDie()->WriteTable(*table);
+    if (!write_status.ok()) {
+        throw std::runtime_error("Failed to write table: " + write_status.ToString());
     }
 
-    // Create view using nanoarrow extension's read_arrow function
-    std::string create_view_sql = "CREATE OR REPLACE VIEW " + table_name + " AS SELECT * FROM read_arrow('" + temp_filename + "')";
-
-    duckdb_result result;
-    if (duckdb_query(conn, create_view_sql.c_str(), &result) != DuckDBSuccess) {
-        // Clean up temp file on error
-        std::filesystem::remove(temp_filename);
-        auto err = duckdb_result_error(&result);
-        std::string error_msg = err ? std::string(err) : "Unknown error";
-        duckdb_destroy_result(&result);
-        throw std::runtime_error("Failed to create view with nanoarrow: " + error_msg);
-    }
-    duckdb_destroy_result(&result);
-
-    // Store table info (no streams needed with nanoarrow extension)
-    RegisteredTable reg_table;
-    reg_table.table = table;
-    reg_table.temp_filename = temp_filename;
-    registered_tables[table_name] = std::move(reg_table);
-}
-
-std::shared_ptr<arrow::Table> CAPIConnection::query(const std::string& sql) {
-    // No need to disable filter pushdown with nanoarrow extension
-    // The new arrow extension handles filtering properly
-
-    // Execute query and get Arrow result
-    duckdb_arrow arrow_result = nullptr;
-    if (duckdb_query_arrow(conn, sql.c_str(), &arrow_result) != DuckDBSuccess) {
-        // No filter pushdown cleanup needed
-
-        // Get error message for better debugging
-        duckdb_result error_result;
-        std::string error_msg = "Query failed";
-        if (duckdb_query(conn, sql.c_str(), &error_result) != DuckDBSuccess) {
-            auto err = duckdb_result_error(&error_result);
-            if (err) {
-                error_msg = std::string("Query failed: ") + err;
-            }
-            duckdb_destroy_result(&error_result);
-        }
-        throw std::runtime_error(error_msg);
+    auto close_status = writer.ValueOrDie()->Close();
+    if (!close_status.ok()) {
+        throw std::runtime_error("Failed to close writer: " + close_status.ToString());
     }
 
-    // Collect all result chunks into record batches
+    // Create temp view using read_arrow (built-in function, no extension needed)
+    std::string create_view_sql = "CREATE OR REPLACE TEMP VIEW t AS SELECT * FROM read_arrow('" + temp_file + "')";
+    auto view_result = conn->Query(create_view_sql);
+    if (view_result->HasError()) {
+        throw std::runtime_error("Failed to create temp view: " + view_result->GetError());
+    }
+
+    // Execute user's SQL query
+    auto result = conn->Query(sql);
+    if (result->HasError()) {
+        throw std::runtime_error("Query failed: " + result->GetError());
+    }
+
+    // File will be automatically cleaned up by FileCleanup destructor
+
+    // Use ResultArrowArrayStreamWrapper to convert to Arrow
+    // IMPORTANT: wrapper must stay alive until stream is fully consumed
+    auto wrapper = duckdb::make_uniq<duckdb::ResultArrowArrayStreamWrapper>(
+        std::move(result), 1024);  // batch_size = 1024 rows
+
+    // Get the ArrowArrayStream from the wrapper
+    ArrowArrayStream* c_stream = &wrapper->stream;
+
+    // Get schema first
+    ArrowSchema arrow_schema;
+    if (c_stream->get_schema(c_stream, &arrow_schema) != 0) {
+        const char* error = c_stream->get_last_error(c_stream);
+        throw std::runtime_error(std::string("Failed to get schema: ") + (error ? error : "unknown error"));
+    }
+
+    auto schema_result = arrow::ImportSchema(&arrow_schema);
+    if (!schema_result.ok()) {
+        throw std::runtime_error("Failed to import schema: " + schema_result.status().ToString());
+    }
+    auto schema = schema_result.ValueOrDie();
+
+    // Collect all record batches
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
 
-    // Get the schema once (it's the same for all chunks)
-    std::shared_ptr<arrow::Schema> schema_ptr;
-
-    idx_t chunk_count = 0;
     while (true) {
-        ArrowArray array = {};
-        ArrowSchema schema = {};
-
-        // Get the array for this chunk
-        duckdb_arrow_array arrow_array = reinterpret_cast<duckdb_arrow_array>(&array);
-        if (duckdb_query_arrow_array(arrow_result, &arrow_array) != DuckDBSuccess) {
-            duckdb_destroy_arrow(&arrow_result);
-            throw std::runtime_error("Failed to get Arrow array");
+        ArrowArray arrow_array;
+        int ret = c_stream->get_next(c_stream, &arrow_array);
+        if (ret != 0) {
+            const char* error = c_stream->get_last_error(c_stream);
+            throw std::runtime_error(std::string("Failed to get next array: ") + (error ? error : "unknown error"));
         }
 
-        // Check if we have data
-        if (!array.release) {
-            // No more chunks
+        // Check if we reached the end (null release function)
+        if (arrow_array.release == nullptr) {
             break;
         }
 
-        // For the first chunk, also get the schema
-        if (chunk_count == 0) {
-            duckdb_arrow_schema arrow_schema = reinterpret_cast<duckdb_arrow_schema>(&schema);
-            if (duckdb_query_arrow_schema(arrow_result, &arrow_schema) != DuckDBSuccess) {
-                if (array.release) array.release(&array);
-                duckdb_destroy_arrow(&arrow_result);
-                throw std::runtime_error("Failed to get Arrow schema");
-            }
-
-            // Import the schema
-            auto schema_result = arrow::ImportSchema(&schema);
-            if (!schema_result.ok()) {
-                if (array.release) array.release(&array);
-                if (schema.release) schema.release(&schema);
-                duckdb_destroy_arrow(&arrow_result);
-                throw std::runtime_error("Failed to import schema: " + schema_result.status().ToString());
-            }
-            schema_ptr = schema_result.ValueOrDie();
+        // Import the array as a RecordBatch
+        auto batch_result = arrow::ImportRecordBatch(&arrow_array, schema);
+        if (!batch_result.ok()) {
+            throw std::runtime_error("Failed to import record batch: " + batch_result.status().ToString());
         }
 
-        // Import the record batch using the imported schema
-        auto import_result = arrow::ImportRecordBatch(&array, schema_ptr);
-        if (!import_result.ok()) {
-            if (array.release) array.release(&array);
-            duckdb_destroy_arrow(&arrow_result);
-            throw std::runtime_error("Failed to import batch: " + import_result.status().ToString());
-        }
-
-        batches.push_back(import_result.ValueOrDie());
-        chunk_count++;
+        batches.push_back(batch_result.ValueOrDie());
     }
 
-    // Clean up
-    duckdb_destroy_arrow(&arrow_result);
+    // Don't manually release the stream - the wrapper's destructor will handle it
+    // Now it's safe to let wrapper be destroyed
 
-    // Convert to table
+    // Create table from batches
+    std::shared_ptr<arrow::Table> result_table;
     if (batches.empty()) {
-        // No filter pushdown cleanup needed
-
-        // Return empty table with proper schema if we have it
-        if (schema_ptr) {
-            auto empty_result = arrow::Table::MakeEmpty(schema_ptr);
-            if (!empty_result.ok()) {
-                throw std::runtime_error("Failed to create empty table");
-            }
-            return empty_result.ValueOrDie();
-        }
-        // Create minimal empty table
-        auto empty_schema = arrow::schema({});
-        auto empty_result = arrow::Table::MakeEmpty(empty_schema);
+        auto empty_result = arrow::Table::MakeEmpty(schema);
         if (!empty_result.ok()) {
-            throw std::runtime_error("Failed to create empty table");
+            throw std::runtime_error("Failed to create empty table: " + empty_result.status().ToString());
         }
-        return empty_result.ValueOrDie();
-    }
-
-    auto table_result = arrow::Table::FromRecordBatches(batches);
-    if (!table_result.ok()) {
-        throw std::runtime_error("Failed to create table: " + table_result.status().ToString());
+        result_table = empty_result.ValueOrDie();
+    } else {
+        auto table_result = arrow::Table::FromRecordBatches(schema, batches);
+        if (!table_result.ok()) {
+            throw std::runtime_error("Failed to create table: " + table_result.status().ToString());
+        }
+        result_table = table_result.ValueOrDie();
     }
 
     // Convert extension types to regular Arrow types
-    auto resultTable = table_result.ValueOrDie();
-    resultTable = convertExtensionTypes(resultTable);
+    result_table = convertExtensionTypes(result_table);
 
-    // No filter pushdown cleanup needed
-
-    return resultTable;
-}
-
-void CAPIConnection::execute(const std::string& sql) {
-    duckdb_result result;
-    if (duckdb_query(conn, sql.c_str(), &result) != DuckDBSuccess) {
-        std::string error_msg = duckdb_result_error(&result);
-        duckdb_destroy_result(&result);
-        throw std::runtime_error("Execution failed: " + error_msg);
-    }
-    duckdb_destroy_result(&result);
+    return result_table;
 }
 
 void CAPIConnection::setMaxExpressionDepth(int depth) {
     std::string sql = "SET max_expression_depth TO " + std::to_string(depth);
-    duckdb_result result;
-    if (duckdb_query(conn, sql.c_str(), &result) != DuckDBSuccess) {
-        std::string error_msg = duckdb_result_error(&result);
-        duckdb_destroy_result(&result);
-        throw std::runtime_error("Failed to set max_expression_depth: " + error_msg);
+    auto result = conn->Query(sql);
+    if (result->HasError()) {
+        throw std::runtime_error("Failed to set max expression depth: " + result->GetError());
     }
-    duckdb_destroy_result(&result);
-}
-
-void CAPIConnection::dropTable(const std::string& table_name) {
-    // Try to drop both view and table (ignore errors)
-    try {
-        execute("DROP VIEW IF EXISTS " + table_name);
-    } catch (...) {}
-
-    try {
-        execute("DROP TABLE IF EXISTS " + table_name);
-    } catch (...) {}
-
-    // Clean up registered table and temporary file
-    auto it = registered_tables.find(table_name);
-    if (it != registered_tables.end()) {
-        // Remove temporary file if it exists
-        if (!it->second.temp_filename.empty()) {
-            try {
-                std::filesystem::remove(it->second.temp_filename);
-            } catch (...) {
-                // Ignore file cleanup errors
-            }
-        }
-        registered_tables.erase(it);
-    }
-}
-
-CAPIConnection& CAPIConnection::getThreadLocal() {
-    thread_local CAPIConnection instance;
-    return instance;
-}
-
-std::string CAPIConnection::mapAggregateFunction(const std::string& arrow_agg_name) {
-    // Map Arrow/Acero aggregate function names to DuckDB SQL functions
-    static const std::unordered_map<std::string, std::string> agg_map = {
-        {"sum", "SUM"},
-        {"mean", "AVG"},
-        {"min", "MIN"},
-        {"max", "MAX"},
-        {"count", "COUNT"},
-        {"count_distinct", "COUNT(DISTINCT "},  // Special handling needed
-        {"std", "STDDEV"},
-        {"stddev", "STDDEV"},
-        {"var", "VARIANCE"},
-        {"variance", "VARIANCE"},
-        {"product", "PRODUCT"},
-        {"any", "BOOL_OR"},
-        {"all", "BOOL_AND"},
-        {"approximate_median", "APPROX_QUANTILE"}
-        // Note: "first" and "last" need special handling
-    };
-
-    auto it = agg_map.find(arrow_agg_name);
-    if (it != agg_map.end()) {
-        return it->second;
-    }
-
-    // Default: return uppercase version
-    std::string upper = arrow_agg_name;
-    std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
-    return upper;
-}
-
-std::shared_ptr<arrow::Table> CAPIConnection::groupByQuery(
-    const std::string& table_name,
-    const std::vector<std::string>& group_columns,
-    const std::vector<std::pair<std::string, std::string>>& agg_functions) {
-    // Build SELECT clause
-    std::string sql = "SELECT ";
-
-    // Add group columns first
-    for (size_t i = 0; i < group_columns.size(); i++) {
-        if (i > 0) sql += ", ";
-        sql += "\"" + group_columns[i] + "\"";
-    }
-
-    // Add aggregated columns
-    for (const auto& [agg_name, col_name] : agg_functions) {
-        if (!group_columns.empty() || &agg_name != &agg_functions[0].first) {
-            sql += ", ";
-        }
-
-        std::string sql_func = mapAggregateFunction(agg_name);
-
-        // Special handling for first/last - use aggregation with MIN/MAX on rowid
-        if (agg_name == "first" || agg_name == "last") {
-            // Use ARG_MIN/ARG_MAX if available, otherwise use a subquery approach
-            // DuckDB supports FIRST() and LAST() functions directly
-            if (agg_name == "first") {
-                sql += "FIRST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
-            } else {
-                sql += "LAST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
-            }
-        } else if (agg_name == "count_distinct") {
-            sql += "COUNT(DISTINCT \"" + col_name + "\") AS \"" + col_name + "_nunique\"";
-        } else if (agg_name == "approximate_median") {
-            sql += "APPROX_QUANTILE(\"" + col_name + "\", 0.5) AS \"" + col_name + "_" + agg_name + "\"";
-        } else {
-            sql += sql_func + "(\"" + col_name + "\") AS \"" + col_name + "_" + agg_name + "\"";
-        }
-    }
-
-    // FROM clause
-    sql += " FROM " + table_name;
-
-    // GROUP BY clause
-    if (!group_columns.empty()) {
-        sql += " GROUP BY ";
-        for (size_t i = 0; i < group_columns.size(); i++) {
-            if (i > 0) sql += ", ";
-            sql += "\"" + group_columns[i] + "\"";
-        }
-    }
-
-    // Add ORDER BY to preserve order of group keys
-    if (!group_columns.empty()) {
-        sql += " ORDER BY ";
-        for (size_t i = 0; i < group_columns.size(); i++) {
-            if (i > 0) sql += ", ";
-            sql += "\"" + group_columns[i] + "\"";
-        }
-    }
-
-    // Execute the query
-    return query(sql);
 }
 
 std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_ptr<arrow::Table> table) {
@@ -406,20 +222,27 @@ std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_
         return table;
     }
 
-    // Check if any columns are extension types that need conversion
-    bool hasExtensionTypes = false;
+    // Check if any columns need conversion (extension types or decimal128 with scale 0)
+    bool needsConversion = false;
     auto schema = table->schema();
 
     for (int i = 0; i < schema->num_fields(); i++) {
         auto field = schema->field(i);
         if (field->type()->id() == arrow::Type::EXTENSION) {
-            hasExtensionTypes = true;
+            needsConversion = true;
             break;
+        }
+        if (field->type()->id() == arrow::Type::DECIMAL128) {
+            auto decimal_type = std::static_pointer_cast<arrow::Decimal128Type>(field->type());
+            if (decimal_type->scale() == 0) {
+                needsConversion = true;
+                break;
+            }
         }
     }
 
-    // If no extension types, return table as-is
-    if (!hasExtensionTypes) {
+    // If no conversion needed, return table as-is
+    if (!needsConversion) {
         return table;
     }
 
@@ -596,8 +419,106 @@ std::shared_ptr<arrow::Table> CAPIConnection::convertExtensionTypes(std::shared_
                 newColumns.push_back(column);
                 newFields.push_back(field);
             }
+        } else if (field->type()->id() == arrow::Type::DECIMAL128) {
+            // Handle decimal128 types - DuckDB SUM() returns decimal128(38, 0) for integer sums
+            auto decimal_type = std::static_pointer_cast<arrow::Decimal128Type>(field->type());
+
+            // Only convert if scale is 0 (these are actually integers)
+            if (decimal_type->scale() == 0) {
+                std::vector<std::shared_ptr<arrow::Array>> convertedChunks;
+
+                for (int j = 0; j < column->num_chunks(); j++) {
+                    auto chunk = column->chunk(j);
+                    auto decimal_array = std::static_pointer_cast<arrow::Decimal128Array>(chunk);
+
+                    // Try to convert to int64 first
+                    arrow::Int64Builder int64Builder;
+                    auto status = int64Builder.Reserve(chunk->length());
+                    if (!status.ok()) {
+                        throw std::runtime_error("Failed to reserve int64 builder: " + status.ToString());
+                    }
+
+                    bool all_fit_int64 = true;
+                    for (int64_t k = 0; k < decimal_array->length(); k++) {
+                        if (decimal_array->IsNull(k)) {
+                            status = int64Builder.AppendNull();
+                        } else {
+                            // Get the raw decimal128 bytes (16 bytes)
+                            auto decimal_bytes = decimal_array->GetValue(k);
+                            arrow::Decimal128 decimal_val(decimal_bytes);
+
+                            // Decimal128 can be converted to int64 if it fits
+                            // Check if value is within int64 range
+                            int64_t int_val = 0;  // Initialize to avoid uninitialized warning
+                            auto convert_status = decimal_val.ToInteger(&int_val);
+
+                            if (convert_status.ok()) {
+                                status = int64Builder.Append(int_val);
+                            } else {
+                                all_fit_int64 = false;
+                                break;
+                            }
+                        }
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to append to int64 builder: " + status.ToString());
+                        }
+                    }
+
+                    if (all_fit_int64) {
+                        std::shared_ptr<arrow::Array> int64Array;
+                        status = int64Builder.Finish(&int64Array);
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to finish int64 builder: " + status.ToString());
+                        }
+                        convertedChunks.push_back(int64Array);
+                    } else {
+                        // Convert to double if doesn't fit in int64
+                        arrow::DoubleBuilder doubleBuilder;
+                        status = doubleBuilder.Reserve(chunk->length());
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to reserve double builder: " + status.ToString());
+                        }
+
+                        for (int64_t k = 0; k < decimal_array->length(); k++) {
+                            if (decimal_array->IsNull(k)) {
+                                status = doubleBuilder.AppendNull();
+                            } else {
+                                auto decimal_bytes = decimal_array->GetValue(k);
+                                arrow::Decimal128 decimal_val(decimal_bytes);
+                                double double_val = decimal_val.ToDouble(decimal_type->scale());
+                                status = doubleBuilder.Append(double_val);
+                            }
+                            if (!status.ok()) {
+                                throw std::runtime_error("Failed to append to double builder: " + status.ToString());
+                            }
+                        }
+
+                        std::shared_ptr<arrow::Array> doubleArray;
+                        status = doubleBuilder.Finish(&doubleArray);
+                        if (!status.ok()) {
+                            throw std::runtime_error("Failed to finish double builder: " + status.ToString());
+                        }
+                        convertedChunks.push_back(doubleArray);
+                    }
+                }
+
+                // Create chunked array from converted chunks
+                auto convertedColumn = arrow::ChunkedArray::Make(convertedChunks);
+                if (!convertedColumn.ok()) {
+                    throw std::runtime_error("Failed to create converted column: " + convertedColumn.status().ToString());
+                }
+                newColumns.push_back(convertedColumn.ValueOrDie());
+
+                // Determine the new type based on the first chunk
+                auto newType = convertedChunks[0]->type();
+                newFields.push_back(arrow::field(field->name(), newType, field->nullable()));
+            } else {
+                // Keep decimal with non-zero scale as-is
+                newColumns.push_back(column);
+                newFields.push_back(field);
+            }
         } else {
-            // Not an extension type, keep as-is
+            // Not an extension type or decimal128, keep as-is
             newColumns.push_back(column);
             newFields.push_back(field);
         }

@@ -23,7 +23,6 @@
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/frame_or_series.h"
 #include "epoch_frame/series.h"
-#include "duckdb/c_api_connection.h"
 
 namespace ac = arrow::acero;
 namespace cp = arrow::compute;

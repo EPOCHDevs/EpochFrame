@@ -55,6 +55,9 @@ endif()
 # Include the EpochCore dependency
 include(${PROJECT_SOURCE_DIR}/cmake/EpochCore.cmake)
 
+# Include DuckDB nanoarrow extension for zero-copy Arrow IPC
+include(${PROJECT_SOURCE_DIR}/cmake/DuckDBNanoarrow.cmake)
+
 # Arrow already includes AWS SDK internally when built with S3 support
 find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)

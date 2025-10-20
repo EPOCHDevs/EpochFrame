@@ -44,134 +44,21 @@ namespace epoch_frame
         /**
          * @brief Execute SQL query on this DataFrame
          *
-         * Registers this DataFrame with the specified table name in SQL.
+         * Executes SQL query where the DataFrame is available as "t" in the query.
          * Returns raw Arrow Table - user handles indexing and DataFrame creation.
          *
-         * @param sql SQL query string
-         * @param table_name Name to register this DataFrame as in SQL
+         * @param sql SQL query string (use "t" to reference this DataFrame)
+         * @param table_name Ignored (kept for compatibility, table is always "t")
          * @return Arrow Table containing query results
          *
          * @example
          * ```cpp
          * DataFrame df = load_data();
-         * auto result_table = df.query("SELECT * FROM sales WHERE value > 100", "sales");
+         * auto result_table = df.query("SELECT * FROM t WHERE value > 100", "");
          * // User decides how to create DataFrame from result_table
          * ```
          */
-        std::shared_ptr<arrow::Table> query(const std::string& sql, const std::string& table_name) const;
-
-        /**
-         * @brief Execute SQL query with multiple DataFrames
-         *
-         * Registers this DataFrame with the specified table name plus additional tables.
-         * Returns raw Arrow Table - user handles indexing and DataFrame creation.
-         *
-         * @param sql SQL query string
-         * @param table_name Name to register this DataFrame as in SQL
-         * @param tables Map of additional table names to DataFrames
-         * @return Arrow Table containing query results
-         *
-         * @example
-         * ```cpp
-         * DataFrame sales = load_sales();
-         * DataFrame products = load_products();
-         * auto result_table = sales.query(
-         *     "SELECT s.customer, p.name FROM sales s JOIN products p ON s.product_id = p.id",
-         *     "sales",
-         *     {{"products", products}}
-         * );
-         * ```
-         */
-        std::shared_ptr<arrow::Table> query(const std::string& sql,
-                                          const std::string& table_name,
-                                          const std::unordered_map<std::string, DataFrame>& tables) const;
-
-        /**
-         * @brief Execute SQL query without DataFrame context (static method)
-         *
-         * Executes SQL directly on DuckDB. Returns raw Arrow Table.
-         *
-         * @param sql SQL query string
-         * @return Arrow Table containing query results
-         *
-         * @example
-         * ```cpp
-         * auto result_table = DataFrame::sql("SELECT 1 as id, 'hello' as message");
-         * auto info_table = DataFrame::sql("SHOW TABLES");
-         * ```
-         */
-        static std::shared_ptr<arrow::Table> sql(const std::string& sql);
-
-        /**
-         * @brief Execute SQL query with multiple DataFrames (static method)
-         *
-         * Registers all provided DataFrames with their specified names in SQL.
-         * Returns raw Arrow Table.
-         *
-         * @param sql SQL query string
-         * @param tables Map of table names to DataFrames
-         * @return Arrow Table containing query results
-         *
-         * @example
-         * ```cpp
-         * DataFrame sales = load_sales();
-         * DataFrame products = load_products();
-         * auto result_table = DataFrame::sql(
-         *     "SELECT s.customer, p.name FROM sales s JOIN products p ON s.product_id = p.id",
-         *     {{"sales", sales}, {"products", products}}
-         * );
-         * ```
-         */
-        static std::shared_ptr<arrow::Table> sql(const std::string& sql,
-                                                const std::unordered_map<std::string, DataFrame>& tables);
-
-        /**
-         * @brief Execute SQL query directly on .arrows files
-         *
-         * User manages .arrows files manually. Use read_arrow('file.arrows') in SQL.
-         * Returns raw Arrow Table.
-         *
-         * @param sql SQL query string using read_arrow() function calls
-         * @return Arrow Table containing query results
-         *
-         * @example
-         * ```cpp
-         * // First save DataFrames to .arrows files
-         * sales_df.write_arrows("sales.arrows");
-         * products_df.write_arrows("products.arrows");
-         *
-         * // Then query directly
-         * auto result_table = DataFrame::sql_simple(
-         *     "SELECT s.customer, p.name "
-         *     "FROM read_arrow('sales.arrows') s "
-         *     "JOIN read_arrow('products.arrows') p ON s.product_id = p.id"
-         * );
-         * ```
-         */
-        static std::shared_ptr<arrow::Table> sql_simple(const std::string& sql);
-
-        /**
-         * @brief Write DataFrame to .arrows file for use with sql_simple()
-         *
-         * Serializes DataFrame to Arrow IPC stream format (.arrows file) that can be read
-         * by DuckDB's read_arrow() function. Uses existing serialization infrastructure.
-         *
-         * @param file_path Path where .arrows file will be created
-         * @param include_index Whether to include the index as a column (default: true)
-         *
-         * @throws std::runtime_error if file cannot be written
-         *
-         * @example
-         * ```cpp
-         * DataFrame df = load_data();
-         * df.write_arrows("my_data.arrows");  // Include index
-         * df.write_arrows("data_no_index.arrows", false);  // Exclude index
-         *
-         * // Later use with sql_simple
-         * auto result = DataFrame::sql_simple("SELECT * FROM read_arrow('my_data.arrows')");
-         * ```
-         */
-        void write_arrows(const std::string& file_path, bool include_index = true) const;
+        std::shared_ptr<arrow::Table> query(const std::string& sql, const std::string& table_name = "") const;
 
         //--------------------------------------------------------------------------
         // 2) Basic arithmetic: +, -, *, / with NDFrame and Scalar

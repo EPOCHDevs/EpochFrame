@@ -12,7 +12,6 @@
 #include "index/datetime_index.h"
 #include <common/arrow_agg.h>
 #include <common/asserts.h>
-#include "duckdb/c_api_connection.h"
 
 #include "epoch_frame/dataframe.h"
 #include "epoch_frame/factory/array_factory.h"
@@ -23,9 +22,103 @@
 #include <utility>
 #include <vector_functions/arrow_vector_functions.h>
 
+// Include DuckDB last to avoid macro conflicts
+#include "duckdb/c_api_connection.h"
+
 namespace epoch_frame
 {
     namespace cp = arrow::compute;
+
+    // Helper to map aggregate function names to DuckDB SQL functions
+    std::string mapAggregateFunction(const std::string& agg_name) {
+        static const std::unordered_map<std::string, std::string> agg_map = {
+            {"sum", "SUM"},
+            {"mean", "AVG"},
+            {"min", "MIN"},
+            {"max", "MAX"},
+            {"count", "COUNT"},
+            {"count_distinct", "COUNT(DISTINCT "},
+            {"std", "STDDEV"},
+            {"stddev", "STDDEV"},
+            {"var", "VARIANCE"},
+            {"variance", "VARIANCE"},
+            {"product", "PRODUCT"},
+            {"any", "BOOL_OR"},
+            {"all", "BOOL_AND"},
+            {"approximate_median", "APPROX_QUANTILE"}
+        };
+
+        auto it = agg_map.find(agg_name);
+        if (it != agg_map.end()) {
+            return it->second;
+        }
+
+        // Default: return uppercase version
+        std::string upper = agg_name;
+        std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+        return upper;
+    }
+
+    // Helper to build GROUP BY SQL for DuckDB
+    std::string buildGroupBySQL(
+        const std::vector<std::string>& group_columns,
+        const std::vector<std::pair<std::string, std::string>>& agg_functions) {
+
+        std::string sql = "SELECT ";
+
+        // Add group columns first
+        for (size_t i = 0; i < group_columns.size(); i++) {
+            if (i > 0) sql += ", ";
+            sql += "\"" + group_columns[i] + "\"";
+        }
+
+        // Add aggregated columns
+        for (const auto& [agg_name, col_name] : agg_functions) {
+            if (!group_columns.empty() || &agg_name != &agg_functions[0].first) {
+                sql += ", ";
+            }
+
+            std::string sql_func = mapAggregateFunction(agg_name);
+
+            // Special handling for first/last
+            if (agg_name == "first" || agg_name == "last") {
+                if (agg_name == "first") {
+                    sql += "FIRST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
+                } else {
+                    sql += "LAST(\"" + col_name + "\" ORDER BY rowid) AS \"" + col_name + "_" + agg_name + "\"";
+                }
+            } else if (agg_name == "count_distinct") {
+                sql += "COUNT(DISTINCT \"" + col_name + "\") AS \"" + col_name + "_nunique\"";
+            } else if (agg_name == "approximate_median") {
+                sql += "APPROX_QUANTILE(\"" + col_name + "\", 0.5) AS \"" + col_name + "_" + agg_name + "\"";
+            } else {
+                sql += sql_func + "(\"" + col_name + "\") AS \"" + col_name + "_" + agg_name + "\"";
+            }
+        }
+
+        // FROM clause
+        sql += " FROM t";
+
+        // GROUP BY clause
+        if (!group_columns.empty()) {
+            sql += " GROUP BY ";
+            for (size_t i = 0; i < group_columns.size(); i++) {
+                if (i > 0) sql += ", ";
+                sql += "\"" + group_columns[i] + "\"";
+            }
+        }
+
+        // ORDER BY to preserve order of group keys
+        if (!group_columns.empty()) {
+            sql += " ORDER BY ";
+            for (size_t i = 0; i < group_columns.size(); i++) {
+                if (i > 0) sql += ", ";
+                sql += "\"" + group_columns[i] + "\"";
+            }
+        }
+
+        return sql;
+    }
 
     std::string get_placeholder_name(uint64_t index)
     {
@@ -275,8 +368,8 @@ namespace epoch_frame
     AggOperations::apply_agg(std::string const&                                      agg_name,
                              const std::shared_ptr<arrow::compute::FunctionOptions>& /* option */) const
     {
-        // Register the table with DuckDB (thread-local connection)
-        auto& conn = CAPIConnection::getThreadLocal();
+        // Get thread-local connection
+        auto& conn = getSQLEngineConnection();
 
         // Handle empty column names by temporarily renaming them
         auto table = m_grouper->table();
@@ -315,8 +408,6 @@ namespace epoch_frame
             arrow::field("rowid", arrow::int64()),
             rowid_chunked));
 
-        conn.registerArrowTable("grouped_table", table);
-
         // Build group columns and aggregation functions
         std::vector<std::string> group_columns;
         for (auto const& key : m_grouper->keys()) {
@@ -345,11 +436,9 @@ namespace epoch_frame
             }
         }
 
-        // Execute the GROUP BY query
-        auto result = conn.groupByQuery("grouped_table", group_columns, agg_functions);
-
-        // Clean up
-        conn.dropTable("grouped_table");
+        // Build and execute GROUP BY SQL using new API
+        std::string sql = buildGroupBySQL(group_columns, agg_functions);
+        auto result = conn.query(table, sql);
 
         return result;
     }
@@ -358,8 +447,8 @@ namespace epoch_frame
         std::vector<std::string> const&                                      agg_names,
         const std::vector<std::shared_ptr<arrow::compute::FunctionOptions>>& /* options */) const
     {
-        // Register the table with DuckDB (thread-local connection)
-        auto& conn = CAPIConnection::getThreadLocal();
+        // Get thread-local connection
+        auto& conn = getSQLEngineConnection();
 
         // Handle empty column names by temporarily renaming them
         auto table = m_grouper->table();
@@ -398,8 +487,6 @@ namespace epoch_frame
             arrow::field("rowid", arrow::int64()),
             rowid_chunked2));
 
-        conn.registerArrowTable("grouped_table", table);
-
         // Build group columns
         std::vector<std::string> group_columns;
         for (auto const& key : m_grouper->keys()) {
@@ -430,11 +517,9 @@ namespace epoch_frame
             }
         }
 
-        // Execute the GROUP BY query
-        auto result = conn.groupByQuery("grouped_table", group_columns, agg_functions);
-
-        // Clean up
-        conn.dropTable("grouped_table");
+        // Build and execute GROUP BY SQL using new API
+        std::string sql = buildGroupBySQL(group_columns, agg_functions);
+        auto result = conn.query(table, sql);
 
         return result;
     }

@@ -19,6 +19,7 @@ target_link_libraries(epoch_frame
         "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"
         "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,ArrowAcero::arrow_acero_static,ArrowAcero::arrow_acero_shared>"
         "$<IF:$<TARGET_EXISTS:duckdb>,duckdb,duckdb_static>"
+        duckdb_nanoarrow_static
         epoch::core)
 
 #target_compile_options(epoch_frame PRIVATE -Wall -Wextra -Werror)
