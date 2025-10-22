@@ -54,7 +54,7 @@ namespace epoch_frame
          * @example
          * ```cpp
          * DataFrame df = load_data();
-         * auto result_table = df.query("SELECT * FROM t WHERE value > 100", "");
+         * auto result_table = df.query("SELECT * FROM self WHERE value > 100", "");
          * // User decides how to create DataFrame from result_table
          * ```
          */

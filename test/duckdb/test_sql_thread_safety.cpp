@@ -77,8 +77,7 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                         // Each thread executes slightly different queries but uses same table name
                         double threshold = 200.0 + (thread_id * 100.0);
                         auto result_table = df.query(
-                            "SELECT COUNT(*) as count, AVG(value) as avg_val FROM t WHERE value > " + std::to_string(threshold),
-                            ""
+                            "SELECT COUNT(*) as count, AVG(value) as avg_val FROM self WHERE value > " + std::to_string(threshold)
                         );
 
                         // Verify result structure (without REQUIRE - just check and throw)
@@ -174,14 +173,14 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                 try {
                     // Run multiple different queries on the assigned DataFrame
                     std::vector<std::string> queries = {
-                        "SELECT COUNT(*) as total FROM t",
-                        "SELECT MAX(value) as max_val, MIN(value) as min_val FROM t",
-                        "SELECT category, COUNT(*) as count FROM t GROUP BY category",
-                        "SELECT * FROM t WHERE id % 10 = " + std::to_string(thread_id % 10) + " ORDER BY value DESC LIMIT 5"
+                        "SELECT COUNT(*) as total FROM self",
+                        "SELECT MAX(value) as max_val, MIN(value) as min_val FROM self",
+                        "SELECT category, COUNT(*) as count FROM self GROUP BY category",
+                        "SELECT * FROM self WHERE id % 10 = " + std::to_string(thread_id % 10) + " ORDER BY value DESC LIMIT 5"
                     };
 
                     for (const auto& sql : queries) {
-                        auto result_table = df_ptr->query(sql, "");
+                        auto result_table = df_ptr->query(sql);
                         if (!result_table) {
                             throw std::runtime_error("result_table is null");
                         }
@@ -324,9 +323,8 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                 try {
                     // Query 1: Aggregation
                     auto result1 = main_df.query(
-                        "SELECT category, COUNT(*) as cnt, AVG(value) as avg_val FROM t "
-                        "GROUP BY category ORDER BY cnt DESC",
-                        ""
+                        "SELECT category, COUNT(*) as cnt, AVG(value) as avg_val FROM self "
+                        "GROUP BY category ORDER BY cnt DESC"
                     );
                     if (!result1) {
                         throw std::runtime_error("result1 is null");
@@ -335,9 +333,8 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
                     // Query 2: Filtering with thread-specific criteria
                     auto result2 = main_df.query(
-                        "SELECT * FROM t WHERE value > " + std::to_string(thread_id * 100) +
-                        " ORDER BY value DESC LIMIT 10",
-                        ""
+                        "SELECT * FROM self WHERE value > " + std::to_string(thread_id * 100) +
+                        " ORDER BY value DESC LIMIT 10"
                     );
                     if (!result2) {
                         throw std::runtime_error("result2 is null");
@@ -394,8 +391,7 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
 
                 try {
                     auto result_table = chosen_df->query(
-                        "SELECT COUNT(*) as count, MIN(id) as min_id FROM t",
-                        ""  // Table is always "t"
+                        "SELECT COUNT(*) as count, MIN(id) as min_id FROM self"
                     );
 
                     if (!result_table) {
@@ -487,9 +483,8 @@ TEST_CASE("SQL Engine Thread Safety", "[sql][threading]") {
                         int random_category = category_dist(gen);
 
                         auto result_table = df.query(
-                            "SELECT COUNT(*) as count FROM t WHERE value > " +
-                            std::to_string(random_value) + " AND category = " + std::to_string(random_category),
-                            ""
+                            "SELECT COUNT(*) as count FROM self WHERE value > " +
+                            std::to_string(random_value) + " AND category = " + std::to_string(random_category)
                         );
 
                         if (!result_table) {

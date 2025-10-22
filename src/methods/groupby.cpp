@@ -97,7 +97,7 @@ namespace epoch_frame
         }
 
         // FROM clause
-        sql += " FROM t";
+        sql += " FROM self";
 
         // GROUP BY clause
         if (!group_columns.empty()) {
