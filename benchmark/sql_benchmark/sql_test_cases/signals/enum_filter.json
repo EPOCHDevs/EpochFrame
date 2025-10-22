@@ -1,0 +1,13 @@
+{
+  "name": "Filter categorical signal column",
+  "description": "Test filtering on categorical string column (signal enum)",
+  "category": "signals",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT * FROM t WHERE signal = 'BUY'",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": ["signal"]
+}

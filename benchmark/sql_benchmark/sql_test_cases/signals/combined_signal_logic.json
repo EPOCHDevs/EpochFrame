@@ -1,0 +1,13 @@
+{
+  "name": "Combined technical indicator signals",
+  "description": "Combine buy_signal, sell_signal boolean columns with categorical signal enum",
+  "category": "signals",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT timestamp, signal, buy_signal, sell_signal, rsi, macd FROM t WHERE (buy_signal = true AND signal = 'BUY') OR (sell_signal = true AND signal = 'SELL')",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": ["signal"]
+}

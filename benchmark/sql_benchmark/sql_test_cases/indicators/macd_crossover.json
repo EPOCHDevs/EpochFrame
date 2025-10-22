@@ -1,0 +1,13 @@
+{
+  "name": "MACD crossover detection",
+  "description": "Detect MACD signal line crossovers (bullish and bearish)",
+  "category": "indicators",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT timestamp, price, macd, signal_line, (macd - signal_line) as histogram, CASE WHEN macd > signal_line THEN 'BULLISH' ELSE 'BEARISH' END as trend FROM t WHERE ABS(macd - signal_line) < 1.0",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": []
+}

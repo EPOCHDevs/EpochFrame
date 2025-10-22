@@ -1,0 +1,14 @@
+{
+  "name": "Calculate price returns with window function",
+  "description": "Use LAG window function to calculate period-over-period returns",
+  "category": "transformations",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 1000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, close, LAG(close, 1) OVER (ORDER BY timestamp) as prev_close, (close - LAG(close, 1) OVER (ORDER BY timestamp)) / LAG(close, 1) OVER (ORDER BY timestamp) * 100 as return_pct FROM t LIMIT 100",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

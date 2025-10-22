@@ -1,0 +1,13 @@
+{
+  "name": "GROUP BY categorical signal",
+  "description": "Test GROUP BY on categorical string column (signal enum) with aggregation",
+  "category": "signals",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT signal, COUNT(*) as count, AVG(rsi) as avg_rsi FROM t GROUP BY signal ORDER BY signal",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": ["signal"]
+}

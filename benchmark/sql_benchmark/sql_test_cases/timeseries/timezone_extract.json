@@ -1,0 +1,14 @@
+{
+  "name": "Extract timezone from timestamp",
+  "description": "Test EXTRACT(TIMEZONE FROM timestamp) with America/New_York timezone",
+  "category": "timeseries",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 1000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, EXTRACT(TIMEZONE FROM timestamp) as tz FROM t LIMIT 10",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Convert timezone to UTC",
+  "description": "Test AT TIME ZONE conversion from America/New_York to UTC",
+  "category": "timeseries",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 1000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, timestamp AT TIME ZONE 'UTC' as utc_time FROM t LIMIT 10",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

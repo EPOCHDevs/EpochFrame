@@ -1,0 +1,14 @@
+{
+  "name": "Daily high-low range calculation",
+  "description": "Calculate daily range and filter by large moves",
+  "category": "ohlcv",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, symbol, high, low, (high - low) as range, ((high - low) / low * 100) as range_pct FROM t WHERE (high - low) > 3.0 ORDER BY range DESC LIMIT 20",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

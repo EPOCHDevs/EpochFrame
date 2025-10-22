@@ -1,0 +1,14 @@
+{
+  "name": "Simple OHLCV price filter",
+  "description": "Filter OHLCV data by close price threshold",
+  "category": "ohlcv",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, symbol, open, high, low, close, volume FROM t WHERE close > 150 LIMIT 100",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

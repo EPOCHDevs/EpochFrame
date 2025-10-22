@@ -1,0 +1,14 @@
+{
+  "name": "Time-based OHLCV aggregation with timezone",
+  "description": "Aggregate OHLCV data by hour with timezone-aware timestamps",
+  "category": "aggregations",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT DATE_TRUNC('hour', timestamp) as hour, COUNT(*) as bars, MIN(low) as period_low, MAX(high) as period_high, SUM(volume) as total_volume FROM t GROUP BY hour ORDER BY hour LIMIT 10",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Volume profile by price level",
+  "description": "Aggregate volume by price buckets to create volume profile",
+  "category": "aggregations",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT FLOOR(close) as price_level, SUM(volume) as total_volume, COUNT(*) as occurrences FROM t GROUP BY price_level ORDER BY total_volume DESC LIMIT 20",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": []
+}

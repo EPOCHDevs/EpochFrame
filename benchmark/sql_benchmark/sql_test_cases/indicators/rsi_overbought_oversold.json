@@ -1,0 +1,13 @@
+{
+  "name": "RSI overbought/oversold detection",
+  "description": "Detect overbought (RSI > 70) and oversold (RSI < 30) conditions",
+  "category": "indicators",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT timestamp, price, rsi, CASE WHEN rsi > 70 THEN 'OVERBOUGHT' WHEN rsi < 30 THEN 'OVERSOLD' ELSE 'NEUTRAL' END as condition FROM t WHERE rsi > 70 OR rsi < 30",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": []
+}

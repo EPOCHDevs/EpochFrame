@@ -1,0 +1,13 @@
+{
+  "name": "IN clause with categorical signal",
+  "description": "Test IN clause with categorical string column combined with numeric filter",
+  "category": "signals",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT * FROM t WHERE signal IN ('BUY', 'SELL') AND rsi < 50",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": ["signal"]
+}

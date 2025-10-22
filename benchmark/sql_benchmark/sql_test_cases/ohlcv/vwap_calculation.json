@@ -1,0 +1,14 @@
+{
+  "name": "VWAP calculation and comparison",
+  "description": "Calculate VWAP and compare with stored vwap column",
+  "category": "ohlcv",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, close, vwap, volume, (close - vwap) as vwap_diff FROM t WHERE ABS(close - vwap) > 1.0 LIMIT 50",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

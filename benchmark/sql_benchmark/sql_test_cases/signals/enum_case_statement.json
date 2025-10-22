@@ -1,0 +1,13 @@
+{
+  "name": "CASE statement with categorical signal",
+  "description": "Test CASE statement mapping categorical string values to numeric values",
+  "category": "signals",
+  "setup_data": {
+    "type": "indicators",
+    "rows": 1000
+  },
+  "query": "SELECT signal, CASE WHEN signal = 'BUY' THEN 1 WHEN signal = 'SELL' THEN -1 ELSE 0 END as signal_value FROM t",
+  "expect_exception": false,
+  "timezone_sensitive": false,
+  "enum_columns": ["signal"]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Calculate moving average with window function",
+  "description": "Use window functions to calculate simple moving average over price",
+  "category": "transformations",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 1000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT timestamp, close, AVG(close) OVER (ORDER BY timestamp ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) as sma_20 FROM t LIMIT 100",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

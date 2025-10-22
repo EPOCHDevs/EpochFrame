@@ -1,0 +1,14 @@
+{
+  "name": "DATE_TRUNC with timezone awareness",
+  "description": "Test DATE_TRUNC on timezone-aware timestamps to aggregate by day",
+  "category": "timeseries",
+  "setup_data": {
+    "type": "ohlcv",
+    "rows": 10000,
+    "symbol": "AAPL"
+  },
+  "query": "SELECT DATE_TRUNC('day', timestamp) as day, COUNT(*) as count FROM t GROUP BY day ORDER BY day LIMIT 10",
+  "expect_exception": false,
+  "timezone_sensitive": true,
+  "enum_columns": []
+}

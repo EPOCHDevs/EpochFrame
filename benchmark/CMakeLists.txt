@@ -37,4 +37,7 @@ add_custom_target(compare_benchmarks
 add_custom_target(run_all_benchmarks
     DEPENDS run_python_benchmark run_epoch_benchmark compare_benchmarks
     COMMENT "Running all benchmarks and comparison"
-) 
+)
+
+# Add sql_benchmark subdirectory
+add_subdirectory(sql_benchmark) 
