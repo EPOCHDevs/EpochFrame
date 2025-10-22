@@ -124,7 +124,7 @@ std::shared_ptr<arrow::Table> CAPIConnection::query(std::shared_ptr<arrow::Table
     }
 
     // Create temp view using read_arrow (built-in function, no extension needed)
-    std::string create_view_sql = "CREATE OR REPLACE TEMP VIEW t AS SELECT * FROM read_arrow('" + temp_file + "')";
+    std::string create_view_sql = "CREATE OR REPLACE TEMP VIEW table AS SELECT * FROM read_arrow('" + temp_file + "')";
     auto view_result = conn->Query(create_view_sql);
     if (view_result->HasError()) {
         throw std::runtime_error("Failed to create temp view: " + view_result->GetError());

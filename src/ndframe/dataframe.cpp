@@ -758,7 +758,7 @@ namespace epoch_frame
 
 
     // SQL Query Interface Implementation - single table only
-    std::shared_ptr<arrow::Table> DataFrame::query(const std::string& sql, const std::string& /* table_name */) const
+    std::shared_ptr<arrow::Table> DataFrame::query(const std::string& sql) const
     {
         // Use new single-table API - table is always available as "t"
         auto& conn = getSQLEngineConnection();

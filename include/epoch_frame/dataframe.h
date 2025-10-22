@@ -58,7 +58,7 @@ namespace epoch_frame
          * // User decides how to create DataFrame from result_table
          * ```
          */
-        std::shared_ptr<arrow::Table> query(const std::string& sql, const std::string& table_name = "") const;
+        std::shared_ptr<arrow::Table> query(const std::string& sql) const;
 
         //--------------------------------------------------------------------------
         // 2) Basic arithmetic: +, -, *, / with NDFrame and Scalar
