@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(nanoarrow)
 # Populate duckdb_nanoarrow sources but don't add subdirectory
 FetchContent_GetProperties(duckdb_nanoarrow)
 if(NOT duckdb_nanoarrow_POPULATED)
-    FetchContent_Populate(duckdb_nanoarrow)
+    FetchContent_MakeAvailable(duckdb_nanoarrow)
     # Don't call add_subdirectory - we'll manually create the library
 
     # Create a zstd.h shim header that nanoarrow will include
