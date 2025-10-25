@@ -164,6 +164,21 @@ namespace epoch_frame {
     // Helper to generate unique index column name to avoid collisions
     std::string get_unique_index_column_name(std::vector<arrow::TablePtr> const& tables);
 
+    // Helper functions for concat operations (used by Concatenator)
+    std::vector<FrameOrSeries> remove_empty_objs(std::vector<FrameOrSeries> const& objs);
+    struct ConcatInputs {
+        std::vector<DataFrame> dataframes;
+        std::vector<IndexPtr> indices;
+        std::vector<arrow::TablePtr> tables;
+    };
+    ConcatInputs prepare_concat_inputs(std::vector<FrameOrSeries> const& objs);
+    std::vector<std::string> check_duplicate_columns(std::vector<arrow::TablePtr> const& tables);
+    bool check_index_overlap(std::vector<IndexPtr> const& indices);
+    DataFrame concat_rows_acero(
+        std::vector<arrow::TablePtr> const& tables,
+        std::vector<IndexPtr> const& indices,
+        bool ignore_index);
+
     template <typename T>
     std::vector<arrow::Datum> make_datum_vector(std::vector<T> const& v) {
         std::vector<arrow::Datum> result(v.size());

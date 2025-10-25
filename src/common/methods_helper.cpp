@@ -3,6 +3,7 @@
 //
 
 #include "methods_helper.h"
+#include "concatenator.h"
 #include "common/epoch_thread_pool.h"
 #include "epoch_frame/factory/array_factory.h"
 #include "epoch_frame/factory/dataframe_factory.h"
@@ -16,6 +17,7 @@
 #include <fmt/format.h>
 #include <index/datetime_index.h>
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <tbb/parallel_for.h>
 #include <unordered_set>
 
@@ -540,13 +542,6 @@ namespace epoch_frame
     // Helper functions for concat - Following Single Responsibility Principle
     // ============================================================================
 
-    struct ConcatInputs
-    {
-        std::vector<DataFrame> dataframes;
-        std::vector<IndexPtr> indices;
-        std::vector<arrow::TablePtr> tables;
-    };
-
     ConcatInputs prepare_concat_inputs(std::vector<FrameOrSeries> const& objs)
     {
         ConcatInputs result;
@@ -736,158 +731,6 @@ namespace epoch_frame
         return true;  // Has overlap
     }
 
-    ac::Declaration build_acero_join_plan(
-        std::vector<arrow::TablePtr> const& tables_with_index,
-        ac::JoinType join_type,
-        std::string const& index_name)
-    {
-        // For single table, just return it
-        if (tables_with_index.size() == 1) {
-            return ac::Declaration{"table_source", ac::TableSourceNodeOptions(tables_with_index[0])};
-        }
-
-        // For 2 tables, use simple join
-        if (tables_with_index.size() == 2) {
-            ac::Declaration left{"table_source", ac::TableSourceNodeOptions(tables_with_index[0])};
-            ac::Declaration right{"table_source", ac::TableSourceNodeOptions(tables_with_index[1])};
-
-            ac::HashJoinNodeOptions join_opts{
-                join_type,
-                /*left_keys=*/{index_name},
-                /*right_keys=*/{index_name},
-                cp::literal(true),
-                "_left_1",
-                "_right_1"
-            };
-
-            return ac::Declaration{
-                "hashjoin",
-                {std::move(left), std::move(right)},
-                std::move(join_opts)
-            };
-        }
-
-        // For 3+ tables, we need to materialize and re-add index column after each join
-        // to avoid Acero's "No match or multiple matches" error
-        arrow::TablePtr current_table = tables_with_index[0];
-
-        for (size_t i = 1; i < tables_with_index.size(); i++) {
-            ac::Declaration left{"table_source", ac::TableSourceNodeOptions(current_table)};
-            ac::Declaration right{"table_source", ac::TableSourceNodeOptions(tables_with_index[i])};
-
-            std::string left_suffix = "_left_" + std::to_string(i);
-            std::string right_suffix = "_right_" + std::to_string(i);
-
-            ac::HashJoinNodeOptions join_opts{
-                join_type,
-                /*left_keys=*/{index_name},
-                /*right_keys=*/{index_name},
-                cp::literal(true),
-                left_suffix,
-                right_suffix
-            };
-
-            ac::Declaration hashjoin{
-                "hashjoin",
-                {std::move(left), std::move(right)},
-                std::move(join_opts)
-            };
-
-            // Materialize the join result
-            current_table = AssertResultIsOk(ac::DeclarationToTable(hashjoin));
-
-            // Coalesce the index columns and re-add with original name
-            auto index_col_left = current_table->GetColumnByName(index_name + left_suffix);
-            auto index_col_right = current_table->GetColumnByName(index_name + right_suffix);
-
-            if (index_col_left && index_col_right) {
-                auto coalesced = arrow_utils::call_compute_array({index_col_left, index_col_right}, "coalesce");
-
-                // Remove the suffixed index columns
-                auto left_idx = current_table->schema()->GetFieldIndex(index_name + left_suffix);
-                auto right_idx = current_table->schema()->GetFieldIndex(index_name + right_suffix);
-
-                if (left_idx >= 0) {
-                    current_table = AssertResultIsOk(current_table->RemoveColumn(left_idx));
-                    // After removing left, right index shifts down
-                    right_idx = current_table->schema()->GetFieldIndex(index_name + right_suffix);
-                }
-                if (right_idx >= 0) {
-                    current_table = AssertResultIsOk(current_table->RemoveColumn(right_idx));
-                }
-
-                // Add coalesced index back with original name
-                current_table = AssertResultIsOk(
-                    current_table->AddColumn(0, arrow::field(index_name, coalesced->type()), coalesced));
-            }
-        }
-
-        return ac::Declaration{"table_source", ac::TableSourceNodeOptions(current_table)};
-    }
-
-    arrow::ChunkedArrayPtr coalesce_index_columns(
-        arrow::TablePtr const& merged,
-        std::string const& index_name)
-    {
-        // Find all index columns (with suffixes from joins)
-        std::vector<std::string> index_columns;
-        for (int i = 0; i < merged->num_columns(); i++) {
-            auto col_name = merged->schema()->field(i)->name();
-            if (col_name == index_name ||
-                col_name.find(std::string(index_name) + "_left_") == 0 ||
-                col_name.find(std::string(index_name) + "_right_") == 0) {
-                index_columns.push_back(col_name);
-            }
-        }
-
-        if (index_columns.empty()) {
-            return nullptr;
-        }
-
-        // Gather index arrays
-        std::vector<arrow::ChunkedArrayPtr> index_arrays;
-        for (const auto& col_name : index_columns) {
-            index_arrays.push_back(merged->GetColumnByName(col_name));
-        }
-
-        if (index_arrays.size() == 1) {
-            return index_arrays[0];
-        }
-
-        // Coalesce multiple index columns
-        std::vector<arrow::Datum> datums;
-        for (const auto& arr : index_arrays) {
-            datums.push_back(arr);
-        }
-        return arrow_utils::call_compute_array(datums, "coalesce");
-    }
-
-    arrow::TablePtr remove_index_columns(
-        arrow::TablePtr merged,
-        std::string const& index_name)
-    {
-        // Find and remove all index-related columns
-        std::vector<std::string> columns_to_remove;
-        for (int i = 0; i < merged->num_columns(); i++) {
-            auto col_name = merged->schema()->field(i)->name();
-            if (col_name == index_name ||
-                col_name.find(std::string(index_name) + "_left_") == 0 ||
-                col_name.find(std::string(index_name) + "_right_") == 0) {
-                columns_to_remove.push_back(col_name);
-            }
-        }
-
-        for (const auto& col_name : columns_to_remove) {
-            auto col_idx = merged->schema()->GetFieldIndex(col_name);
-            if (col_idx >= 0) {
-                merged = AssertResultIsOk(merged->RemoveColumn(col_idx));
-            }
-        }
-
-        return merged;
-    }
-
-    // Main row concatenation function using Acero
     DataFrame concat_rows_acero(
         std::vector<arrow::TablePtr> const& tables,
         std::vector<IndexPtr> const& indices,
@@ -929,147 +772,34 @@ namespace epoch_frame
         return extract_index_from_merged_table(merged, indexName, ignore_index);
     }
 
-    // Main column concatenation function using Acero
-    DataFrame concat_columns_acero(
-        std::vector<arrow::TablePtr> const& tables,
-        std::vector<IndexPtr> const& indices,
-        JoinType join_type,
-        bool ignore_index)
-    {
-        // Generate unique index column name to avoid collisions with existing columns
-        // This is critical: if any input table has a column named "__index__",
-        // Acero's join will fail with "No match or multiple matches for key field reference"
-        const std::string indexName = get_unique_index_column_name(tables);
-
-        // Check for duplicate column names
-        auto duplicate_columns = check_duplicate_columns(tables);
-        bool has_duplicates = !duplicate_columns.empty();
-
-        // For inner join with duplicates, check if indices overlap
-        if (has_duplicates && join_type == JoinType::Inner) {
-            if (!check_index_overlap(indices)) {
-                // No overlapping indices - return empty DataFrame
-                return make_empty_dataframe(indices[0]->dtype());
-            }
-        }
-
-        // If we have duplicates and would have rows, throw error
-        if (has_duplicates) {
-            std::string duplicate_list;
-            for (size_t i = 0; i < duplicate_columns.size(); ++i) {
-                if (i > 0) duplicate_list += ", ";
-                duplicate_list += "'" + duplicate_columns[i] + "'";
-            }
-            throw std::runtime_error(fmt::format(
-                "concat: Duplicate column names detected: {}. "
-                "Use different column names or consider using suffixes to avoid conflicts.",
-                duplicate_list));
-        }
-
-        // Add index as column to all tables
-        std::vector<arrow::TablePtr> tables_with_index(tables.size());
-        for (size_t i = 0; i < tables.size(); i++) {
-            auto index_array = indices[i]->array().as_chunked_array();
-            auto index_field = arrow::field(indexName, index_array->type());
-            tables_with_index[i] = AssertResultIsOk(
-                tables[i]->AddColumn(0, index_field, index_array));
-        }
-
-        // Build and execute join plan
-        ac::JoinType acero_join_type = (join_type == JoinType::Inner)
-                                ? ac::JoinType::INNER
-                                : ac::JoinType::FULL_OUTER;
-        auto join_plan = build_acero_join_plan(tables_with_index, acero_join_type, indexName);
-        arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(join_plan));
-
-        // Coalesce and sort by index
-        auto final_index_array = coalesce_index_columns(merged, indexName);
-        if (final_index_array) {
-            auto sort_indices = arrow_utils::call_compute_array({final_index_array}, "sort_indices");
-            merged = AssertTableResultIsOk(arrow::compute::Take(merged, sort_indices));
-            final_index_array = AssertArrayResultIsOk(
-                arrow::compute::Take(final_index_array, sort_indices));
-        }
-
-        // Remove index columns
-        merged = remove_index_columns(merged, indexName);
-
-        // Create final DataFrame with reconstructed index
-        if (!ignore_index && final_index_array) {
-            auto final_index = factory::index::make_index(
-                factory::array::make_contiguous_array(final_index_array),
-                std::nullopt,
-                "");
-            return DataFrame(final_index, merged);
-        } else {
-            return DataFrame(factory::index::from_range(merged->num_rows()), merged);
-        }
-    }
-
     DataFrame concat(const ConcatOptions& options)
     {
-        // Validate input
-        if (options.frames.empty())
-        {
-            throw std::runtime_error("concat: no frames to concatenate");
-        }
-
-        // Early exit for single frame
-        if (options.frames.size() == 1)
-        {
-            return options.frames.front().to_frame();
-        }
-
-        // Remove empty objects
-        std::vector<FrameOrSeries> cleanedObjs = remove_empty_objs(options.frames);
-        if (cleanedObjs.empty())
-        {
-            return make_empty_dataframe(options.frames.front().index()->dtype());
-        }
-        if (cleanedObjs.size() == 1)
-        {
-            return (options.joinType == JoinType::Inner)
-                       ? make_empty_dataframe(options.frames.front().index()->dtype())
-                       : cleanedObjs.front().to_frame();
-        }
-
-        // Prepare inputs - convert FrameOrSeries to working data structures
-        auto [dataframes, indices, tables] = prepare_concat_inputs(cleanedObjs);
-
-        // Dispatch to appropriate concat function
-        DataFrame frame = (options.axis == AxisType::Row)
-            ? concat_rows_acero(tables, indices, options.ignore_index)
-            : concat_columns_acero(tables, indices, options.joinType, options.ignore_index);
-
-        // Apply sorting if requested
-        if (options.sort)
-        {
-            return options.axis == AxisType::Column ? frame.sort_index() : frame.sort_columns();
-        }
-        return frame;
+        // Delegate to Concatenator class
+        return Concatenator(
+            options.frames,
+            options.joinType,
+            options.axis,
+            options.ignore_index,
+            options.sort
+        ).execute();
     }
 
     DataFrame merge(const MergeOptions& options)
     {
-        // Convert to DataFrames
-        DataFrame df_left  = options.left.to_frame();
-        DataFrame df_right = options.right.to_frame();
+        // Convert to DataFrames and wrap in FrameOrSeries
+        std::vector<FrameOrSeries> frames = {
+            FrameOrSeries(options.left.to_frame()),
+            FrameOrSeries(options.right.to_frame())
+        };
 
-        // Prepare tables and indices for Acero
-        std::vector<arrow::TablePtr> tables = {df_left.table(), df_right.table()};
-        std::vector<IndexPtr> indices = {df_left.index(), df_right.index()};
-
-        // Dispatch to concat_*_acero functions (they handle N tables, 2 is trivial)
-        DataFrame frame = (options.axis == AxisType::Row)
-            ? concat_rows_acero(tables, indices, options.ignore_index)
-            : concat_columns_acero(tables, indices, options.joinType, options.ignore_index);
-
-        // Apply sorting if requested
-        if (options.sort) {
-            return options.axis == AxisType::Column ? frame.sort_index() : frame.sort_columns();
-        }
-
-        return frame;
+        // Delegate to Concatenator class
+        return Concatenator(
+            frames,
+            options.joinType,
+            options.axis,
+            options.ignore_index,
+            options.sort
+        ).execute();
     }
 
     //----------------------------------------------------------------------

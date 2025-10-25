@@ -252,7 +252,11 @@ namespace epoch_frame
             });
 
         auto concatenated = concat({.frames = results, .axis = AxisType::Row}).to_series();
-        return concatenated.reindex(m_data.index());
+        // Optimization: Only reindex if indices actually differ
+        if (!concatenated.index()->equals(m_data.index())) {
+            return concatenated.reindex(m_data.index());
+        }
+        return concatenated;
     }
 
     DataFrame ApplyDataFrameRollingWindowOperations::apply(
@@ -288,7 +292,11 @@ namespace epoch_frame
             });
 
         auto concatenated = concat({.frames = results, .axis = AxisType::Row});
-        return concatenated.reindex(m_data.index());
+        // Optimization: Only reindex if indices actually differ
+        if (!concatenated.index()->equals(m_data.index())) {
+            return concatenated.reindex(m_data.index());
+        }
+        return concatenated;
     }
 
     DataFrame ApplyDataFrameRollingWindowOperations::apply(
@@ -320,6 +328,10 @@ namespace epoch_frame
         auto concatenated = concat({.frames = results, .axis = AxisType::Row});
         if (m_data.size() != concatenated.size())
         {
+            return concatenated.reindex(m_data.index());
+        }
+        // Optimization: Only reindex if indices actually differ
+        if (!concatenated.index()->equals(m_data.index())) {
             return concatenated.reindex(m_data.index());
         }
         return concatenated;
