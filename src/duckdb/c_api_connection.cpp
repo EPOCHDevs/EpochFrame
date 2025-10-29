@@ -203,6 +203,38 @@ std::shared_ptr<arrow::Table> CAPIConnection::query(std::shared_ptr<arrow::Table
         result_table = table_result.ValueOrDie();
     }
 
+    // Normalize DECIMAL columns to DOUBLE to avoid Arrow cast issues
+    auto result_schema = result_table->schema();
+    std::vector<std::shared_ptr<arrow::Field>> new_fields;
+    std::vector<std::shared_ptr<arrow::ChunkedArray>> new_columns;
+    bool has_decimals = false;
+
+    for (int i = 0; i < result_schema->num_fields(); i++) {
+        auto field = result_schema->field(i);
+        auto column = result_table->column(i);
+
+        if (field->type()->id() == arrow::Type::DECIMAL128 ||
+            field->type()->id() == arrow::Type::DECIMAL256) {
+            has_decimals = true;
+            // Cast to double
+            auto cast_result = arrow::compute::Cast(column, arrow::float64());
+            if (!cast_result.ok()) {
+                throw std::runtime_error("Failed to cast DECIMAL to DOUBLE: " +
+                                       cast_result.status().ToString());
+            }
+            new_columns.push_back(cast_result.ValueOrDie().chunked_array());
+            new_fields.push_back(arrow::field(field->name(), arrow::float64()));
+        } else {
+            new_columns.push_back(column);
+            new_fields.push_back(field);
+        }
+    }
+
+    if (has_decimals) {
+        auto new_schema = arrow::schema(new_fields);
+        result_table = arrow::Table::Make(new_schema, new_columns);
+    }
+
     // Convert extension types to regular Arrow types
     result_table = convertExtensionTypes(result_table);
 
