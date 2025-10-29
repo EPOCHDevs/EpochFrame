@@ -188,3 +188,120 @@ TEST_CASE("DataFrame SQL Query Interface - Simple Single Table", "[sql][simple]"
         REQUIRE(std::static_pointer_cast<arrow::DoubleScalar>(value_scalar)->value == 200.3);
     }
 }
+
+TEST_CASE("DataFrame SQL Query Interface - DECIMAL to DOUBLE Normalization", "[sql][decimal]") {
+    // Create a test dataframe with integer values
+    arrow::Int64Builder id_builder;
+    arrow::Int64Builder amount_builder;
+
+    // Add sample data
+    REQUIRE(id_builder.AppendValues({1, 2, 3, 4, 5}).ok());
+    REQUIRE(amount_builder.AppendValues({100, 200, 150, 300, 250}).ok());
+
+    std::shared_ptr<arrow::Array> id_array, amount_array;
+    REQUIRE(id_builder.Finish(&id_array).ok());
+    REQUIRE(amount_builder.Finish(&amount_array).ok());
+
+    auto table = arrow::Table::Make(
+        arrow::schema({
+            arrow::field("id", arrow::int64()),
+            arrow::field("amount", arrow::int64())
+        }),
+        {id_array, amount_array}
+    );
+
+    DataFrame df(table);
+
+    SECTION("SUM aggregation returns DOUBLE not DECIMAL") {
+        // DuckDB's SUM() on integers returns DECIMAL128, which should be normalized to DOUBLE
+        auto result_table = df.query("SELECT SUM(amount) as total FROM self");
+
+        REQUIRE(result_table->num_rows() == 1);
+        REQUIRE(result_table->num_columns() == 1);
+
+        // Verify the column type is DOUBLE, not DECIMAL
+        auto total_column = result_table->GetColumnByName("total");
+        REQUIRE(total_column != nullptr);
+        REQUIRE(total_column->type()->id() == arrow::Type::DOUBLE);
+
+        // Verify we can access it as double
+        auto result_index = factory::index::from_range(result_table->num_rows());
+        DataFrame result(result_index, result_table);
+
+        INFO("SUM result - expecting 1000.0 as DOUBLE:");
+        INFO(result);
+
+        REQUIRE(result.iloc(0, "total").value<double>().value() == 1000.0);
+    }
+
+    SECTION("Multiple DECIMAL columns normalized") {
+        auto result_table = df.query(
+            "SELECT SUM(amount) as total_amount, AVG(amount) as avg_amount, MAX(amount) as max_amount FROM self"
+        );
+
+        REQUIRE(result_table->num_rows() == 1);
+        REQUIRE(result_table->num_columns() == 3);
+
+        // Verify all aggregate columns are DOUBLE
+        auto total_column = result_table->GetColumnByName("total_amount");
+        auto avg_column = result_table->GetColumnByName("avg_amount");
+        auto max_column = result_table->GetColumnByName("max_amount");
+
+        REQUIRE(total_column->type()->id() == arrow::Type::DOUBLE);
+        REQUIRE(avg_column->type()->id() == arrow::Type::DOUBLE);
+        REQUIRE(max_column->type()->id() == arrow::Type::INT64);  // MAX preserves int64
+
+        auto result_index = factory::index::from_range(result_table->num_rows());
+        DataFrame result(result_index, result_table);
+
+        INFO("Multiple aggregates:");
+        INFO(result);
+
+        REQUIRE(result.iloc(0, "total_amount").value<double>().value() == 1000.0);
+        REQUIRE(result.iloc(0, "avg_amount").value<double>().value() == 200.0);
+        REQUIRE(result.iloc(0, "max_amount").value<int64_t>().value() == 300);
+    }
+
+    SECTION("GROUP BY with SUM returns DOUBLE") {
+        auto result_table = df.query(
+            "SELECT id % 2 as group_id, SUM(amount) as total FROM self GROUP BY id % 2 ORDER BY group_id"
+        );
+
+        REQUIRE(result_table->num_rows() == 2);
+        REQUIRE(result_table->num_columns() == 2);
+
+        // Verify SUM column is DOUBLE
+        auto total_column = result_table->GetColumnByName("total");
+        REQUIRE(total_column->type()->id() == arrow::Type::DOUBLE);
+
+        auto result_index = factory::index::from_range(result_table->num_rows());
+        DataFrame result(result_index, result_table);
+
+        INFO("GROUP BY with SUM:");
+        INFO(result);
+
+        // Odd IDs (1,3,5): 100+150+250 = 500
+        // Even IDs (2,4): 200+300 = 500
+        REQUIRE(result.iloc(0, "total").value<double>().value() == 500.0);
+        REQUIRE(result.iloc(1, "total").value<double>().value() == 500.0);
+    }
+
+    SECTION("DECIMAL with non-zero scale preserved as DOUBLE") {
+        // Create explicit DECIMAL with scale > 0
+        auto result_table = df.query("SELECT CAST(amount AS DECIMAL(18,2)) as decimal_amount FROM self LIMIT 1");
+
+        REQUIRE(result_table->num_rows() == 1);
+
+        // Should be normalized to DOUBLE
+        auto decimal_column = result_table->GetColumnByName("decimal_amount");
+        REQUIRE(decimal_column->type()->id() == arrow::Type::DOUBLE);
+
+        auto result_index = factory::index::from_range(result_table->num_rows());
+        DataFrame result(result_index, result_table);
+
+        INFO("DECIMAL(18,2) normalized to DOUBLE:");
+        INFO(result);
+
+        REQUIRE(result.iloc(0, "decimal_amount").value<double>().value() == 100.0);
+    }
+}
