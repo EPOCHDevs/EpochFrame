@@ -239,9 +239,9 @@ namespace epoch_frame
             return to_type(arrow::compute::MonthsBetween(m_data.value(), other.value()));
         }
 
-        Type weeks_between(Type const& other, arrow::compute::DayOfWeekOptions const& options) const
+        Type weeks_between(Type const& other) const
         {
-            return to_type(arrow::compute::WeeksBetween(m_data.value(), other.value(), &options));
+            return to_type(arrow::compute::WeeksBetween(m_data.value(), other.value()));
         }
 
         Type days_between(Type const& other) const
