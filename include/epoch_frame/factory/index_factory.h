@@ -29,7 +29,7 @@ namespace epoch_frame::factory::index {
         std::optional<arrow::TimestampScalar> end{};
         std::optional<int64_t> periods{};
         DateOffsetHandlerPtr offset;
-        std::string tz{""};
+        std::string tz{"UTC"};
         AmbiguousTimeHandling ambiguous{AmbiguousTimeHandling::RAISE};
         NonexistentTimeHandling nonexistent{NonexistentTimeHandling::RAISE};
     };

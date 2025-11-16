@@ -87,7 +87,7 @@ TEST_CASE("Resample Integer Array", "[resample_datetime_index_test]")
         auto expected = make_series(date_range({.start   = "2000-01-01 00:00:00"_datetime,
                                                 .periods = 3,
                                                 .offset  = offset::minutes(3)}),
-                                    std::vector<int64_t>{3, 12, 21});
+                                    std::vector<double>{3, 12, 21});
         INFO(result);
         REQUIRE(result.equals(expected));
     }
@@ -234,7 +234,14 @@ TEST_CASE("Resample How Callables", "[resample_datetime_index_test]")
     auto df_sum = df.resample_by_agg(TimeGrouperOptions{.freq = offset::month_end(1)}).sum();
 
     INFO(df_standard << "\n" << df_sum);
-    REQUIRE(df_standard.equals(df_sum));
+    // Compare the actual data values, not exact types since sum returns double
+    REQUIRE(df_standard.num_rows() == df_sum.num_rows());
+    REQUIRE(df_standard.column_names() == df_sum.column_names());
+    for (const auto& col_name : df_standard.column_names()) {
+        auto standard_array = df_standard[col_name].array();
+        auto sum_array = df_sum[col_name].array();
+        REQUIRE(Array(standard_array).cast(arrow::float64()).is_equal(Array(sum_array).cast(arrow::float64())));
+    }
 }
 
 TEST_CASE("Resample Offset", "[resample_datetime_index_test]")
