@@ -35,9 +35,9 @@ namespace epoch_frame::factory::index {
     };
     IndexPtr date_range(DateRangeOptions const&);
 
-    IndexPtr make_datetime_index(std::vector<int64_t> const& timestamps, std::string const& name="", std::string const& tz="");
-    IndexPtr make_datetime_index(std::vector<DateTime> const& timestamps, std::string const& name="", std::string const& tz="");
-    IndexPtr make_datetime_index(std::vector<arrow::TimestampScalar> const& timestamps, std::string const& name="", std::string const& tz="");
+    IndexPtr make_datetime_index(std::vector<int64_t> const& timestamps, std::string const& name="", std::string const& tz="UTC");
+    IndexPtr make_datetime_index(std::vector<DateTime> const& timestamps, std::string const& name="", std::string const& tz="UTC");
+    IndexPtr make_datetime_index(std::vector<arrow::TimestampScalar> const& timestamps, std::string const& name="", std::string const& tz="UTC");
     IndexPtr make_index(arrow::ArrayPtr const& index_array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name);
 
     IndexPtr make_index(arrow::ChunkedArrayPtr const& index_array, std::optional<MonotonicDirection> monotonic_direction, std::string const& name);
