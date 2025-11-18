@@ -23,12 +23,12 @@ TEST_CASE("SessionAnchorOffsetHandler throws on unsupported operations")
     auto schedule = cal->schedule("2025-01-03"__date.date(), "2025-01-10"__date.date(), {});
     REQUIRE(schedule.shape()[0] >= 2);
 
-    auto d0_open  = schedule["MarketOpen"].iloc(0).to_datetime().replace_tz("UTC");
-    auto d0_close = schedule["MarketClose"].iloc(0).to_datetime().replace_tz("UTC");
-    auto d1_open  = schedule["MarketOpen"].iloc(1).to_datetime().replace_tz("UTC");
+    auto d0_open  = schedule["MarketOpen"].iloc(0);
+    auto d0_close = schedule["MarketClose"].iloc(0);
+    auto d1_open  = schedule["MarketOpen"].iloc(1);
 
     // Build SessionRange from day's open/close times (tz must match timestamps used)
-    auto session = SessionRange{d0_open.time(), d0_close.time()};
+    auto session = SessionRange{d0_open.to_datetime().time(), d0_close.to_datetime().time()};
 
     SECTION("add() throws")
     {
@@ -75,7 +75,7 @@ TEST_CASE("SessionAnchorOffsetHandler throws on unsupported operations")
         auto after_open = session_anchor(session, SessionAnchorWhich::AfterOpen,
                                          TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
 
-        auto d0_after_open = (d0_open + TimeDelta{chrono_minutes(2)}).timestamp();
+        auto d0_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
 
         // This should still work as it doesn't rely on the unsupported operations
         REQUIRE(after_open->is_on_offset(d0_after_open));
@@ -100,13 +100,13 @@ TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta > 0")
     auto schedule = cal->schedule("2025-01-03"__date.date(), "2025-01-10"__date.date(), {});
     REQUIRE(schedule.shape()[0] >= 2);
 
-    auto d0_open  = schedule["MarketOpen"].iloc(0).to_datetime().replace_tz("UTC");
-    auto d0_close = schedule["MarketClose"].iloc(0).to_datetime().replace_tz("UTC");
+    auto d0_open  = schedule["MarketOpen"].iloc(0);
+    auto d0_close = schedule["MarketClose"].iloc(0);
 
-    auto d0_after_open = (d0_open + TimeDelta{chrono_minutes(2)}).timestamp();
-    auto d0_before_cl  = (d0_close - TimeDelta{chrono_minutes(2)}).timestamp();
+    auto d0_after_open = (d0_open + Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
+    auto d0_before_cl  = (d0_close - Scalar{TimeDelta{chrono_minutes(2)}}).timestamp();
 
-    auto session = SessionRange{d0_open.time(), d0_close.time()};
+    auto session = SessionRange{d0_open.to_datetime().time(), d0_close.to_datetime().time()};
 
     auto after_open   = session_anchor(session, SessionAnchorWhich::AfterOpen,
                                        TimeDelta{TimeDelta::Components{.minutes = 2}}, 1);
@@ -132,8 +132,8 @@ TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta > 0")
         // Times that should not be on the session anchor offset for the day
         auto d0_open_ts       = d0_open.timestamp();
         auto d0_close_ts      = d0_close.timestamp();
-        auto mid_after_open   = (d0_open + TimeDelta{chrono_minutes(30)}).timestamp();
-        auto mid_before_close = (d0_close - TimeDelta{chrono_minutes(30)}).timestamp();
+        auto mid_after_open   = (d0_open + Scalar{TimeDelta{chrono_minutes(30)}}).timestamp();
+        auto mid_before_close = (d0_close - Scalar{TimeDelta{chrono_minutes(30)}}).timestamp();
 
         // AfterOpen(anchor=open+2m) => open itself and other intraday times are not on offset
         REQUIRE_FALSE(after_open->is_on_offset(d0_open_ts));
@@ -155,8 +155,8 @@ TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta == 0 (open/close)"
     auto schedule = cal->schedule("2025-01-06"__date.date(), "2025-01-10"__date.date(), {});
     REQUIRE(schedule.shape()[0] >= 1);
 
-    auto d0_open_dt  = schedule["MarketOpen"].iloc(0).to_datetime().replace_tz("UTC");
-    auto d0_close_dt = schedule["MarketClose"].iloc(0).to_datetime().replace_tz("UTC");
+    auto d0_open_dt  = schedule["MarketOpen"].iloc(0).to_datetime();
+    auto d0_close_dt = schedule["MarketClose"].iloc(0).to_datetime();
 
     // Build SessionRange from the first day times
     auto session = SessionRange{d0_open_dt.time(), d0_close_dt.time()};
@@ -169,15 +169,15 @@ TEST_CASE("SessionAnchorOffsetHandler is_on_offset with delta == 0 (open/close)"
     SECTION("AfterOpen(delta=0): open time is on, +/- is off")
     {
         REQUIRE(ao0->is_on_offset(d0_open_dt.timestamp()));
-        REQUIRE_FALSE(ao0->is_on_offset((d0_open_dt + TimeDelta{chrono_minutes(1)}).timestamp()));
-        REQUIRE_FALSE(ao0->is_on_offset((d0_open_dt - TimeDelta{chrono_minutes(1)}).timestamp()));
+        REQUIRE_FALSE(ao0->is_on_offset(d0_open_dt.timestamp() + TimeDelta{chrono_minutes(1)}));
+        REQUIRE_FALSE(ao0->is_on_offset(d0_open_dt.timestamp() - TimeDelta{chrono_minutes(1)}));
     }
 
     SECTION("BeforeClose(delta=0): close time is on, +/- is off")
     {
         REQUIRE(bc0->is_on_offset(d0_close_dt.timestamp()));
-        REQUIRE_FALSE(bc0->is_on_offset((d0_close_dt + TimeDelta{chrono_minutes(1)}).timestamp()));
-        REQUIRE_FALSE(bc0->is_on_offset((d0_close_dt - TimeDelta{chrono_minutes(1)}).timestamp()));
+        REQUIRE_FALSE(bc0->is_on_offset(d0_close_dt.timestamp() + TimeDelta{chrono_minutes(1)}));
+        REQUIRE_FALSE(bc0->is_on_offset(d0_close_dt.timestamp() - TimeDelta{chrono_minutes(1)}));
     }
 }
 

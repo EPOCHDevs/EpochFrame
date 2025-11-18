@@ -96,30 +96,30 @@ TEST_CASE("Pandas examples", "[resample]") {
         struct TestCase {
             std::string name;
             efo::TimeGrouperOptions options;
-            std::vector<double> expected;
+            std::vector<int64_t> expected;
             std::vector<efo::DateTime> expected_index;
         };
 
         std::vector<TestCase> test_cases = {
             {"Sum(default)", efo::TimeGrouperOptions{
                 .freq = minutes(3)
-            }, {3, 12, 21}, {efo::DateTime(date).replace_tz("UTC"), efo::DateTime(date, {0h, 3min}).replace_tz("UTC"), efo::DateTime(date, {0h, 6min}).replace_tz("UTC")}},
+            }, {3, 12, 21}, {efo::DateTime(date), efo::DateTime(date, {0h, 3min}), efo::DateTime(date, {0h, 6min})}},
             {"Sum(label=right)", efo::TimeGrouperOptions{
                 .freq = minutes(3),
                 .label = epoch_core::GrouperLabelType::Right
-            }, {3, 12, 21}, {efo::DateTime(date, {0h, 3min}).replace_tz("UTC"), efo::DateTime(date, {0h, 6min}).replace_tz("UTC"), efo::DateTime(date, {0h, 9min}).replace_tz("UTC")}},
+            }, {3, 12, 21}, {efo::DateTime(date, {0h, 3min}), efo::DateTime(date, {0h, 6min}), efo::DateTime(date, {0h, 9min})}},
             {"Sum(closed=right, label=right)", efo::TimeGrouperOptions{
                 .freq = minutes(3),
                 .closed = epoch_core::GrouperClosedType::Right,
                 .label = epoch_core::GrouperLabelType::Right
-            }, {0, 6, 15, 15}, {efo::DateTime(date).replace_tz("UTC"), efo::DateTime(date, {0h, 3min}).replace_tz("UTC"), efo::DateTime(date, {0h, 6min}).replace_tz("UTC"), efo::DateTime(date, {0h, 9min}).replace_tz("UTC")}},
+            }, {0, 6, 15, 15}, {efo::DateTime(date), efo::DateTime(date, {0h, 3min}), efo::DateTime(date, {0h, 6min}), efo::DateTime(date, {0h, 9min})}},
         };
 
         for (auto const& [name, options, expected, expected_index] : test_cases) {
             DYNAMIC_SECTION(name) {
                 auto resampled = series.resample_by_agg(options).sum();
                 REQUIRE(resampled.index()->array().to_vector<efo::DateTime>() == expected_index);
-                REQUIRE(efo::Array(resampled.array()).to_vector<double>() == expected);
+                REQUIRE(efo::Array(resampled.array()).to_vector<int64_t>() == expected);
             }
         }
     }
@@ -519,14 +519,14 @@ TEST_CASE("Resample with different labels", "[resample]") {
         REQUIRE(right_labeled.size() == 3);
 
         // Expected sum values (same as in Pandas examples)
-        std::vector<double> expected_sums = {3, 12, 21};
-        REQUIRE(efo::Array(right_labeled.array()).to_vector<double>() == expected_sums);
+        std::vector<int64_t> expected_sums = {3, 12, 21};
+        REQUIRE(efo::Array(right_labeled.array()).to_vector<int64_t>() == expected_sums);
 
         // Expected index values (from Pandas examples)
         std::vector<efo::DateTime> expected_index = {
-            efo::DateTime(date, {0h, 3min}).replace_tz("UTC"),
-            efo::DateTime(date, {0h, 6min}).replace_tz("UTC"),
-            efo::DateTime(date, {0h, 9min}).replace_tz("UTC")
+            efo::DateTime(date, {0h, 3min}),
+            efo::DateTime(date, {0h, 6min}),
+            efo::DateTime(date, {0h, 9min})
         };
         REQUIRE(right_labeled.index()->array().to_vector<efo::DateTime>() == expected_index);
     }
@@ -540,15 +540,15 @@ TEST_CASE("Resample with different labels", "[resample]") {
         }).sum();
 
         // Expected sum values (same as in Pandas examples)
-        std::vector<double> expected_sums = {0, 6, 15, 15};
-        REQUIRE(efo::Array(closed_right.array()).to_vector<double>() == expected_sums);
+        std::vector<int64_t> expected_sums = {0, 6, 15, 15};
+        REQUIRE(efo::Array(closed_right.array()).to_vector<int64_t>() == expected_sums);
 
         // Expected index values (from Pandas examples)
         std::vector<efo::DateTime> expected_index = {
-            efo::DateTime(date).replace_tz("UTC"),
-            efo::DateTime(date, {0h, 3min}).replace_tz("UTC"),
-            efo::DateTime(date, {0h, 6min}).replace_tz("UTC"),
-            efo::DateTime(date, {0h, 9min}).replace_tz("UTC")
+            efo::DateTime(date),
+            efo::DateTime(date, {0h, 3min}),
+            efo::DateTime(date, {0h, 6min}),
+            efo::DateTime(date, {0h, 9min})
         };
         REQUIRE(closed_right.index()->array().to_vector<efo::DateTime>() == expected_index);
     }

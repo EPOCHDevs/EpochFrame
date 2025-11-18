@@ -36,20 +36,20 @@ TEST_CASE("GroupBy", "[groupby]") {
 
                 INFO(result);
 
-                 REQUIRE(result.loc(0_scalar, "a").value<double>() == 10);
-                 REQUIRE(result.loc(4_scalar, "a").value<double>() == 11);
-                 REQUIRE(result.loc(6_scalar, "a").value<double>() == 7);
-                 REQUIRE(result.loc(8_scalar, "a").value<double>() == 27);
-                 REQUIRE(result.loc(0_scalar, "b").value<double>() == 100);
-                 REQUIRE(result.loc(4_scalar, "b").value<double>() == 110);
-                 REQUIRE(result.loc(6_scalar, "b").value<double>() == 70);
-                 REQUIRE(result.loc(8_scalar, "b").value<double>() == 270);
+                 REQUIRE(result.loc(0_scalar, "a").value<int64_t>() == 10);
+                 REQUIRE(result.loc(4_scalar, "a").value<int64_t>() == 11);
+                 REQUIRE(result.loc(6_scalar, "a").value<int64_t>() == 7);
+                 REQUIRE(result.loc(8_scalar, "a").value<int64_t>() == 27);
+                 REQUIRE(result.loc(0_scalar, "b").value<int64_t>() == 100);
+                 REQUIRE(result.loc(4_scalar, "b").value<int64_t>() == 110);
+                 REQUIRE(result.loc(6_scalar, "b").value<int64_t>() == 70);
+                 REQUIRE(result.loc(8_scalar, "b").value<int64_t>() == 270);
 
                  if constexpr (std::is_same_v<T, arrow::ChunkedArrayVector>) {
-                     REQUIRE(result.loc(0_scalar, "c").value<double>() == 0);
-                     REQUIRE(result.loc(4_scalar, "c").value<double>() == 8);
-                     REQUIRE(result.loc(6_scalar, "c").value<double>() == 6);
-                     REQUIRE(result.loc(8_scalar, "c").value<double>() == 24);
+                     REQUIRE(result.loc(0_scalar, "c").value<int64_t>() == 0);
+                     REQUIRE(result.loc(4_scalar, "c").value<int64_t>() == 8);
+                     REQUIRE(result.loc(6_scalar, "c").value<int64_t>() == 6);
+                     REQUIRE(result.loc(8_scalar, "c").value<int64_t>() == 24);
                  }
             }, param);
         }
@@ -103,27 +103,27 @@ TEST_CASE("Advanced GroupBy", "[groupby]") {
         std::vector<std::string> fields{"a", "b"};
         arrow::ScalarPtr locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("bar"), arrow::MakeScalar("one")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 2.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 20);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 20);
 
         locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("bar"), arrow::MakeScalar("three")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 4.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 40);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 40);
 
         locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("bar"), arrow::MakeScalar("two")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 6.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 60);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 60);
 
         locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("foo"), arrow::MakeScalar("one")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 8.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 80);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 80);
 
         locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("foo"), arrow::MakeScalar("three")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 8.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 80);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 80);
 
         locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("foo"), arrow::MakeScalar("two")}, fields).MoveValueUnsafe();
         REQUIRE(result.loc(Scalar{locIndex}, "c").value<double>() == 8.0);
-        REQUIRE(result.loc(Scalar{locIndex}, "d").value<double>() == 80);
+        REQUIRE(result.loc(Scalar{locIndex}, "d").value<int64_t>() == 80);
     }
 
     SECTION("Validate group") {
@@ -406,7 +406,7 @@ TEST_CASE("Advanced GroupBy", "[groupby]") {
         // Validate some results for sum
         arrow::ScalarPtr locIndex = arrow::StructScalar::Make(arrow::ScalarVector{arrow::MakeScalar("bar"), arrow::MakeScalar("one")}, {"a", "b"}).MoveValueUnsafe();
         REQUIRE(sum_result.loc(Scalar{locIndex}, "c").value<double>() == 2.0);
-        REQUIRE(sum_result.loc(Scalar{locIndex}, "d").value<double>() == 20);
+        REQUIRE(sum_result.loc(Scalar{locIndex}, "d").value<int64_t>() == 20);
 
         // Validate some results for mean
         REQUIRE(mean_result.loc(Scalar{locIndex}, "c").value<double>() == 2.0);
