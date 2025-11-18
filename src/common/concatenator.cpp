@@ -64,9 +64,11 @@ DataFrame Concatenator::execute() {
         ? concat_rows()
         : concat_columns();
 
-    // Apply sorting if requested
+    // Apply sorting if requested (mirror original concat semantics)
     if (sort_) {
-        return axis_ == AxisType::Column ? frame.sort_index() : frame.sort_columns();
+        return (axis_ == AxisType::Column)
+            ? frame.sort_index()
+            : frame.sort_columns();
     }
     return frame;
 }
@@ -114,9 +116,9 @@ DataFrame Concatenator::concat_columns() {
             std::nullopt,
             "");
         return DataFrame(final_index, merged);
-    } else {
-        return DataFrame(factory::index::from_range(merged->num_rows()), merged);
     }
+
+    return DataFrame(factory::index::from_range(merged->num_rows()), merged);
 }
 
 // Row concatenation (delegates to existing implementation)
@@ -184,115 +186,77 @@ Concatenator::concat_aligned_indices(
     return {merged, final_index_array};
 }
 
-// Optimized path: Misaligned indices with pipelined join+coalesce+sort
+// Fixed: Misaligned indices - precompute union index then align each table
 std::tuple<arrow::TablePtr, arrow::ChunkedArrayPtr>
 Concatenator::concat_misaligned_pipelined(
     std::vector<arrow::TablePtr> const& tables,
     std::vector<IndexPtr> const& indices,
-    std::string const& indexName)
+    std::string const& /* indexName */)
 {
-    SPDLOG_DEBUG("Concatenator: Pre-renaming index columns for {} tables", tables.size());
+    SPDLOG_INFO("CONCAT_DEBUG: Using FIXED approach - precomputing union index for {} tables", tables.size());
 
-    size_t n_tables = tables.size();
-    std::vector<std::string> final_index_names(n_tables);
-    std::vector<arrow::TablePtr> tables_with_renamed_index(n_tables);
-
-    // Give each table a unique index column name
-    for (size_t i = 0; i < n_tables; i++) {
-        std::string unique_index_name = indexName + "_TBL" + std::to_string(i);
-        final_index_names[i] = unique_index_name;
-
-        auto index_array = indices[i]->array().as_chunked_array();
-        auto index_field = arrow::field(unique_index_name, index_array->type());
-        tables_with_renamed_index[i] = AssertResultIsOk(
-            tables[i]->AddColumn(0, index_field, index_array));
-    }
-
-    // Build join tree using the unique index column names
-    ac::Declaration current = ac::Declaration{
-        "table_source",
-        ac::TableSourceNodeOptions(tables_with_renamed_index[0])
-    };
-
-    for (size_t i = 1; i < n_tables; i++) {
-        ac::Declaration right_source{
-            "table_source",
-            ac::TableSourceNodeOptions(tables_with_renamed_index[i])
-        };
-
-        ac::HashJoinNodeOptions join_opts{
-            ac::JoinType::FULL_OUTER,
-            /*left_keys=*/{final_index_names[i-1]},
-            /*right_keys=*/{final_index_names[i]},
-            cp::literal(true),
-            "",  // Empty suffix - columns keep their unique names
-            ""   // Empty suffix
-        };
-
-        current = ac::Declaration{
-            "hashjoin",
-            {std::move(current), std::move(right_source)},
-            std::move(join_opts)
-        };
-    }
-
-    // Add project node to coalesce all index columns into one
-    std::vector<cp::Expression> project_exprs;
-    std::vector<std::string> project_names;
-
-    // Build coalesce expression: coalesce(__index___TBL0, __index___TBL1, ...)
-    std::vector<cp::Expression> index_field_refs;
-    for (const auto& name : final_index_names) {
-        index_field_refs.push_back(cp::field_ref(name));
-    }
-    cp::Expression coalesce_expr = cp::call("coalesce", index_field_refs);
-    project_exprs.push_back(coalesce_expr);
-    project_names.push_back(indexName);
-
-    // Add all data columns to the projection
+    // LOG: Input table info
     for (size_t i = 0; i < tables.size(); i++) {
-        for (int col_idx = 0; col_idx < tables[i]->num_columns(); col_idx++) {
-            std::string col_name = tables[i]->schema()->field(col_idx)->name();
-            project_exprs.push_back(cp::field_ref(col_name));
-            project_names.push_back(col_name);
+        SPDLOG_INFO("CONCAT_DEBUG: Input Table {}: {} rows, {} cols, index length: {}",
+                    i, tables[i]->num_rows(), tables[i]->num_columns(), indices[i]->size());
+    }
+
+    // Step 1: Compute the union of all indices (deduplicated)
+    IndexPtr merged_index = indices[0];
+    for (size_t i = 1; i < indices.size(); i++) {
+        SPDLOG_INFO("CONCAT_DEBUG: Before union: merged_index size={}, indices[{}] size={}",
+                   merged_index->size(), i, indices[i]->size());
+        merged_index = merged_index->union_(indices[i]);
+        SPDLOG_INFO("CONCAT_DEBUG: After union with table {}: merged_index size={}",
+                   i, merged_index->size());
+    }
+
+    SPDLOG_INFO("CONCAT_DEBUG: Merged index computed: {} unique values", merged_index->size());
+
+    // Step 2: Build a canonical aligned index order (sorted by value)
+    auto union_array = merged_index->array().as_chunked_array();
+    auto index_table = arrow::Table::Make(
+        arrow::schema({arrow::field("__idx", union_array->type())}),
+        {union_array});
+
+    auto sort_indices = AssertResultIsOk(
+        SortIndices(index_table,
+                    arrow::SortOptions{{arrow::compute::SortKey{"__idx"}}}));
+
+    auto sorted_union_array = AssertArrayResultIsOk(
+        arrow::compute::Take(union_array, sort_indices));
+
+    auto aligned_index = factory::index::make_index(
+        factory::array::make_contiguous_array(sorted_union_array),
+        std::nullopt,
+        merged_index->name());
+
+    // Step 3: Align each table to the aligned index
+    std::vector<arrow::TablePtr> aligned_tables;
+    for (size_t i = 0; i < tables.size(); i++) {
+        TableComponent table_component{indices[i], TableOrArray{tables[i]}};
+        auto aligned = align_by_index(table_component, aligned_index, Scalar{});
+        aligned_tables.push_back(aligned.get_table(""));
+
+        SPDLOG_INFO("CONCAT_DEBUG: Aligned Table {}: {} rows (was {})",
+                    i, aligned_tables[i]->num_rows(), tables[i]->num_rows());
+    }
+
+    // Step 4: Concatenate aligned tables column-wise (simple horizontal concat)
+    std::vector<arrow::ChunkedArrayPtr> all_columns;
+    std::vector<std::shared_ptr<arrow::Field>> all_fields;
+
+    for (const auto& table : aligned_tables) {
+        for (int i = 0; i < table->num_columns(); i++) {
+            all_columns.push_back(table->column(i));
+            all_fields.push_back(table->schema()->field(i));
         }
     }
 
-    ac::ProjectNodeOptions project_opts{project_exprs, project_names};
-    current = ac::Declaration{
-        "project",
-        {std::move(current)},
-        std::move(project_opts)
-    };
+    arrow::TablePtr merged = arrow::Table::Make(arrow::schema(all_fields), all_columns);
+    auto final_index_array = aligned_index->array().as_chunked_array();
 
-    // Add sort by the coalesced index
-    arrow::compute::Ordering ordering = {
-        {arrow::compute::SortKey(indexName, arrow::compute::SortOrder::Ascending)}
-    };
-    ac::OrderByNodeOptions sort_opts(ordering);
-    current = ac::Declaration{
-        "order_by",
-        {std::move(current)},
-        std::move(sort_opts)
-    };
-
-    SPDLOG_DEBUG("Concatenator: Executing multi-way join + coalesce + sort pipeline");
-    arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(current));
-
-    // Extract the coalesced index column
-    arrow::ChunkedArrayPtr final_index_array;
-    auto index_col = merged->GetColumnByName(indexName);
-    if (index_col) {
-        final_index_array = index_col;
-        // Remove the index column from the result table
-        auto idx = merged->schema()->GetFieldIndex(indexName);
-        if (idx >= 0) {
-            merged = AssertResultIsOk(merged->RemoveColumn(idx));
-        }
-    }
-
-    SPDLOG_DEBUG("Concatenator: Multi-way join completed - {} rows × {} columns",
-                 merged->num_rows(), merged->num_columns());
+    SPDLOG_INFO("CONCAT_DEBUG: Final result: {} rows, {} cols", merged->num_rows(), merged->num_columns());
 
     return {merged, final_index_array};
 }
