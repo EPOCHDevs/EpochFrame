@@ -96,7 +96,7 @@ TEST_CASE("Pandas examples", "[resample]") {
         struct TestCase {
             std::string name;
             efo::TimeGrouperOptions options;
-            std::vector<int64_t> expected;
+            std::vector<double> expected;
             std::vector<efo::DateTime> expected_index;
         };
 
@@ -119,7 +119,7 @@ TEST_CASE("Pandas examples", "[resample]") {
             DYNAMIC_SECTION(name) {
                 auto resampled = series.resample_by_agg(options).sum();
                 REQUIRE(resampled.index()->array().to_vector<efo::DateTime>() == expected_index);
-                REQUIRE(efo::Array(resampled.array()).to_vector<int64_t>() == expected);
+                REQUIRE(efo::Array(resampled.array()).to_vector<double>() == expected);
             }
         }
     }
@@ -519,8 +519,8 @@ TEST_CASE("Resample with different labels", "[resample]") {
         REQUIRE(right_labeled.size() == 3);
 
         // Expected sum values (same as in Pandas examples)
-        std::vector<int64_t> expected_sums = {3, 12, 21};
-        REQUIRE(efo::Array(right_labeled.array()).to_vector<int64_t>() == expected_sums);
+        std::vector<double> expected_sums = {3, 12, 21};
+        REQUIRE(efo::Array(right_labeled.array()).to_vector<double>() == expected_sums);
 
         // Expected index values (from Pandas examples)
         std::vector<efo::DateTime> expected_index = {
@@ -540,8 +540,8 @@ TEST_CASE("Resample with different labels", "[resample]") {
         }).sum();
 
         // Expected sum values (same as in Pandas examples)
-        std::vector<int64_t> expected_sums = {0, 6, 15, 15};
-        REQUIRE(efo::Array(closed_right.array()).to_vector<int64_t>() == expected_sums);
+        std::vector<double> expected_sums = {0, 6, 15, 15};
+        REQUIRE(efo::Array(closed_right.array()).to_vector<double>() == expected_sums);
 
         // Expected index values (from Pandas examples)
         std::vector<efo::DateTime> expected_index = {
