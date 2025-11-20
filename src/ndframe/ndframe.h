@@ -338,6 +338,7 @@ namespace epoch_frame
         // 13) Selection & Transform
         //--------------------------------------------------------------------------
         ChildType drop_null(DropMethod how = DropMethod::Any, AxisType axis = AxisType::Row,
+                            std::optional<int64_t> const&   thresh       = std::nullopt,
                             std::vector<std::string> const& subset       = {},
                             bool                            ignore_index = false) const;
 

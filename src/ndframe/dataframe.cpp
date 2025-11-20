@@ -765,4 +765,150 @@ namespace epoch_frame
         return conn.query(m_table, sql);
     }
 
+    // Drop duplicates based on index values
+    DataFrame DataFrame::drop_duplicates(DropDuplicatesKeepPolicy keep) const
+    {
+        // Early exit if index has no duplicates
+        if (!m_index->has_duplicates()) {
+            return *this;
+        }
+
+        // Use groupby with index to efficiently deduplicate
+        auto index_array = m_index->as_chunked_array();
+
+        switch (keep) {
+            case DropDuplicatesKeepPolicy::First:
+                return group_by_agg({index_array}).first();
+
+            case DropDuplicatesKeepPolicy::Last:
+                return group_by_agg({index_array}).last();
+
+            case DropDuplicatesKeepPolicy::False: {
+                // Drop all duplicates - keep only unique index values
+                // Strategy: group by index, count occurrences, filter where count == 1
+
+                // Get unique index values
+                auto unique_index = m_index->drop_duplicates();
+
+                // For each unique value, check if it appears exactly once
+                std::vector<bool> keep_mask;
+                keep_mask.reserve(m_index->size());
+
+                for (size_t i = 0; i < m_index->size(); ++i) {
+                    auto current_value = m_index->at(i);
+                    auto locations = m_index->get_loc(current_value);
+                    keep_mask.push_back(locations.size() == 1);
+                }
+
+                // Build boolean filter array
+                arrow::BooleanBuilder builder;
+                AssertStatusIsOk(builder.AppendValues(keep_mask));
+                auto filter_array = AssertContiguousArrayResultIsOk(builder.Finish());
+
+                // Filter both index and table
+                auto filtered_index = m_index->filter(Array(filter_array));
+                auto filtered_table = AssertTableResultIsOk(
+                    arrow::compute::Filter(m_table, filter_array));
+
+                return DataFrame(filtered_index, filtered_table);
+            }
+
+            default:
+                throw std::invalid_argument("Invalid keep policy for drop_duplicates");
+        }
+    }
+
+    // Drop duplicates based on column values
+    DataFrame DataFrame::drop_duplicates(std::vector<std::string> const& subset,
+                                        DropDuplicatesKeepPolicy         keep) const
+    {
+        // If subset is empty, use all columns
+        std::vector<std::string> cols_to_check = subset.empty() ? column_names() : subset;
+
+        // Validate that all columns exist
+        for (const auto& col : cols_to_check) {
+            if (!contains(col)) {
+                throw std::invalid_argument(fmt::format("Column '{}' not found", col));
+            }
+        }
+
+        // Extract the columns to check for duplicates
+        arrow::ChunkedArrayVector arrays;
+        arrays.reserve(cols_to_check.size());
+        for (const auto& col : cols_to_check) {
+            arrays.push_back(m_table->GetColumnByName(col));
+        }
+
+        // Use groupby on the specified columns
+        switch (keep) {
+            case DropDuplicatesKeepPolicy::First:
+                return group_by_agg(arrays).first();
+
+            case DropDuplicatesKeepPolicy::Last:
+                return group_by_agg(arrays).last();
+
+            case DropDuplicatesKeepPolicy::False: {
+                // Strategy: group by columns, count occurrences, filter where count == 1
+                // This is more complex - we need to identify which rows are unique
+
+                // Create a temporary table with row numbers
+                arrow::Int64Builder row_builder;
+                for (int64_t i = 0; i < m_table->num_rows(); ++i) {
+                    AssertStatusIsOk(row_builder.Append(i));
+                }
+                auto row_numbers = AssertContiguousArrayResultIsOk(row_builder.Finish());
+
+                // Add row numbers to table
+                auto temp_table = AssertResultIsOk(m_table->AddColumn(
+                    m_table->num_columns(),
+                    arrow::field("__row_num__", arrow::int64()),
+                    std::make_shared<arrow::ChunkedArray>(row_numbers)));
+
+                // Group by the subset columns and count
+                auto grouped = factory::group_by::make_agg_by_key<DataFrame>(temp_table, cols_to_check);
+                auto counts = grouped.count();
+
+                // Find rows where count == 1 (appear only once)
+                // This is a simplified approach - ideally we'd use the count directly
+                // For now, we'll use a different strategy: hash-based deduplication
+
+                // Build a set of unique row signatures
+                std::unordered_map<std::string, std::vector<int64_t>> row_signatures;
+
+                for (int64_t i = 0; i < m_table->num_rows(); ++i) {
+                    std::string signature;
+                    for (const auto& col : cols_to_check) {
+                        auto chunked_array = m_table->GetColumnByName(col);
+                        auto scalar = chunked_array->GetScalar(i).ValueOrDie();
+                        signature += scalar->ToString() + "|";
+                    }
+                    row_signatures[signature].push_back(i);
+                }
+
+                // Keep only rows that appear exactly once
+                std::vector<bool> keep_mask(m_table->num_rows(), false);
+                for (const auto& [sig, rows] : row_signatures) {
+                    if (rows.size() == 1) {
+                        keep_mask[rows[0]] = true;
+                    }
+                }
+
+                // Build boolean filter array
+                arrow::BooleanBuilder builder;
+                AssertStatusIsOk(builder.AppendValues(keep_mask));
+                auto filter_array = AssertContiguousArrayResultIsOk(builder.Finish());
+
+                // Filter both index and table
+                auto filtered_index = m_index->filter(Array(filter_array));
+                auto filtered_table = AssertTableResultIsOk(
+                    arrow::compute::Filter(m_table, filter_array));
+
+                return DataFrame(filtered_index, filtered_table);
+            }
+
+            default:
+                throw std::invalid_argument("Invalid keep policy for drop_duplicates");
+        }
+    }
+
 } // namespace epoch_frame

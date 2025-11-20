@@ -201,6 +201,17 @@ Concatenator::concat_misaligned_pipelined(
                     i, tables[i]->num_rows(), tables[i]->num_columns(), indices[i]->size());
     }
 
+    // Validate: Check for duplicate indices in input dataframes (matching pandas behavior)
+    // Pandas raises: InvalidIndexError: Reindexing only valid with uniquely valued Index objects
+    for (size_t i = 0; i < indices.size(); i++) {
+        if (indices[i]->has_duplicates()) {
+            throw std::invalid_argument(
+                "Cannot perform column-wise concat with duplicate index values. "
+                "Input dataframe at position " + std::to_string(i) + " has duplicate indices. "
+                "Reindexing is only valid with uniquely valued Index objects.");
+        }
+    }
+
     // Step 1: Compute the union of all indices (deduplicated)
     IndexPtr merged_index = indices[0];
     for (size_t i = 1; i < indices.size(); i++) {

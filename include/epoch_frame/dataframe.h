@@ -245,6 +245,51 @@ namespace epoch_frame
             return m_table->schema()->GetFieldIndex(column) != -1;
         }
 
+        /**
+         * @brief Remove duplicate rows based on index values
+         *
+         * Similar to pandas df[~df.index.duplicated(keep='first')]
+         * Uses groupby internally for efficient deduplication.
+         *
+         * @param keep Which duplicates to keep:
+         *             - First: Keep first occurrence (default)
+         *             - Last: Keep last occurrence
+         *             - False: Drop all duplicates
+         * @return DataFrame with duplicate index values removed
+         *
+         * @example
+         * ```cpp
+         * DataFrame df = make_dataframe<int64_t>(
+         *     make_index_from_vector<int64_t>({1, 2, 1, 3, 2}),
+         *     {{10, 20, 30, 40, 50}},
+         *     {"A"}
+         * );
+         * auto result = df.drop_duplicates();  // Keep first, result has 3 rows
+         * ```
+         */
+        DataFrame drop_duplicates(DropDuplicatesKeepPolicy keep = DropDuplicatesKeepPolicy::First) const;
+
+        /**
+         * @brief Remove duplicate rows based on column values
+         *
+         * Similar to pandas df.drop_duplicates(subset=['col1', 'col2'])
+         *
+         * @param subset Column names to consider for identifying duplicates.
+         *               If empty, all columns are used.
+         * @param keep Which duplicates to keep:
+         *             - First: Keep first occurrence (default)
+         *             - Last: Keep last occurrence
+         *             - False: Drop all duplicates
+         * @return DataFrame with duplicate rows removed
+         *
+         * @example
+         * ```cpp
+         * auto result = df.drop_duplicates({"col1", "col2"}, DropDuplicatesKeepPolicy::First);
+         * ```
+         */
+        DataFrame drop_duplicates(std::vector<std::string> const& subset,
+                                 DropDuplicatesKeepPolicy         keep = DropDuplicatesKeepPolicy::First) const;
+
         // Inherit map method from NDFrame
         using NDFrame::map;
 

@@ -261,6 +261,16 @@ namespace epoch_frame
             return get_or_throw_value<int32_t>();
         }
 
+        uint64_t as_uint64() const
+        {
+            return get_or_throw_value<uint64_t>();
+        }
+
+        uint32_t as_uint32() const
+        {
+            return get_or_throw_value<uint32_t>();
+        }
+
         bool as_bool() const
         {
             return get_or_throw_value<bool>();

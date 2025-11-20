@@ -956,10 +956,11 @@ namespace epoch_frame
     //--------------------------------------------------------------------------
     template <class ChildType, class ArrowType>
     ChildType NDFrame<ChildType, ArrowType>::drop_null(DropMethod how, AxisType axis,
+                                                       std::optional<int64_t> const&   thresh,
                                                        std::vector<std::string> const& subset,
                                                        bool ignore_index) const
     {
-        return from_base(m_select->drop_null(how, axis, subset, ignore_index));
+        return from_base(m_select->drop_null(how, axis, thresh, subset, ignore_index));
     }
 
     template <class ChildType, class ArrowType>

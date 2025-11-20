@@ -52,16 +52,249 @@ namespace epoch_frame
         return TableComponent{new_index, data};
     }
 
-    TableComponent Selections::drop_null(epoch_frame::DropMethod how, epoch_frame::AxisType axis,
-                                         const std::vector<std::string>& subset,
-                                         bool                            ignore_index) const
+    TableComponent Selections::drop_null(epoch_frame::DropMethod             how,
+                                         epoch_frame::AxisType                axis,
+                                         std::optional<int64_t> const&        thresh,
+                                         const std::vector<std::string>&      subset,
+                                         bool                                 ignore_index) const
     {
-        AssertFromStream(how == DropMethod::Any, "drop_null only support any");
-        AssertFromStream(axis == AxisType::Row, "drop_null only support row");
-        AssertFromStream(subset.empty(), "drop_null does not support subset");
-        AssertFalseFromStream(ignore_index, "ignore_index can not be true");
+        // Validate that thresh and how are not both specified
+        AssertFromFormat(!thresh.has_value() || how == DropMethod::Any,
+                         "Cannot specify both 'thresh' and 'how' (must use default 'any')");
 
-        return unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "drop_null"));
+        if (axis == AxisType::Row)
+        {
+            // For Series (ChunkedArray), use filter-based approach since Arrow's drop_null for ChunkedArray
+            // doesn't preserve the index
+            if (!m_data.second.is_table())
+            {
+                AssertFromFormat(!thresh.has_value(), "thresh parameter not supported for Series");
+                AssertFromFormat(subset.empty(), "subset parameter not supported for Series");
+
+                // Create a boolean filter where values are valid (not null)
+                auto is_valid_result = arrow_utils::call_unary_compute_table_or_array(m_data.second, "is_valid");
+                auto is_valid_array = AssertContiguousArrayResultIsOk(is_valid_result.chunked_array());
+
+                // Use the filter method which handles index properly
+                auto result = filter(std::make_shared<arrow::ChunkedArray>(is_valid_array),
+                                   arrow::compute::FilterOptions::Defaults());
+
+                if (ignore_index)
+                {
+                    return TableComponent{factory::index::from_range(result.second.size()),
+                                          result.second};
+                }
+                return result;
+            }
+
+            // For row-wise dropping on DataFrames
+            arrow::ChunkedArrayPtr filter_mask;
+
+            if (thresh.has_value())
+            {
+                // Count non-null values and keep rows with at least thresh non-nulls
+                // Use subset columns if specified, otherwise all columns
+                arrow::TablePtr table_to_check = m_data.second.table();
+
+                if (!subset.empty())
+                {
+                    // Select only the subset columns
+                    std::vector<std::shared_ptr<arrow::Field>> subset_fields;
+                    std::vector<std::shared_ptr<arrow::ChunkedArray>> subset_columns;
+
+                    for (const auto& col_name : subset)
+                    {
+                        auto col_idx = table_to_check->schema()->GetFieldIndex(col_name);
+                        AssertFromFormat(col_idx != -1, "Column '{}' not found in table", col_name);
+                        subset_fields.push_back(table_to_check->schema()->field(col_idx));
+                        subset_columns.push_back(table_to_check->column(col_idx));
+                    }
+
+                    table_to_check =
+                        AssertTableResultIsOk(arrow::Table::Make(arrow::schema(subset_fields), subset_columns));
+                }
+
+                // Count non-nulls per row
+                auto num_rows = table_to_check->num_rows();
+                auto num_cols = table_to_check->num_columns();
+
+                // Build a count array of non-null values per row
+                arrow::Int64Builder count_builder;
+                AssertStatusIsOk(count_builder.Reserve(num_rows));
+
+                for (int64_t row = 0; row < num_rows; ++row)
+                {
+                    int64_t non_null_count = 0;
+                    for (int col = 0; col < num_cols; ++col)
+                    {
+                        auto chunked_array = table_to_check->column(col);
+                        auto scalar        = AssertScalarResultIsOk(chunked_array->GetScalar(row));
+                        if (scalar->is_valid)
+                        {
+                            non_null_count++;
+                        }
+                    }
+                    AssertStatusIsOk(count_builder.Append(non_null_count));
+                }
+
+                auto count_array = AssertArrayResultIsOk(count_builder.Finish());
+
+                // Create filter: count >= thresh
+                auto thresh_scalar = arrow::MakeScalar(thresh.value());
+                auto filter_result = arrow::compute::CallFunction("greater_equal", {count_array, thresh_scalar});
+                filter_mask = factory::array::make_chunked_array(filter_result);
+            }
+            else
+            {
+                // Use how parameter (Any or All)
+                arrow::TablePtr table_to_check = m_data.second.table();
+
+                if (!subset.empty())
+                {
+                    // Select only the subset columns
+                    std::vector<std::shared_ptr<arrow::Field>> subset_fields;
+                    std::vector<std::shared_ptr<arrow::ChunkedArray>> subset_columns;
+
+                    for (const auto& col_name : subset)
+                    {
+                        auto col_idx = table_to_check->schema()->GetFieldIndex(col_name);
+                        AssertFromFormat(col_idx != -1, "Column '{}' not found in table", col_name);
+                        subset_fields.push_back(table_to_check->schema()->field(col_idx));
+                        subset_columns.push_back(table_to_check->column(col_idx));
+                    }
+
+                    table_to_check =
+                        AssertTableResultIsOk(arrow::Table::Make(arrow::schema(subset_fields), subset_columns));
+                }
+
+                if (how == DropMethod::Any)
+                {
+                    // Drop rows with ANY null values
+                    // Use Arrow's built-in drop_null if no subset is specified
+                    if (subset.empty())
+                    {
+                        auto result = unzip_index(arrow_utils::call_unary_compute_table(merge_index(), "drop_null"));
+                        if (ignore_index)
+                        {
+                            return TableComponent{factory::index::from_range(result.second.size()),
+                                                  result.second};
+                        }
+                        return result;
+                    }
+
+                    // Build filter mask: all columns must be valid
+                    auto num_rows = table_to_check->num_rows();
+                    auto num_cols = table_to_check->num_columns();
+
+                    arrow::BooleanBuilder filter_builder;
+                    AssertStatusIsOk(filter_builder.Reserve(num_rows));
+
+                    for (int64_t row = 0; row < num_rows; ++row)
+                    {
+                        bool all_valid = true;
+                        for (int col = 0; col < num_cols; ++col)
+                        {
+                            auto chunked_array = table_to_check->column(col);
+                            auto scalar        = AssertScalarResultIsOk(chunked_array->GetScalar(row));
+                            if (!scalar->is_valid)
+                            {
+                                all_valid = false;
+                                break;
+                            }
+                        }
+                        AssertStatusIsOk(filter_builder.Append(all_valid));
+                    }
+
+                    auto filter_array = AssertResultIsOk(filter_builder.Finish());
+                    arrow::ArrayVector vec = {filter_array};
+                    filter_mask = AssertResultIsOk(arrow::ChunkedArray::Make(vec));
+                }
+                else // DropMethod::All
+                {
+                    // Drop rows where ALL values are null
+                    auto num_rows = table_to_check->num_rows();
+                    auto num_cols = table_to_check->num_columns();
+
+                    arrow::BooleanBuilder filter_builder;
+                    AssertStatusIsOk(filter_builder.Reserve(num_rows));
+
+                    for (int64_t row = 0; row < num_rows; ++row)
+                    {
+                        bool any_valid = false;
+                        for (int col = 0; col < num_cols; ++col)
+                        {
+                            auto chunked_array = table_to_check->column(col);
+                            auto scalar        = AssertScalarResultIsOk(chunked_array->GetScalar(row));
+                            if (scalar->is_valid)
+                            {
+                                any_valid = true;
+                                break;
+                            }
+                        }
+                        AssertStatusIsOk(filter_builder.Append(any_valid));
+                    }
+
+                    auto filter_array = AssertResultIsOk(filter_builder.Finish());
+                    arrow::ArrayVector vec = {filter_array};
+                    filter_mask = AssertResultIsOk(arrow::ChunkedArray::Make(vec));
+                }
+            }
+
+            // Apply filter
+            auto result = filter(filter_mask, arrow::compute::FilterOptions::Defaults());
+
+            if (ignore_index)
+            {
+                return TableComponent{factory::index::from_range(result.second.size()),
+                                      result.second};
+            }
+
+            return result;
+        }
+        else // AxisType::Column
+        {
+            // For column-wise dropping (only makes sense for DataFrames)
+            AssertFromFormat(m_data.second.is_table(), "Column-wise drop_null requires a DataFrame");
+            AssertFromFormat(subset.empty(), "subset parameter not supported for column-wise drop_null");
+
+            auto table = m_data.second.table();
+            std::vector<std::shared_ptr<arrow::Field>> kept_fields;
+            std::vector<std::shared_ptr<arrow::ChunkedArray>> kept_columns;
+
+            for (int col = 0; col < table->num_columns(); ++col)
+            {
+                auto chunked_array = table->column(col);
+                bool should_keep   = false;
+
+                if (thresh.has_value())
+                {
+                    // Count non-nulls in this column
+                    int64_t non_null_count = chunked_array->length() - chunked_array->null_count();
+                    should_keep            = non_null_count >= thresh.value();
+                }
+                else if (how == DropMethod::Any)
+                {
+                    // Keep column if it has no nulls
+                    should_keep = chunked_array->null_count() == 0;
+                }
+                else // DropMethod::All
+                {
+                    // Keep column if not all values are null
+                    should_keep = chunked_array->null_count() < chunked_array->length();
+                }
+
+                if (should_keep)
+                {
+                    kept_fields.push_back(table->schema()->field(col));
+                    kept_columns.push_back(chunked_array);
+                }
+            }
+
+            auto new_table =
+                AssertTableResultIsOk(arrow::Table::Make(arrow::schema(kept_fields), kept_columns));
+
+            return TableComponent{m_data.first, TableOrArray{new_table}};
+        }
     }
 
     TableComponent Selections::drop(arrow::ArrayPtr const& index, StringVector const& columns) const
