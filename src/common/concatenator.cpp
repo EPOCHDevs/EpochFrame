@@ -193,11 +193,11 @@ Concatenator::concat_misaligned_pipelined(
     std::vector<IndexPtr> const& indices,
     std::string const& /* indexName */)
 {
-    SPDLOG_INFO("CONCAT_DEBUG: Using FIXED approach - precomputing union index for {} tables", tables.size());
+    SPDLOG_DEBUG("CONCAT_DEBUG: Using FIXED approach - precomputing union index for {} tables", tables.size());
 
     // LOG: Input table info
     for (size_t i = 0; i < tables.size(); i++) {
-        SPDLOG_INFO("CONCAT_DEBUG: Input Table {}: {} rows, {} cols, index length: {}",
+        SPDLOG_DEBUG("CONCAT_DEBUG: Input Table {}: {} rows, {} cols, index length: {}",
                     i, tables[i]->num_rows(), tables[i]->num_columns(), indices[i]->size());
     }
 
@@ -215,14 +215,14 @@ Concatenator::concat_misaligned_pipelined(
     // Step 1: Compute the union of all indices (deduplicated)
     IndexPtr merged_index = indices[0];
     for (size_t i = 1; i < indices.size(); i++) {
-        SPDLOG_INFO("CONCAT_DEBUG: Before union: merged_index size={}, indices[{}] size={}",
+        SPDLOG_DEBUG("CONCAT_DEBUG: Before union: merged_index size={}, indices[{}] size={}",
                    merged_index->size(), i, indices[i]->size());
         merged_index = merged_index->union_(indices[i]);
-        SPDLOG_INFO("CONCAT_DEBUG: After union with table {}: merged_index size={}",
+        SPDLOG_DEBUG("CONCAT_DEBUG: After union with table {}: merged_index size={}",
                    i, merged_index->size());
     }
 
-    SPDLOG_INFO("CONCAT_DEBUG: Merged index computed: {} unique values", merged_index->size());
+    SPDLOG_DEBUG("CONCAT_DEBUG: Merged index computed: {} unique values", merged_index->size());
 
     // Step 2: Build a canonical aligned index order (sorted by value)
     auto union_array = merged_index->array().as_chunked_array();
@@ -249,7 +249,7 @@ Concatenator::concat_misaligned_pipelined(
         auto aligned = align_by_index(table_component, aligned_index, Scalar{});
         aligned_tables.push_back(aligned.get_table(""));
 
-        SPDLOG_INFO("CONCAT_DEBUG: Aligned Table {}: {} rows (was {})",
+        SPDLOG_DEBUG("CONCAT_DEBUG: Aligned Table {}: {} rows (was {})",
                     i, aligned_tables[i]->num_rows(), tables[i]->num_rows());
     }
 
@@ -267,7 +267,7 @@ Concatenator::concat_misaligned_pipelined(
     arrow::TablePtr merged = arrow::Table::Make(arrow::schema(all_fields), all_columns);
     auto final_index_array = aligned_index->array().as_chunked_array();
 
-    SPDLOG_INFO("CONCAT_DEBUG: Final result: {} rows, {} cols", merged->num_rows(), merged->num_columns());
+    SPDLOG_DEBUG("CONCAT_DEBUG: Final result: {} rows, {} cols", merged->num_rows(), merged->num_columns());
 
     return {merged, final_index_array};
 }
@@ -295,12 +295,14 @@ Concatenator::concat_fallback(
                             ? ac::JoinType::INNER
                             : ac::JoinType::FULL_OUTER;
 
+#ifndef NDEBUG
     size_t total_input_rows = 0;
     for (const auto& table : tables_with_index) {
         total_input_rows += table->num_rows();
     }
     SPDLOG_DEBUG("Concatenator: Starting multi-way join - {} tables, {} total input rows",
                  tables_with_index.size(), total_input_rows);
+#endif
 
     auto join_plan = build_join_tree(tables_with_index, acero_join_type, indexName);
     arrow::TablePtr merged = AssertResultIsOk(ac::DeclarationToTable(join_plan));
