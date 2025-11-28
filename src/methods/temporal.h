@@ -226,57 +226,68 @@ namespace epoch_frame
 
         Type years_between(Type const& other) const
         {
-            return to_type(arrow::compute::YearsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::YearsBetween(self_unified, other_unified));
         }
 
         Type quarters_between(Type const& other) const
         {
-            return to_type(arrow::compute::QuartersBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::QuartersBetween(self_unified, other_unified));
         }
 
         Type months_between(Type const& other) const
         {
-            return to_type(arrow::compute::MonthsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::MonthsBetween(self_unified, other_unified));
         }
 
         Type weeks_between(Type const& other) const
         {
-            return to_type(arrow::compute::WeeksBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::WeeksBetween(self_unified, other_unified));
         }
 
         Type days_between(Type const& other) const
         {
-            return to_type(arrow::compute::DaysBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::DaysBetween(self_unified, other_unified));
         }
 
         Type hours_between(Type const& other) const
         {
-            return to_type(arrow::compute::HoursBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::HoursBetween(self_unified, other_unified));
         }
 
         Type minutes_between(Type const& other) const
         {
-            return to_type(arrow::compute::MinutesBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::MinutesBetween(self_unified, other_unified));
         }
 
         Type seconds_between(Type const& other) const
         {
-            return to_type(arrow::compute::SecondsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::SecondsBetween(self_unified, other_unified));
         }
 
         Type milliseconds_between(Type const& other) const
         {
-            return to_type(arrow::compute::MillisecondsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::MillisecondsBetween(self_unified, other_unified));
         }
 
         Type microseconds_between(Type const& other) const
         {
-            return to_type(arrow::compute::MicrosecondsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::MicrosecondsBetween(self_unified, other_unified));
         }
 
         Type nanoseconds_between(Type const& other) const
         {
-            return to_type(arrow::compute::NanosecondsBetween(m_data.value(), other.value()));
+            auto [self_unified, other_unified] = unify_timestamp_precision(other);
+            return to_type(arrow::compute::NanosecondsBetween(self_unified, other_unified));
         }
 
         // timezone handling
@@ -351,5 +362,67 @@ namespace epoch_frame
 
       private:
         Type m_data;
+
+        /**
+         * @brief Unify timestamp precision between two operands.
+         *
+         * Arrow compute functions like DaysBetween require both operands to have
+         * the same timestamp precision. This helper casts to the finer precision
+         * (nanoseconds > microseconds > milliseconds > seconds) to avoid data loss.
+         *
+         * @param other The other timestamp operand
+         * @return A pair of Datum objects with unified precision
+         */
+        std::pair<arrow::Datum, arrow::Datum> unify_timestamp_precision(Type const& other) const
+        {
+            auto self_type  = m_data.type();
+            auto other_type = other.type();
+
+            // If types are equal, no conversion needed
+            if (self_type->Equals(other_type))
+            {
+                return {m_data.value(), other.value()};
+            }
+
+            // Both must be timestamps
+            if (self_type->id() != arrow::Type::TIMESTAMP ||
+                other_type->id() != arrow::Type::TIMESTAMP)
+            {
+                return {m_data.value(), other.value()};
+            }
+
+            auto self_ts  = std::static_pointer_cast<arrow::TimestampType>(self_type);
+            auto other_ts = std::static_pointer_cast<arrow::TimestampType>(other_type);
+
+            // Determine the finer precision (higher TimeUnit value = finer precision)
+            // SECOND=0, MILLI=1, MICRO=2, NANO=3
+            arrow::TimeUnit::type target_unit =
+                (self_ts->unit() > other_ts->unit()) ? self_ts->unit() : other_ts->unit();
+
+            // Use timezone from self if available, otherwise from other
+            std::string tz = self_ts->timezone().empty() ? other_ts->timezone() : self_ts->timezone();
+            auto target_type = arrow::timestamp(target_unit, tz);
+
+            arrow::Datum self_result  = m_data.value();
+            arrow::Datum other_result = other.value();
+
+            // Cast self if needed
+            if (self_ts->unit() != target_unit || self_ts->timezone() != tz)
+            {
+                auto cast_result = arrow::compute::Cast(m_data.value(), target_type);
+                AssertResultIsOk(cast_result);
+                self_result = cast_result.ValueOrDie();
+            }
+
+            // Cast other if needed
+            if (other_ts->unit() != target_unit || other_ts->timezone() != tz)
+            {
+                auto cast_result = arrow::compute::Cast(other.value(), target_type);
+                AssertResultIsOk(cast_result);
+                other_result = cast_result.ValueOrDie();
+            }
+
+            return {self_result, other_result};
+        }
     };
 } // namespace epoch_frame

@@ -20,6 +20,7 @@
 #include <spdlog/spdlog.h>
 #include <tbb/parallel_for.h>
 #include <unordered_set>
+#include <map>
 
 #include "epoch_frame/common.h"
 #include "epoch_frame/dataframe.h"
@@ -281,6 +282,18 @@ namespace epoch_frame
                                                        index_name, left_table_.first->array().value());
         auto                  index_table = new_index_->to_table(index_name);
 
+        // Store original column types (especially timestamp precision) before hash join
+        // Arrow Acero may change timestamp precision during joins
+        std::map<std::string, std::shared_ptr<arrow::DataType>> original_types;
+        for (int i = 0; i < left_rb->num_columns(); i++)
+        {
+            auto field = left_rb->schema()->field(i);
+            if (field->name() != index_name)
+            {
+                original_types[field->name()] = field->type();
+            }
+        }
+
         ac::Declaration left{"table_source", ac::TableSourceNodeOptions(left_rb)};
         ac::Declaration right{"table_source", ac::TableSourceNodeOptions(index_table)};
 
@@ -323,6 +336,39 @@ namespace epoch_frame
         {
             new_table = AssertTableResultIsOk(
                 arrow_utils::call_compute_fill_null_table(new_table, fillValue.value()));
+        }
+
+        // Restore original timestamp precision if it was changed during hash join
+        // Arrow Acero may promote timestamps (e.g., ns -> us) which breaks downstream operations
+        for (int i = 0; i < new_table->num_columns(); i++)
+        {
+            auto field     = new_table->schema()->field(i);
+            auto col_name  = field->name();
+            auto orig_it   = original_types.find(col_name);
+
+            if (orig_it != original_types.end())
+            {
+                auto orig_type = orig_it->second;
+                auto curr_type = field->type();
+
+                // Check if timestamp precision changed
+                if (orig_type->id() == arrow::Type::TIMESTAMP &&
+                    curr_type->id() == arrow::Type::TIMESTAMP &&
+                    !orig_type->Equals(curr_type))
+                {
+                    // Cast back to original precision
+                    auto column      = new_table->column(i);
+                    auto cast_result = arrow::compute::Cast(column, orig_type);
+                    AssertFromStream(cast_result.ok(),
+                                     "Failed to restore timestamp precision for column "
+                                         << col_name << ": " << cast_result.status().ToString());
+                    auto casted_column = cast_result.ValueOrDie().chunked_array();
+
+                    // Replace the column with the casted version
+                    auto new_field = arrow::field(col_name, orig_type);
+                    new_table      = AssertResultIsOk(new_table->SetColumn(i, new_field, casted_column));
+                }
+            }
         }
 
         AssertFromStream(new_table->num_rows() == static_cast<int64_t>(new_index_->size()),
