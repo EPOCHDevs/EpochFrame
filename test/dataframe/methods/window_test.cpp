@@ -50,7 +50,18 @@ TEST_CASE("pandas rolling example", "[window]")
 
     SECTION("min_periods=1, step=2")
     {
-        REQUIRE_THROWS_AS(df.rolling_agg({.window_size = 2, .min_periods = 1, .step = 2}), std::runtime_error);
+        // With step=2, we get output at positions 0, 2, 4 (every other element)
+        auto result = df.rolling_agg({.window_size = 2, .min_periods = 1, .step = 2}).sum();
+
+        INFO(result);
+        // Expected: values at indices 0, 2, 4 from original
+        // For window_size=2, min_periods=1:
+        // - index 0: window [0], sum = 0
+        // - index 2: window [1,2], sum = 3
+        // - index 4: window [NaN,4], sum = 4
+        auto expected_index = efo::factory::index::from_range(0, 5, 2); // indices 0, 2, 4
+        REQUIRE(result.equals(efo::make_dataframe<double>(
+            expected_index, {{0, 3, 4}}, {"B"})));
     }
 }
 

@@ -23,7 +23,7 @@ namespace epoch_frame
               m_min_periods(options.min_periods.value_or(m_window_size)), m_center(options.center),
               m_closed(options.closed), m_step(options.step)
         {
-            AssertFromStream(m_step == 1, "epoch_frame only supports step == 1");
+            AssertFromStream(m_step >= 1, "step must be >= 1");
         }
 
         WindowBounds RollingWindow::get_window_bounds(uint64_t n) const
@@ -31,8 +31,6 @@ namespace epoch_frame
             auto num_values = static_cast<int64_t>(n);
             auto offset     = static_cast<int64_t>(
                 m_center or m_window_size == 0 ? floor_div(m_window_size - 1, 2) : 0);
-
-            WindowBounds bounds(num_values);
 
             auto start_value = 1 + offset;
             auto end_value   = num_values + 1 + offset;
@@ -57,20 +55,26 @@ namespace epoch_frame
 
             if (m_step == 1)
             {
+                WindowBounds bounds(num_values);
                 std::ranges::transform(std::ranges::views::iota(start_value, end_value),
                                        bounds.begin(), fn);
+                return bounds;
             }
             else
             {
-                std::vector<int64_t> indices(num_values);
-                auto                 ptr = indices.begin();
+                // Calculate the number of output windows when step > 1
+                auto num_windows = (num_values + m_step - 1) / m_step;
+                WindowBounds bounds(num_windows);
+
+                std::vector<int64_t> indices;
+                indices.reserve(num_windows);
                 for (int64_t i = start_value; i < end_value; i += m_step)
                 {
-                    *ptr++ = i;
+                    indices.push_back(i);
                 }
                 std::ranges::transform(indices, bounds.begin(), fn);
+                return bounds;
             }
-            return bounds;
         }
 
         ExpandingWindow::ExpandingWindow(const ExpandingWindowOptions& options) : m_options(options)
@@ -86,6 +90,27 @@ namespace epoch_frame
             return bounds;
         }
     } // namespace window
+
+    namespace
+    {
+        // Helper to compute the sampled index when step > 1
+        IndexPtr compute_sampled_index(IndexPtr const& original_index, int64_t step, size_t num_windows)
+        {
+            if (step <= 1 || num_windows >= original_index->size())
+            {
+                return original_index;
+            }
+            // Create indices array for sampling: 0, step, 2*step, ...
+            arrow::UInt64Builder builder;
+            AssertStatusIsOk(builder.Reserve(num_windows));
+            for (size_t i = 0; i < num_windows; ++i)
+            {
+                builder.UnsafeAppend(i * step);
+            }
+            auto indices_array = AssertResultIsOk(builder.Finish());
+            return original_index->take(Array(indices_array), true);
+        }
+    } // namespace
 
     template <bool is_dataframe>
     AggRollingWindowOperations<is_dataframe>::AggRollingWindowOperations(
@@ -144,14 +169,17 @@ namespace epoch_frame
                     tbb::simple_partitioner());
             });
 
+        // Compute the result index - when step > 1, we need to sample the original index
+        auto result_index = compute_sampled_index(m_data.index(), m_generator->step(), bounds.size());
+
         if constexpr (is_dataframe)
         {
-            return DataFrame{m_data.index(),
+            return DataFrame{result_index,
                              AssertTableResultIsOk(arrow::ConcatenateTables(results))};
         }
         else
         {
-            return Series(m_data.index(),
+            return Series(result_index,
                           factory::array::make_chunked_array(results, results.front()->type));
         }
     }
@@ -209,7 +237,8 @@ namespace epoch_frame
                     tbb::simple_partitioner());
             });
 
-        return Series(data.index(), factory::array::make_array(results, results.front()->type));
+        auto result_index = compute_sampled_index(data.index(), generator->step(), bounds.size());
+        return Series(result_index, factory::array::make_array(results, results.front()->type));
     }
 
     ApplyDataFrameRollingWindowOperations::ApplyDataFrameRollingWindowOperations(
@@ -252,9 +281,10 @@ namespace epoch_frame
             });
 
         auto concatenated = concat({.frames = results, .axis = AxisType::Row}).to_series();
+        auto target_index = compute_sampled_index(m_data.index(), m_generator->step(), bounds.size());
         // Optimization: Only reindex if indices actually differ
-        if (!concatenated.index()->equals(m_data.index())) {
-            return concatenated.reindex(m_data.index());
+        if (!concatenated.index()->equals(target_index)) {
+            return concatenated.reindex(target_index);
         }
         return concatenated;
     }
@@ -292,9 +322,10 @@ namespace epoch_frame
             });
 
         auto concatenated = concat({.frames = results, .axis = AxisType::Row});
+        auto target_index = compute_sampled_index(m_data.index(), m_generator->step(), bounds.size());
         // Optimization: Only reindex if indices actually differ
-        if (!concatenated.index()->equals(m_data.index())) {
-            return concatenated.reindex(m_data.index());
+        if (!concatenated.index()->equals(target_index)) {
+            return concatenated.reindex(target_index);
         }
         return concatenated;
     }
@@ -326,13 +357,14 @@ namespace epoch_frame
             });
 
         auto concatenated = concat({.frames = results, .axis = AxisType::Row});
-        if (m_data.size() != concatenated.size())
+        auto target_index = compute_sampled_index(m_data.index(), m_generator->step(), bounds.size());
+        if (concatenated.size() != target_index->size())
         {
-            return concatenated.reindex(m_data.index());
+            return concatenated.reindex(target_index);
         }
         // Optimization: Only reindex if indices actually differ
-        if (!concatenated.index()->equals(m_data.index())) {
-            return concatenated.reindex(m_data.index());
+        if (!concatenated.index()->equals(target_index)) {
+            return concatenated.reindex(target_index);
         }
         return concatenated;
     }

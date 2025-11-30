@@ -28,6 +28,7 @@ namespace epoch_frame
             virtual ~IWindowBoundGenerator()                                  = default;
             virtual WindowBounds get_window_bounds(uint64_t num_values) const = 0;
             virtual int64_t min_periods() const = 0;
+            virtual int64_t step() const = 0;
         };
         using WindowBoundGeneratorPtr = std::unique_ptr<IWindowBoundGenerator>;
 
@@ -47,6 +48,9 @@ namespace epoch_frame
             WindowBounds get_window_bounds(uint64_t num_values) const final;
             int64_t min_periods() const final {
                 return m_min_periods;
+            }
+            int64_t step() const final {
+                return m_step;
             }
 
           private:
@@ -70,6 +74,9 @@ namespace epoch_frame
 
             int64_t min_periods() const final {
                 return m_options.min_periods;
+            }
+            int64_t step() const final {
+                return 1;
             }
 
           private:
