@@ -35,7 +35,12 @@ option(BUILD_BENCHMARK OFF)
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 
-project(EpochFrame VERSION 0.1.0 LANGUAGES C CXX)
+set(EPOCH_VERSION_MAJOR 0)
+set(EPOCH_VERSION_MINOR 2)
+set(EPOCH_VERSION_PATCH 0)
+set(EPOCH_VERSION "${EPOCH_VERSION_MAJOR}.${EPOCH_VERSION_MINOR}.${EPOCH_VERSION_PATCH}")
+
+project(EpochFrame VERSION ${EPOCH_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -74,8 +79,8 @@ add_library(epoch::frame ALIAS epoch_frame)
 
 # Configure version for shared libraries
 set_target_properties(epoch_frame PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION ${EPOCH_VERSION}
+    SOVERSION ${EPOCH_VERSION_MAJOR}
 )
 
 # For shared libraries, export all symbols by default (Linux-friendly approach)
